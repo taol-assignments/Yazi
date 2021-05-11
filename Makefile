@@ -17,7 +17,7 @@ all: dist/libz.a
 
 .PHONY: clean
 clean:
-	rm -rf dist/* hints/* obj/*
+	rm -rf dist/* obj/*
 
 include Makefile.include
 
@@ -152,7 +152,7 @@ KRML=$(KREMLIN_HOME)/krml
 # easily turn this file into a .h, use -add-include '"Impl_Bignum_Intrinsics.h"'
 # and pass -static-header Impl.Bignum.Intrinsics as described in the
 # documentation.
-HAND_WRITTEN_C_FILES = code/c/Yazi_Allocator.h
+HAND_WRITTEN_C_FILES = code/c/Yazi_Allocator.h code/c/Yazi_Z_Stream_Fields.inc
 
 # This is now the preferred and recommended way to compile C code with KreMLin.
 #
@@ -180,8 +180,10 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	$(KRML) -tmpdir $(dir $@) -skip-compilation \
 	  $(filter %.krml,$^) \
 	  -warn-error @4@5@18 \
+	  -drop Spec.*,Prims\
 	  -no-prefix Yazi.Util \
 	  -no-prefix Yazi.CFlags \
+	  -no-prefix Yazi.Types \
 	  -fparentheses \
 	  -minimal \
 	  -bundle 'FStar.*' \
@@ -189,6 +191,7 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	  -add-early-include '"Yazi_Allocator.h"' \
 	  -add-include '"kremlin/internal/target.h"' \
 	  -o libz.a
+	  sed -i '/deflate_state \*state;.*/a #include "Yazi_Z_Stream_Fields.inc"' dist/Yazi_Types.h
 
 # Compiling the generated C code
 # ------------------------------

@@ -13,6 +13,7 @@ open Spec.Deflate.State
 open FStar.Int.Cast
 
 val deflate_init:
+  strm: B.pointer z_stream ->
   state: B.pointer deflate_state ->
   level: I32.t ->
   method: I32.t ->
@@ -20,8 +21,9 @@ val deflate_init:
   mem_level: I32.t ->
   strategy: I32.t ->
   HST.ST I32.t
-  (requires fun h -> B.live h state)
-  (ensures fun h0 res h1 -> B.live h0 state /\ B.live h1 state // /\
+  (requires fun h -> B.live h strm /\ B.live h state)
+  (ensures fun h0 res h1 -> B.live h0 state /\ B.live h1 state /\
+    B.live h0 strm /\ B.live h1 strm // /\
   (*res == Util.z_ok ==> begin
     let state = B.get h1 state 0 in
     let open U32 in

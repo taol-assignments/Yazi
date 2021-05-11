@@ -230,6 +230,7 @@ let zmalloc (#a: Type) (init: a) (len: U32.t{U32.v len > 0}) =
 
 inline_for_extraction
 val malloc_state_fields:
+  strm: Ghost.erased (B.pointer z_stream) ->
   state: Ghost.erased (B.pointer deflate_state) ->
   window_bits: window_bits_t ->
   mem_level: mem_level_t ->
@@ -246,15 +247,16 @@ val malloc_state_fields:
     tree_depth_t *
     l_buf: B.buffer U8.t{B.len l_buf == lit_bufsize mem_level} *
     d_buf: B.buffer U16.t{B.len d_buf == lit_bufsize mem_level}))
-  (requires fun h -> B.live h state)
+  (requires fun h -> B.live h state /\ B.live h strm)
   (ensures fun h0 fields h1 -> match fields with
-   | None -> B.live h0 state /\ B.live h1 state
+   | None -> B.live h0 state /\ B.live h1 state /\ B.live h0 strm /\ B.live h1 strm
    | Some (pending_buf, window, prev, head,
        dyn_ltree, dyn_dtree, bl_tree, bl_count,
        tree_heap, tree_depth, l_buf, d_buf) ->
      let open FStar.Mul in
      let open U32 in
      B.live h0 state /\ B.live h1 state /\
+     B.live h0 strm /\ B.live h1 strm /\
      B.length pending_buf == v (pending_buf_size mem_level) /\
      B.length window == (v (window_size window_bits)) * 2 /\
      (* TODO: more *)
@@ -288,9 +290,9 @@ val malloc_state_fields:
      B.disjoint tree_heap d_buf /\ B.disjoint tree_depth l_buf /\
      B.disjoint tree_depth d_buf /\ B.disjoint l_buf d_buf)
 
-#set-options "--z3rlimit 100"
+#set-options "--z3rlimit 200"
 [@inline_let]
-let malloc_state_fields _ window_bits mem_level =
+let malloc_state_fields _ _ window_bits mem_level =
   let open U32 in
 
   (* Uint 8 buffer *)
@@ -368,11 +370,11 @@ let malloc_state_fields _ window_bits mem_level =
     dyn_ltree, dyn_dtree, bl_tree, bl_count,
     tree_heap, tree_depth, l_buf, d_buf)
 
-let deflate_init state level method window_bits mem_level strategy =
+let deflate_init strm state level method window_bits mem_level strategy =
   match verify_params level method window_bits mem_level strategy with
   | None -> Util.z_stream_error
   | Some (level, window_bits, wrap) ->
-    match malloc_state_fields state window_bits mem_level with
+    match malloc_state_fields strm state window_bits mem_level with
     | None -> Util.z_mem_error
     | Some (
         pending_buf, window, prev, head,
