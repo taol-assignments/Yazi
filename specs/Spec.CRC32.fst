@@ -3,15 +3,11 @@ module Spec.CRC32
 module BV = FStar.BitVector
 module Seq = FStar.Seq
 module U8 = FStar.UInt8
+module U32 = FStar.UInt32
 module UInt = FStar.UInt
 
 open FStar.Seq
 open FStar.Mul
-
-val is_rev_refl: (a: U8.t) -> (b: U8.t) -> Lemma
-  (ensures is_rev a b <==> is_rev b a)
-  [SMTPat (is_rev a b)]
-let is_rev_refl a b = ()
 
 private val do_u8_rev: BV.bv_t 8 -> (i: nat{i < 8}) -> (res: BV.bv_t 8) -> BV.bv_t 8
 let rec do_u8_rev s i res =
@@ -20,10 +16,28 @@ let rec do_u8_rev s i res =
   else
     Seq.upd res (7 - i) (Seq.index s i)
 
+private val do_uint_rev:
+    #n: nat{n > 0}
+  -> s: BV.bv_t n
+  -> i: nat{i < n}
+  -> res: BV.bv_t n{forall j. j > i ==> Seq.index res (n - j - 1) == Seq.index s j}
+  -> r: BV.bv_t n {forall j. Seq.index s j == Seq.index r (n - j - 1)}
+
+let rec do_uint_rev #n s i res =
+  if i >= 1 then
+    do_uint_rev s (i - 1) (Seq.upd res (n - i - 1) (Seq.index s i))
+  else
+    Seq.upd res (n - i - 1) (Seq.index s i)
+    
 let u8_rev v =
   let s = UInt.to_vec (U8.v v) in
   let emp = UInt.to_vec 0 in
-  U8.uint_to_t (UInt.from_vec (do_u8_rev s 7 emp))
+  U8.uint_to_t (UInt.from_vec (do_uint_rev s 7 emp))
+
+let u32_rev v =
+  let s = UInt.to_vec (U32.v v) in
+  let emp = UInt.to_vec 0 in
+  U32.uint_to_t (UInt.from_vec (do_uint_rev s 31 emp))
 
 let rec seq_append_index_l (#t: Type) (a b: Seq.seq t): Lemma
   (ensures forall i. i < Seq.length a ==> Seq.index a i == Seq.index (a @| b) i)
@@ -96,10 +110,7 @@ unfold let ones_vec_l (#n: nat{n > 0}) (m: nat) (a: BV.bv_t n): Tot (res: BV.bv_
 unfold let poly (n: nat{n >= 33}): Tot (p: BV.bv_t n{
   Seq.head p == true
 }) =
-  let p = Seq.init #bool 33 (fun i ->
-    i = 0 || i = 5 || i = 8 || i = 9 || i = 15 || i = 19 || i = 20 ||
-    i = 21 || i = 23 || i = 24 || i = 26 || i = 27 || i = 29 || i = 30) in
-  zero_vec_r #33 (n - 33) p
+  zero_vec_r #33 (n - 33) gf2_polynomial
 
 #set-options "--z3rlimit 120 --z3seed 1"
 val poly_mod: #n: nat{n > 32} -> a: BV.bv_t n -> Tot (BV.bv_t 32)
