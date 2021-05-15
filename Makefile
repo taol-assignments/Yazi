@@ -44,7 +44,7 @@ FSTAR_EXTRACT = --extract '-* +Spec'
 # - --cache_dir, to avoid polluting our generated build artifacts outside o
 FSTAR_NO_FLAGS = $(FSTAR_HOME)/bin/fstar.exe $(FSTAR_HINTS) \
   --odir obj --cache_checked_modules $(FSTAR_INCLUDES) --cmi \
-  --already_cached 'Prims FStar LowStar C Spec.Loops TestLib WasmSupport' --warn_error '+241@247+285' \
+  --already_cached 'Prims FStar LowStar TestLib' --warn_error '+241@247+285' \
   --cache_dir obj --hint_dir hints
 
 # Initial dependency analysis
@@ -180,10 +180,11 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	$(KRML) -tmpdir $(dir $@) -skip-compilation \
 	  $(filter %.krml,$^) \
 	  -warn-error @4@5@18 \
-	  -drop Spec.*,Prims\
+	  -drop LowStar.ConstBuffer,C.Loops,Spec.*,Prims\
 	  -no-prefix Yazi.Util \
 	  -no-prefix Yazi.CFlags \
 	  -no-prefix Yazi.Types \
+	  -ftail-calls \
 	  -fparentheses \
 	  -minimal \
 	  -bundle 'FStar.*' \
