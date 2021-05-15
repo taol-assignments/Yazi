@@ -64,8 +64,8 @@ unfold let unsnoc (#a: Type) (s: Seq.seq a{
   Seq.slice s 0 (Seq.length s - 1)
 
 let gf2_polynomial = Seq.init #bool 33 (fun i ->
-  i = 0 || i = 6 || i = 9 || i = 10 || i = 16 || i = 20 || i = 21 || i = 22 || i = 24 ||
-  i = 25 || i = 27 || i = 28 || i = 30 || i = 31 || i = 32)
+  i = 0 || i = 1 || i = 2 || i = 4 || i = 5 || i = 7 || i = 8 || i = 10 || i = 11 ||
+  i = 12 || i = 16 || i = 22 || i = 23 || i = 26 || i = 32)
 
 let gf2_polynomial32 = unsnoc gf2_polynomial
 
@@ -77,7 +77,7 @@ type crc32_polynomial = res: U32.t{
 unfold let poly (n: nat{n >= 33}): Tot (p: BV.bv_t n{
   Seq.index p (n - 1) == true
 }) =
-  assert(Seq.index gf2_polynomial 31 == true);
+  assert(Seq.index gf2_polynomial 32 == true);
   zero_vec_l #33 (n - 33) gf2_polynomial
 
 unfold let poly_xor (#n: nat{n >= 32}) (a: BV.bv_t n): Tot (res: BV.bv_t n{

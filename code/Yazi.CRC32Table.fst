@@ -114,8 +114,8 @@ private let poly_mask (i: U32.t{(U32.v i) < 32}) (p: U32.t{
     (j > i' ==> UInt.nth res' j == false) /\
     (j <= i' ==> UInt.nth res' j == Seq.index gf2_polynomial32 j)
 }) =
-  if i = 0ul || i = 6ul || i = 9ul || i = 10ul || i = 16ul || i = 20ul || i = 21ul ||
-  i = 22ul || i = 24ul || i = 25ul || i = 27ul || i = 28ul || i = 30ul || i = 31ul then
+  if i = 0ul || i = 1ul || i = 2ul || i = 4ul || i = 5ul || i = 7ul || i = 8ul ||
+  i = 10ul || i = 11ul || i = 12ul || i = 16ul || i = 22ul || i = 23ul || i = 26ul then
   begin
     let open U32 in
     let shift = 31ul -^ i in
