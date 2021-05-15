@@ -181,6 +181,7 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	  $(filter %.krml,$^) \
 	  -warn-error @4@5@18 \
 	  -drop LowStar.ConstBuffer,C.Loops,Spec.*,Prims\
+	  -no-prefix Yazi.CRC32Table \
 	  -no-prefix Yazi.Util \
 	  -no-prefix Yazi.CFlags \
 	  -no-prefix Yazi.Types \

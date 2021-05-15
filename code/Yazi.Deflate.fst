@@ -18,6 +18,7 @@ open Yazi.Deflate.Constants
 open Yazi.Huffman
 open Yazi.Types
 
+#set-options "--z3rlimit 200 --z3seed 1"
 inline_for_extraction
 val set_level: (level: I32.t) -> Tot (l:I32.t{
   let open I32 in
@@ -209,12 +210,9 @@ val lit_bufsize_lemma:
     U32.v (lit_bufsize mem_level) == pow2 (I32.v (I32.add mem_level 6l))
   )) [SMTPat (lit_bufsize mem_level)]
 
-#set-options "--z3rlimit 30"
 let lit_bufsize_lemma mem_level =
   shift_left_pow2 (I32.v (I32.add mem_level 6l))
-#reset-options
 
-#set-options "--z3rlimit 60"
 inline_for_extraction
 val pending_buf_size: mem_level: mem_level_t -> s: U32.t{U32.v s <= pow2 17}
 let pending_buf_size (mem_level: mem_level_t) =
@@ -222,7 +220,6 @@ let pending_buf_size (mem_level: mem_level_t) =
   assert_norm(U32.v (lit_bufsize mem_level) == pow2 (I32.v (I32.add mem_level 6l)));
   FStar.Math.Lemmas.pow2_plus (I32.v (I32.add mem_level 6l)) 2;
   (lit_bufsize mem_level) *^ 4ul
-#reset-options
 
 inline_for_extraction  
 let zmalloc (#a: Type) (init: a) (len: U32.t{U32.v len > 0}) =
@@ -290,7 +287,6 @@ val malloc_state_fields:
      B.disjoint tree_heap d_buf /\ B.disjoint tree_depth l_buf /\
      B.disjoint tree_depth d_buf /\ B.disjoint l_buf d_buf)
 
-#set-options "--z3rlimit 200"
 [@inline_let]
 let malloc_state_fields _ _ window_bits mem_level =
   let open U32 in
@@ -484,7 +480,6 @@ let deflate_init strm state level method window_bits mem_level strategy =
 	high_water = 0ul;
       };
       Util.z_ok
-#reset-options
 
 assume val allocator_check:
   strm: B.pointer z_stream ->

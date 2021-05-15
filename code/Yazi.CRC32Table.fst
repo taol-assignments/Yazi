@@ -183,7 +183,7 @@ let poly_xor_aux (d: U32.t) (p: crc32_polynomial): Lemma
     UInt.nth (U32.v (U32.logxor d p)) i ==
     Seq.index (poly_xor (UInt.to_vec (U32.v d))) i) = ()
 
-#set-options "--z3rlimit 120 --z3seed 1"
+#set-options "--z3rlimit 200 --z3seed 1"
 let poly_xor_poly_mod (d: U32.t) (p: crc32_polynomial): Lemma
   (requires UInt.nth (U32.v d) 31 == true)
   (ensures
