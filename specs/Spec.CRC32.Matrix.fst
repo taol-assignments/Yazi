@@ -8,6 +8,7 @@ open FStar.Seq
 open FStar.Mul
 open Spec.CRC32.Bits
 
+#set-options "--z3rlimit 200 --fuel 1 --ifuel 1"
 let rec seq_append_index_r (#t: Type) (a b: Seq.seq t): Lemma
   (ensures forall i. i < Seq.length b ==> Seq.index (a @| b) (i + Seq.length a) == Seq.index b i)
   (decreases Seq.length a) =
@@ -30,6 +31,7 @@ let rec magic_matrix_init s =
       n;
     };
     let res = s @| (Seq.create 1 n) in
+    assert(Seq.length res == l + 1);
     calc (==) {
       Seq.index res l;
       =={seq_append_index_r s (Seq.create 1 n)}
@@ -99,6 +101,7 @@ let do_magic_matrix_times #nzeros m n i =
   let pat = magic_matrix_pattern nzeros i in
   let ext = bit_extract #nzeros (zero_vec_l nzeros n) i in
   if Seq.index n (31 - i) then begin
+    assert(Seq.equal (magic_matrix_pattern nzeros i) (ext));
     Seq.index m i
   end else begin
     assert(Seq.equal ext (BV.zero_vec #(nzeros + 32)));
@@ -135,9 +138,6 @@ val magic_matrix_times:
 let magic_matrix_times #nzeros m n =
   assert(Seq.equal (bit_sum #nzeros (zero_vec_l nzeros n) 31) (zero_vec_l nzeros n));
   magic_matrix_times' m n 31
-
-#set-options "--z3rlimit 200 --z3seed 1"
-
 
 let magic_matrix_times_double
   (#nzeros: nat{nzeros > 0}) (m: matrix_t nzeros) (i: nat{i < 32}): Lemma

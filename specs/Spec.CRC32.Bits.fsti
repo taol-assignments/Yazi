@@ -1,7 +1,6 @@
 module Spec.CRC32.Bits
 
 module B = LowStar.Buffer
-module CB = LowStar.ConstBuffer
 module BV = FStar.BitVector
 module HS = FStar.HyperStack
 module Math = FStar.Math.Lib
@@ -12,41 +11,69 @@ module UInt = FStar.UInt
 
 open FStar.Mul
 
-unfold let zero_vec_l (#n: nat{n > 0}) (m: nat) (a: BV.bv_t n): Tot (res: BV.bv_t (n + m){
-  forall i.
+let rec logxor_vec_comm (#n: nat{n > 0}) (a b: BV.bv_t n): Lemma
+  (ensures BV.logxor_vec a b == BV.logxor_vec b a)
+  [SMTPat (BV.logxor_vec a b)] =
+  match n with
+  | 1 -> ()
+  | _ -> let c = BV.logxor_vec a b in
+    let c' = BV.logxor_vec b a in
+    assert_norm(Seq.index c 0 == Seq.index c' 0);
+    logxor_vec_comm #(n - 1) (Seq.tail a) (Seq.tail b)
+
+[@"opaque_to_smt"]
+let zero_vec_l (#n: nat{n > 0}) (m: nat) (a: BV.bv_t n): Tot (res: BV.bv_t (n + m){
+  (m == 0 ==> a == res) /\
+  (forall (i: nat{i < n + m}). {:pattern Seq.index res i}
     (i < m ==> Seq.index res i == false) /\
-    (i >= m /\ i < n + m ==> Seq.index res i == Seq.index a (i - m))
+    (i >= m /\ i < n + m ==> Seq.index res i == Seq.index a (i - m)))
 }) =
   match m with
   | 0 -> a
   | _ -> Seq.append (BV.zero_vec #m) a
 
-unfold let zero_vec_r (#n: nat{n > 0}) (m: nat) (a: BV.bv_t n): Tot (res: BV.bv_t (n + m){
-  forall i.
+[@"opaque_to_smt"]
+let zero_vec_r (#n: nat{n > 0}) (m: nat) (a: BV.bv_t n): Tot (res: BV.bv_t (n + m){
+  (m == 0 ==> a == res) /\
+  (forall (i: nat{i < n + m}). {:pattern Seq.index res i}
     (i < n ==> Seq.index res i == Seq.index a i) /\ 
-    (i >= n /\ i < n + m ==> Seq.index res i == false)
+    ((i >= n /\ i < n + m) ==> Seq.index res i == false))
 }) =
   match m with
   | 0 -> a
   | _ -> Seq.append a (BV.zero_vec #m)
 
-unfold let ones_vec_l (#n: nat{n > 0}) (m: nat) (a: BV.bv_t n): Tot (res: BV.bv_t (n + m){
-  forall i.
+[@"opaque_to_smt"]
+let ones_vec_l (#n: nat{n > 0}) (m: nat) (a: BV.bv_t n): Tot (res: BV.bv_t (n + m){
+  (m == 0 ==> a == res) /\
+  (forall (i: nat{i < n + m}). {:pattern Seq.index res i}
     (i < m ==> Seq.index res i == true) /\
-    (i >= m /\ i < n + m ==> Seq.index res i == Seq.index a (i - m))
+    (i >= m /\ i < n + m ==> Seq.index res i == Seq.index a (i - m)))
 }) =
   match m with
   | 0 -> a
   | _ -> Seq.append (BV.ones_vec #m) a
 
-unfold let ones_vec_r (#n: nat{n > 0}) (m: nat) (a: BV.bv_t n): Tot (res: BV.bv_t (n + m){
-  forall i.
+[@"opaque_to_smt"]
+let ones_vec_r (#n: nat{n > 0}) (m: nat) (a: BV.bv_t n): Tot (res: BV.bv_t (n + m){
+  (m == 0 ==> a == res) /\
+  (forall (i: nat{i < n + m}). {:pattern Seq.index res i}
     (i < n ==> Seq.index res i == Seq.index a i) /\
-    (i >= n /\ i < n + m ==> Seq.index res i == true)
+    (i >= n /\ i < n + m ==> Seq.index res i == true))
 }) =
   match m with
   | 0 -> a
   | _ -> Seq.append a (BV.ones_vec #m)
+
+let lemma_vec_padding_zero (#n: nat{n > 0}) (s: BV.bv_t n): Lemma
+  (ensures zero_vec_l 0 s == s /\ zero_vec_r 0 s == s /\
+    ones_vec_l 0 s == s /\ ones_vec_r 0 s == s)
+  [SMTPat (zero_vec_l 0 s); SMTPat (zero_vec_r 0 s);
+   SMTPat (ones_vec_l 0 s); SMTPat (ones_vec_r 0 s)] =
+  assert(Seq.equal s (zero_vec_l 0 s));
+  assert(Seq.equal s (zero_vec_r 0 s));
+  assert(Seq.equal s (ones_vec_l 0 s));
+  assert(Seq.equal s (ones_vec_r 0 s))
 
 let zero_vec_l_app (#n: nat{n > 0}) (a: BV.bv_t n) (m l: nat): Lemma
   (ensures zero_vec_l l (zero_vec_l m a) == zero_vec_l (m + l) a) =
@@ -62,12 +89,12 @@ unfold let gf2_sub (#n: nat{n > 0}) (a b: BV.bv_t n) : Tot (BV.bv_t n) =
 
 let (-@) #n = gf2_sub #n
 
-unfold let unsnoc (#a: Type) (s: Seq.seq a{
+let unsnoc (#a: Type) (s: Seq.seq a{
   Seq.length s > 0
 }): Tot (res: Seq.seq a{
-  forall i.
-    Seq.length res == Seq.length s - 1 /\
-    (Seq.index s i == Seq.index res i)
+  (Seq.length res == Seq.length s - 1) /\
+  (forall (i: nat{i < Seq.length s - 1}).
+    Seq.index s i == Seq.index res i)
 }) =
   Seq.slice s 0 (Seq.length s - 1)
 
@@ -88,7 +115,7 @@ unfold let poly (n: nat{n >= 33}): Tot (p: BV.bv_t n{
   assert(Seq.index gf2_polynomial 32 == true);
   zero_vec_l #33 (n - 33) gf2_polynomial
 
-unfold let poly_xor (#n: nat{n >= 32}) (a: BV.bv_t n): Tot (res: BV.bv_t n{
+let poly_xor (#n: nat{n >= 32}) (a: BV.bv_t n): Tot (res: BV.bv_t n{
   res == unsnoc ((ones_vec_r 1 a) -@ poly (n + 1))
 }) =
   let a' = ones_vec_r 1 a in
@@ -100,8 +127,8 @@ unfold let poly_xor (#n: nat{n >= 32}) (a: BV.bv_t n): Tot (res: BV.bv_t n{
 
 let rec poly_mod (#n: nat{n > 32}) (a: BV.bv_t n): Tot (BV.bv_t 32) =
   let p = poly n in
-  let b = if Seq.index a (n - 1) then a -@ p else a in
-  assert(Seq.index b (n - 1) == false);
+  let b = if Seq.last a then a -@ p else a in
+  assert(Seq.last b == false);
   if n = 33 then unsnoc b else poly_mod #(n - 1) (unsnoc b)
 
 val poly_mod_zero: #n: nat{n > 32} -> a: BV.bv_t n {a == BV.zero_vec #n} -> Lemma
@@ -113,8 +140,10 @@ val poly_mod_add: #n: nat{n > 32} -> a: BV.bv_t n -> b: BV.bv_t n -> Lemma
 val poly_mod_zero_prefix: #n: nat{n > 32} -> a: BV.bv_t n -> m: nat{m > 0} -> Lemma
   (ensures poly_mod (zero_vec_l m (poly_mod a)) == poly_mod (zero_vec_l m a))
 
-val poly_mod_zero_suffix: a: BV.bv_t 32 -> m: nat{m > 0} -> Lemma
-  (ensures poly_mod (zero_vec_r m a) == a)
+val poly_mod_zero_suffix: #n: nat{n >= 32} -> a: BV.bv_t n -> m: nat{m > 0} -> Lemma
+  (ensures
+    (n == 32 ==> poly_mod (zero_vec_r m a) == a) /\
+    (n > 32 ==> poly_mod (zero_vec_r m a) == poly_mod a))
 
 unfold let poly_mod_correct (nzeros: nat{nzeros > 0}) (d res: U32.t) =
   let d' = zero_vec_l nzeros (UInt.to_vec (U32.v d)) in
@@ -167,33 +196,21 @@ private let rec seq_append_index_l (#t: Type) (a b: Seq.seq t): Lemma
   | 0 -> ()
   | _ -> seq_append_index_l (Seq.tail a) b
 
-private let bit_padding (#len: nat) (buf: Seq.seq U8.t{Seq.length buf == len}):
-  Tot (res: Seq.seq U8.t{
-    (Seq.length res == len + 4) /\
-    (forall i.
-      (i < 4 ==> Seq.index res i == 0uy) /\
-      (i >= 4 ==> Seq.index res i = Seq.index buf (i - 4)))
-  }) =
-  let pad = Seq.create 4 0uy in
-  let r = Seq.append pad buf in
-  seq_append_index_l pad buf;
-  r
-
 type crc32_buf_len = n: nat{n == 0 \/ n > 32}
 
-let crc32_append_8bit (#n: crc32_buf_len) (buf: BV.bv_t n) (b: U8.t):
+#set-options "--z3rlimit 200 --fuel 1 --ifuel 1"
+let crc32_append_8bit (#n: nat{n == 0 \/ n > 32}) (buf: BV.bv_t n) (b: U8.t):
   Tot (BV.bv_t (if n = 0 then 40 else n + 8)) =
   let v' = UInt.to_vec (U8.v b) in
   let open Seq in
   if n = 0 then
-    zero_vec_l 8 (gf2_plus (BV.ones_vec #32) (BV.zero_vec #24 @| v'))
+    zero_vec_l 8 (BV.ones_vec #32 +@ (BV.zero_vec #24 @| v'))
   else
     let padding = (BV.zero_vec #24) @| v' @| (BV.zero_vec #(n - 32)) in
     zero_vec_l 8 (buf +@ padding)
 
-let rec crc32_u8_to_bits
-  (#m: nat)
-  (#n: crc32_buf_len)
+let rec crc32_data_to_bits_cont
+  (#n: crc32_buf_len) (m: nat)
   (data: Seq.seq U8.t {Seq.length data == m})
   (buf: BV.bv_t n):
   Tot (BV.bv_t (if m > 0 then
@@ -202,9 +219,8 @@ let rec crc32_u8_to_bits
     n))
   (decreases m) =
   if m > 1 then
-    crc32_u8_to_bits
-      #(m - 1)
-      #_
+    crc32_data_to_bits_cont
+      (m - 1)
       (Seq.tail data)
       (crc32_append_8bit buf (Seq.head data))
   else if m = 1 then
@@ -212,25 +228,78 @@ let rec crc32_u8_to_bits
   else
     buf
 
+unfold let crc32_data_to_bits (m: nat) (data: Seq.seq U8.t {Seq.length data == m}):
+  Tot (BV.bv_t (if m = 0 then 0 else 32 + 8 * m)) =
+  crc32_data_to_bits_cont #0 m data (Seq.empty #bool)
+
 #set-options "--z3rlimit 120 --z3seed 1"
-val crc32_u8_to_bits_append:
-    #m1: nat
-  -> #m2: nat
-  -> #n: crc32_buf_len
+val crc32_data_to_bits_append:
+     m1: nat
+  -> m2: nat
   -> s1: Seq.seq U8.t{Seq.length s1 == m1}
   -> s2: Seq.seq U8.t{Seq.length s2 == m2}
-  -> buf: BV.bv_t n
-  -> Lemma (ensures
-    crc32_u8_to_bits #m2 #(if m1 > 0 then
-      if n = 0 then 32 + 8 * m1 else n + 8 * m1
-    else
-      n) s2 (crc32_u8_to_bits #m1 #n s1 buf) ==
-    crc32_u8_to_bits #(m1 + m2) #n (Seq.append s1 s2) buf)
+  -> Lemma (ensures crc32_data_to_bits_cont
+     #(if m1 > 0 then 32 + 8 * m1 else 0) m2 s2 (crc32_data_to_bits m1 s1) == 
+    crc32_data_to_bits (m1 + m2) (Seq.append s1 s2))
 
-private unfold let crc32_to_vec (v: U32.t) =
-  UInt.to_vec (UInt.logxor (U32.v v) ((pow2 32) - 1))
+type crc32_data_dword (a b c d: U8.t) = res: U32.t{
+  let a' = UInt.to_vec (U8.v a) in
+  let b' = UInt.to_vec (U8.v b) in
+  let c' = UInt.to_vec (U8.v c) in
+  let d' = UInt.to_vec (U8.v d) in
+  let r' = UInt.to_vec (U32.v res) in
+  forall (i: nat{i < 32}). {:pattern Seq.index r' i}
+    (i >= 24 ==> Seq.index r' i == Seq.index a' (i - 24)) /\
+    ((16 <= i /\ i < 24) ==> Seq.index r' i == Seq.index b' (i - 16)) /\
+    ((8 <= i /\ i < 16) ==> Seq.index r' i == Seq.index c' (i - 8)) /\
+    (i < 8 ==> Seq.index r' i == Seq.index d' i)
+}
 
-let crc32_matched (#n: crc32_buf_len) (buf: BV.bv_t n) (v: U32.t) (xor: bool) =
-  let v' = if xor then crc32_to_vec v else UInt.to_vec (U32.v v) in
-  (n == 0 ==> v' == (if xor then BV.zero_vec #32 else BV.ones_vec #32)) /\
-  (n > 0 ==> v' == poly_mod buf)
+unfold let crc32_dword_seq (a b c d: U8.t) =
+  Seq.init 4 (fun i -> match i with | 0 -> a | 1 -> b | 2 -> c | 3 -> d)
+
+val crc32_data_to_bits_32bit:
+    #a: U8.t
+  -> #b: U8.t
+  -> #c: U8.t
+  -> #d: U8.t
+  -> m: nat
+  -> data: Seq.seq U8.t{Seq.length data == m}
+  -> buf: BV.bv_t (if m > 0 then 32 + m * 8 else 0){buf == crc32_data_to_bits m data}
+  -> r: crc32_data_dword a b c d
+  -> Lemma
+  (ensures
+    (m = 0 ==>
+      zero_vec_l 32 (BV.ones_vec #32 +@ UInt.to_vec (U32.v r)) ==
+      crc32_data_to_bits 4 (crc32_dword_seq a b c d)) /\
+    (m > 0 ==>
+      zero_vec_l 32 ((zero_vec_r (8 * m) (UInt.to_vec (U32.v r))) +@ buf) ==
+      crc32_data_to_bits (m + 4) (Seq.append data (crc32_dword_seq a b c d))))
+
+let crc32_matched (n: nat) (data: Seq.seq U8.t{Seq.length data == n}) (v: U32.t) (xor: bool) =
+  let v' = if xor then
+    UInt.to_vec (UInt.logxor (U32.v v) ((pow2 32) - 1))
+  else
+    UInt.to_vec (U32.v v) in
+  (n == 0 ==> Seq.equal v' (BV.ones_vec #32)) /\
+  (n > 0 ==> Seq.equal v' (poly_mod (crc32_data_to_bits n data)))
+
+let crc32_matched_xor_inv_1 (m: nat) (data: Seq.seq U8.t{Seq.length data == m}) (crc: U32.t):
+Lemma
+  (requires crc32_matched m data crc true)
+  (ensures crc32_matched m data (U32.logxor crc 0xfffffffful) false) = ()
+
+let crc32_matched_xor_inv_2 (m: nat) (data: Seq.seq U8.t{Seq.length data == m}) (crc: U32.t):
+Lemma
+  (requires crc32_matched m data crc false)
+  (ensures crc32_matched m data (U32.logxor crc 0xfffffffful) true) =
+  let open U32 in
+  calc (==) {
+      ((crc ^^ 0xfffffffful) ^^ 0xfffffffful);
+      =={UInt.logxor_associative (v crc) (v 0xfffffffful) (v 0xfffffffful)}
+      (crc ^^ (0xfffffffful ^^ 0xfffffffful));
+      =={UInt.logxor_self (v 0xfffffffful)}
+      crc ^^ 0ul;
+      =={UInt.logxor_lemma_1 (v crc)}
+      crc;
+  }

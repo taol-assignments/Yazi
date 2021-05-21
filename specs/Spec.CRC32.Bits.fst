@@ -6,7 +6,7 @@ module Seq = FStar.Seq
 module U32 = FStar.UInt32
 module UInt = FStar.UInt
 
-#set-options "--z3rlimit 200 --z3seed 1"
+#set-options "--z3rlimit 200 --z3seed 1 --fuel 1 --ifuel 1"
 let poly_xor_zero_prefix (#n: nat{n >= 32}) (a: BV.bv_t n) (m: nat{m > 0}): Lemma
   (ensures forall (i: nat{i > 0}).
     i < Seq.length (zero_vec_l m a) ==>
@@ -21,7 +21,7 @@ let zero_vec_l_aux (#n: nat{n > 0}) (a: BV.bv_t n) (m: nat{m > 0}): Lemma
 let rec poly_xor_zero_vec_l (#n: nat{n >= 32}) (a: BV.bv_t n) (m: nat): Lemma
   (ensures zero_vec_l m (poly_xor a) == poly_xor (zero_vec_l m a)) =
   match m with
-  | 0 -> ()
+  | 0 -> assert(Seq.equal (zero_vec_l m (poly_xor a)) (poly_xor (zero_vec_l m a)))
   | _ ->
     let b = zero_vec_l m (poly_xor a) in
     let c = poly_xor (zero_vec_l m a) in
@@ -63,16 +63,6 @@ let logxor_eq_zero (#n: nat{n > 0}) (a b: BV.bv_t n): Lemma
   (ensures BV.logxor_vec a b == BV.zero_vec #n)
   [SMTPat (BV.logxor_vec #n a b)] =
   assert(Seq.equal (BV.logxor_vec a b) (BV.zero_vec #n))
-
-let rec logxor_vec_comm (#n: nat{n > 0}) (a b: BV.bv_t n): Lemma
-  (ensures BV.logxor_vec a b == BV.logxor_vec b a)
-  [SMTPat (BV.logxor_vec a b)] =
-  match n with
-  | 1 -> ()
-  | _ -> let c = BV.logxor_vec a b in
-    let c' = BV.logxor_vec b a in
-    assert_norm(Seq.index c 0 == Seq.index c' 0);
-    logxor_vec_comm #(n - 1) (Seq.tail a) (Seq.tail b)
 
 let logxor_vec_assoc (#n: nat{n > 0}) (a b c: BV.bv_t n): Lemma
   (ensures BV.logxor_vec (BV.logxor_vec a b) c == BV.logxor_vec a (BV.logxor_vec b c))
@@ -243,16 +233,35 @@ let rec poly_mod_zero_prefix #n a m =
         poly_mod (zero_vec_l m a);
       }
 
-let rec poly_mod_zero_suffix a m =
-  match m with
-  | 1 -> assert(Seq.equal (poly_mod (zero_vec_r m a)) a)
-  | _ ->
-    calc (==) {
-      poly_mod (zero_vec_r m a);
-      =={assert(Seq.equal (unsnoc (zero_vec_r m a)) (zero_vec_r (m - 1) a))}
-      poly_mod (zero_vec_r (m - 1) a);
-    };
-    poly_mod_zero_suffix a (m - 1)
+let rec poly_mod_zero_suffix #n a m =
+  if n = 32 then
+    match m with
+    | 1 ->
+      assert_norm(Seq.last (zero_vec_r m a) == false);
+      assert(Seq.equal (poly_mod (zero_vec_r m a)) a)
+    | _ ->
+      calc (==) {
+        poly_mod (zero_vec_r m a);
+        =={assert_norm(Seq.equal (unsnoc (zero_vec_r m a)) (zero_vec_r (m - 1) a))}
+        poly_mod (zero_vec_r (m - 1) a);
+      };
+      poly_mod_zero_suffix a (m - 1)
+  else
+    match m with
+    | 1 -> calc (==) {
+        poly_mod (zero_vec_r m a);
+        =={}
+        poly_mod #n (unsnoc (zero_vec_r m a));
+        =={assert(Seq.equal (unsnoc (zero_vec_r m a)) a)}
+        poly_mod a;
+      }
+    | _ -> calc (==) {
+        poly_mod (zero_vec_r m a);
+        =={assert(Seq.equal (unsnoc (zero_vec_r m a)) (zero_vec_r (m - 1) a))}
+        poly_mod #(n + m - 1) (zero_vec_r (m - 1) a);
+        =={poly_mod_zero_suffix #n a (m - 1)}
+        poly_mod a;
+      }
 
 private let rec logand_mask_aux (a: nat{a > 0}) (n: nat{n >= a}): Lemma
   (requires (pow2 a) - 1 < pow2 n)
@@ -309,8 +318,23 @@ let large_table_val_aux i nzeros p p' p'' =
    assert(vp' +@ vp'' == poly_mod (zero_vec_l (nzeros + 8) vi))
 
 open FStar.Seq
-  
-let rec crc32_u8_to_bits_append #m1 #m2 #n s1 s2 buf =
+
+val crc32_data_to_bits_append':
+    #n: crc32_buf_len
+  -> m1: nat
+  -> m2: nat
+  -> s1: Seq.seq U8.t{Seq.length s1 == m1}
+  -> s2: Seq.seq U8.t{Seq.length s2 == m2}
+  -> buf: BV.bv_t n
+  -> Lemma (ensures
+    crc32_data_to_bits_cont #(if m1 > 0 then
+      if n = 0 then 32 + 8 * m1 else n + 8 * m1
+    else
+      n) m2 s2 (crc32_data_to_bits_cont m1 s1 buf) ==
+    crc32_data_to_bits_cont (m1 + m2) (s1 @| s2) buf)
+    (decreases m1)
+
+let rec crc32_data_to_bits_append' #n m1 m2 s1 s2 buf =
   match m1 with
   | 0 -> assert(Seq.equal (Seq.append s1 s2) s2)
   | _ ->
@@ -322,52 +346,234 @@ let rec crc32_u8_to_bits_append #m1 #m2 #n s1 s2 buf =
     if m2 = 0 then begin
       assert(Seq.equal (s1 @| s2) s1);
       assert(
-        (normalize_term (crc32_u8_to_bits #m2 #l s2 (crc32_u8_to_bits #m1 #n s1 buf))) ==
-        crc32_u8_to_bits #m1 #n s1 buf)
+        (normalize_term (crc32_data_to_bits_cont #l m2 s2 (crc32_data_to_bits_cont m1 s1 buf))) ==
+        crc32_data_to_bits_cont m1 s1 buf)
     end else if m1 = 1 then
       calc (==) {
-        crc32_u8_to_bits #m2 #l s2 (crc32_u8_to_bits #m1 #n s1 buf);
+        crc32_data_to_bits_cont m2 s2 (crc32_data_to_bits_cont m1 s1 buf);
         =={}
-        crc32_u8_to_bits #m2 #l s2 (crc32_append_8bit buf (Seq.head s1));
+        crc32_data_to_bits_cont m2 s2 (crc32_append_8bit buf (Seq.head s1));
         =={Seq.lemma_head_append s1 s2}
-        crc32_u8_to_bits #m2 #l s2 (crc32_append_8bit buf (Seq.head (s1 @| s2)));
+        crc32_data_to_bits_cont m2 s2 (crc32_append_8bit buf (Seq.head (s1 @| s2)));
         =={
           Seq.lemma_tail_append s1 s2;
           assert(Seq.equal (Seq.tail (s1 @| s2)) s2)
         }
-        crc32_u8_to_bits #m2 #l (Seq.tail (s1 @| s2)) (crc32_append_8bit buf (Seq.head (s1 @| s2)));
-        =={assert(1 + m2 > 1)}
-        crc32_u8_to_bits #(1 + m2) #n (s1 @| s2) buf;
+        crc32_data_to_bits_cont m2 (Seq.tail (s1 @| s2)) (crc32_append_8bit buf (Seq.head (s1 @| s2)));
+        =={}
+        crc32_data_to_bits_cont (1 + m2) (s1 @| s2) buf;
       }
     else
       calc (==) {
-        crc32_u8_to_bits #m2 #l s2 (crc32_u8_to_bits #m1 #n s1 buf);
+        crc32_data_to_bits_cont m2 s2 (crc32_data_to_bits_cont m1 s1 buf);
         =={}
-        crc32_u8_to_bits #m2 #l s2 (crc32_u8_to_bits
-          #(m1 - 1) #_
+        crc32_data_to_bits_cont m2 s2 (crc32_data_to_bits_cont
+          (m1 - 1)
           (Seq.tail s1)
           (crc32_append_8bit buf (Seq.head s1)));
         =={
-          crc32_u8_to_bits_append
-            #(m1 - 1)
-            #m2
+          crc32_data_to_bits_append'
             #(if n = 0 then 40 else n + 8)
+            (m1 - 1)
+            m2
             (Seq.tail s1)
             s2
             (crc32_append_8bit buf (Seq.head s1))
         }
-        crc32_u8_to_bits
-          #(m1 + m2 - 1) #_
+        crc32_data_to_bits_cont
+          (m1 + m2 - 1)
           ((Seq.tail s1) @| s2) 
           (crc32_append_8bit buf (Seq.head s1));
         =={
           Seq.lemma_tail_append s1 s2;
           Seq.lemma_head_append s1 s2
         }
-        crc32_u8_to_bits
-          #(m1 + m2 - 1) #_
+        crc32_data_to_bits_cont
+          (m1 + m2 - 1)
           (Seq.tail (s1 @| s2))
           (crc32_append_8bit buf (Seq.head (s1 @| s2)));
         =={}
-        crc32_u8_to_bits #(m1 + m2) #n (s1 @| s2) buf;
+        crc32_data_to_bits_cont (m1 + m2) (s1 @| s2) buf;
       }
+
+let crc32_data_to_bits_append m1 m2 s1 s2 =
+  crc32_data_to_bits_append' #0 m1 m2 s1 s2 (Seq.empty #bool)
+
+#set-options "--z3rlimit 200 --fuel 0 --ifuel 0"
+let crc32_data_to_bits_32bit_aux (a b c d: U8.t) (buf: BV.bv_t 64): Lemma
+  (requires buf ==
+    (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit
+      #0 (Seq.empty #bool) a) b) c) d))
+  (ensures forall (i: nat{i < 64}). {:pattern Seq.index buf i}
+    (i >= 56 ==> Seq.index buf i == (UInt.nth (U8.v a) (i - 56) <> true)) /\
+    (i >= 48 /\ i < 56 ==> Seq.index buf i == (UInt.nth (U8.v b) (i - 48) <> true)) /\
+    (i >= 40 /\ i < 48 ==> Seq.index buf i == (UInt.nth (U8.v c) (i - 40) <> true)) /\
+    (i >= 32 /\ i < 40 ==> Seq.index buf i == (UInt.nth (U8.v d) (i - 32) <> true)) /\
+    (i < 32 ==> Seq.index buf i == false)) =
+  let s = crc32_dword_seq a b c d in
+  let a' = UInt.to_vec (U8.v a) in
+  let b' = UInt.to_vec (U8.v b) in
+  let c' = UInt.to_vec (U8.v c) in
+  let d' = UInt.to_vec (U8.v d) in
+  
+  let abuf = zero_vec_l 8 (BV.ones_vec #32 +@ (BV.zero_vec #24 @| a')) in
+  let bpad = BV.zero_vec #24 @| b' @| BV.zero_vec #8 in
+  let bbuf = zero_vec_l 8 (abuf +@ bpad) in
+  let cpad = BV.zero_vec #24 @| c' @| BV.zero_vec #16 in
+  let cbuf = zero_vec_l 8 (bbuf +@ cpad) in
+  let dpad = BV.zero_vec #24 @| d' @| BV.zero_vec #24 in
+  let dbuf = zero_vec_l 8 (cbuf +@ dpad) in
+  
+  assert(forall (i: nat{i < 40}). {:pattern Seq.index abuf i}
+    (i >= 32 ==> Seq.index abuf i == (Seq.index a' (i - 32) <> true)) /\
+    (i >= 8 /\ i < 32 ==> Seq.index abuf i == true) /\
+    (i < 8 ==> Seq.index abuf i == false));
+
+  assert(forall (i: nat{i < 48}). {:pattern Seq.index bbuf i}
+    (i >= 40 ==> Seq.index bbuf i == (Seq.index a' (i - 40) <> true)) /\
+    (i >= 32 /\ i < 40 ==> Seq.index bbuf i == (Seq.index b' (i - 32) <> true)) /\
+    (i >= 16 /\ i < 32 ==> Seq.index bbuf i == true) /\
+    (i < 16 ==> Seq.index bbuf i == false));
+
+  assert(forall (i: nat{i < 56}). {:pattern Seq.index cbuf i}
+    (i >= 48 ==> Seq.index cbuf i == (Seq.index a' (i - 48) <> true)) /\
+    (i >= 40 /\ i < 48 ==> Seq.index cbuf i == (Seq.index b' (i - 40) <> true)) /\
+    (i >= 32 /\ i < 40 ==> Seq.index cbuf i == (Seq.index c' (i - 32) <> true)) /\
+    (i >= 24 /\ i < 32 ==> Seq.index cbuf i == true) /\
+    (i < 24 ==> Seq.index cbuf i == false));
+
+  assert(forall (i: nat{i < 64}). {:pattern Seq.index dbuf i}
+    (i >= 56 ==> Seq.index dbuf i == (Seq.index a' (i - 56) <> true)) /\
+    (i >= 48 /\ i < 56 ==> Seq.index dbuf i == (Seq.index b' (i - 48) <> true)) /\
+    (i >= 40 /\ i < 48 ==> Seq.index dbuf i == (Seq.index c' (i - 40) <> true)) /\
+    (i >= 32 /\ i < 40 ==> Seq.index dbuf i == (Seq.index d' (i - 32) <> true)) /\
+    (i < 32 ==> Seq.index dbuf i == false))
+
+private unfold let xor_status
+  (#n: nat{n > 32})
+  (#offset: nat)
+  (res: BV.bv_t (offset + n))
+  (buf: BV.bv_t n)
+  (a: U8.t) 
+  (i: nat{i >= offset /\ i < offset + n})
+  (j: nat{i - j >= 0 /\ i - j < 8}) =
+    Seq.index res i ==
+    (Seq.index (UInt.to_vec (U8.v a)) (i - j) <> Seq.index buf (i - offset))
+
+let crc32_data_to_bits_32bit_aux'
+  (#n: nat{n > 32})
+  (a b c d: U8.t)
+  (buf: BV.bv_t n)
+  (buf': BV.bv_t (32 + n){
+    buf' == crc32_append_8bit (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit
+      buf a) b) c) d
+  }): Lemma
+  (ensures forall (i: nat{i < 32 + n}).
+    (i >= 64 ==> Seq.index buf' i == Seq.index buf (i - 32)) /\
+    (i >= 56 /\ i < 64 ==> xor_status buf' buf a i 56) /\
+    (i >= 48 /\ i < 56 ==> xor_status buf' buf b i 48) /\
+    (i >= 40 /\ i < 48 ==> xor_status buf' buf c i 40) /\
+    (i >= 32 /\ i < 40 ==> xor_status buf' buf d i 32) /\
+    (i < 32 ==> Seq.index buf' i == false)) =
+  let a' = UInt.to_vec (U8.v a) in
+  let b' = UInt.to_vec (U8.v b) in
+  let c' = UInt.to_vec (U8.v c) in
+  let d' = UInt.to_vec (U8.v d) in
+
+  let apad = BV.zero_vec #24 @| a' @| BV.zero_vec #(n - 32) in
+  let abuf = zero_vec_l 8 (buf +@ apad) in
+  let bpad = BV.zero_vec #24 @| b' @| BV.zero_vec #(n - 24) in
+  let bbuf = zero_vec_l 8 (abuf +@ bpad) in
+  let cpad = BV.zero_vec #24 @| c' @| BV.zero_vec #(n - 16) in
+  let cbuf = zero_vec_l 8 (bbuf +@ cpad) in
+  let dpad = BV.zero_vec #24 @| d' @| BV.zero_vec #(n - 8) in
+  let dbuf = zero_vec_l 8 (cbuf +@ dpad) in
+
+  assert(forall (i: nat{i < n + 8}). {:pattern Seq.index abuf i}
+    (i >= 40 ==> Seq.index abuf i == Seq.index buf (i - 8)) /\
+    (i >= 32 /\ i < 40 ==> xor_status #n #8 abuf buf a i 32) /\
+    (i >= 8 /\ i < 32 ==> Seq.index abuf i == Seq.index buf (i - 8)) /\
+    (i < 8 ==> Seq.index abuf i == false));
+
+  assert(forall (i: nat{i < n + 16}). {:pattern Seq.index bbuf i}
+    (i >= 48 ==> Seq.index bbuf i == Seq.index buf (i - 16)) /\
+    (i >= 40 /\ i < 48 ==> xor_status #n #16 bbuf buf a i 40) /\
+    (i >= 32 /\ i < 40 ==> xor_status #n #16 bbuf buf b i 32) /\
+    (i >= 16 /\ i < 32 ==> Seq.index bbuf i == Seq.index buf (i - 16)) /\
+    (i < 16 ==> Seq.index bbuf i == false));
+
+  assert(forall (i: nat{i < n + 24}). {:pattern Seq.index cbuf i}
+    (i >= 56 ==> Seq.index cbuf i == Seq.index buf (i - 24)) /\
+    (i >= 48 /\ i < 56 ==> xor_status #n #24 cbuf buf a i 48) /\
+    (i >= 40 /\ i < 48 ==> xor_status #n #24 cbuf buf b i 40) /\
+    (i >= 32 /\ i < 40 ==> xor_status #n #24 cbuf buf c i 32) /\
+    (i >= 24 /\ i < 32 ==> Seq.index cbuf i == Seq.index buf (i - 24)) /\
+    (i < 24 ==> Seq.index cbuf i == false));
+
+  assert(forall (i: nat{i < n + 32}). {:pattern Seq.index dbuf i}
+    (i >= 64 ==> Seq.index dbuf i == Seq.index buf (i - 32)) /\
+    (i >= 56 /\ i < 64 ==> xor_status #n #32 dbuf buf a i 56) /\
+    (i >= 48 /\ i < 56 ==> xor_status #n #32 dbuf buf b i 48) /\
+    (i >= 40 /\ i < 48 ==> xor_status #n #32 dbuf buf c i 40) /\
+    (i >= 32 /\ i < 40 ==> xor_status #n #32 dbuf buf d i 32) /\
+    (i < 32 ==> Seq.index dbuf i == false));
+
+  assert(Seq.equal buf' dbuf)
+
+let crc32_data_to_bits_32bit_aux''
+  (#a #b #c #d: U8.t)
+  (r: crc32_data_dword a b c d)
+  (r': BV.bv_t 64{
+    r' == zero_vec_l 32 (BV.ones_vec #32 +@ UInt.to_vec (U32.v r))
+  }): Lemma
+  (ensures forall (i: nat{i < 64}). {:pattern Seq.index r' i}
+    (i >= 56 ==> Seq.index r' i == (UInt.nth (U8.v a) (i - 56) <> true)) /\
+    (i >= 48 /\ i < 56 ==> Seq.index r' i == (UInt.nth (U8.v b) (i - 48) <> true)) /\
+    (i >= 40 /\ i < 48 ==> Seq.index r' i == (UInt.nth (U8.v c) (i - 40) <> true)) /\
+    (i >= 32 /\ i < 40 ==> Seq.index r' i == (UInt.nth (U8.v d) (i - 32) <> true)) /\
+    (i < 32 ==> Seq.index r' i == false)) = ()
+
+let crc32_data_to_bits_32bit_aux'''
+  (#a #b #c #d: U8.t)
+  (m: nat{m > 0})
+  (data: Seq.seq U8.t{Seq.length data == m})
+  (buf: BV.bv_t (32 + m * 8){buf == crc32_data_to_bits m data})
+  (r: crc32_data_dword a b c d)
+  (res: BV.bv_t (64 + m * 8){
+    res == zero_vec_l 32 ((zero_vec_r (8 * m) (UInt.to_vec (U32.v r))) +@ buf)
+  }): Lemma
+  (ensures forall (i: nat{i < 64 + m * 8}). {:pattern Seq.index res i}
+    (i >= 64 ==> Seq.index res i == Seq.index buf (i - 32)) /\
+    (i >= 56 /\ i < 64 ==> xor_status #(32 + m * 8) #32 res buf a i 56) /\
+    (i >= 48 /\ i < 56 ==> xor_status #(32 + m * 8) #32 res buf b i 48) /\
+    (i >= 40 /\ i < 48 ==> xor_status #(32 + m * 8) #32 res buf c i 40) /\
+    (i >= 32 /\ i < 40 ==> xor_status #(32 + m * 8) #32 res buf d i 32) /\
+    (i < 32 ==> Seq.index res i == false)) = ()
+
+#set-options "--z3rlimit 400 --fuel 4 --ifuel 4"
+let crc32_data_to_bits_32bit #a #b #c #d m data buf r =
+  let s = crc32_dword_seq a b c d in
+
+  if m > 0 then begin
+    let res = zero_vec_l 32 ((zero_vec_r (8 * m) (UInt.to_vec (U32.v r))) +@ buf) in
+
+    crc32_data_to_bits_32bit_aux''' m data buf r res;
+    crc32_data_to_bits_append m 4 data s;
+    let buf' = crc32_append_8bit (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit
+      buf a) b) c) d
+    in
+    assert(crc32_data_to_bits (m + 4) (data @| s) == buf');
+
+    crc32_data_to_bits_32bit_aux' a b c d buf buf';
+    assert(Seq.equal buf' res)
+  end else begin
+    let r' = zero_vec_l 32 (BV.ones_vec #32 +@ UInt.to_vec (U32.v r)) in
+    crc32_data_to_bits_32bit_aux'' r r';
+    
+    assert(crc32_data_to_bits 4 s ==
+      (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit
+        #0 (Seq.empty #bool) a) b) c) d));
+    crc32_data_to_bits_32bit_aux a b c d (crc32_data_to_bits 4 s);
+
+    assert(Seq.equal r' (crc32_data_to_bits 4 s))
+  end

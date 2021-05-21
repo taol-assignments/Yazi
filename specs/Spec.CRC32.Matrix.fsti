@@ -14,13 +14,14 @@ let magic_matrix_pattern (nzeros: nat{nzeros > 0}) (i: nat{i < 32}):
   let one = Bits.ones_vec_r 1 zero_left in
   Bits.zero_vec_r i one
 
-let is_magic_matrix_elem (nzeros: nat{nzeros > 0}) (i: nat {i < 32}) (v: BV.bv_t 32) =
+unfold let is_magic_matrix_elem (nzeros: nat{nzeros > 0}) (i: nat {i < 32}) (v: BV.bv_t 32) =
   Bits.poly_mod (magic_matrix_pattern nzeros i) == v
 
 type matrix_seq = s:Seq.seq (BV.bv_t 32) {Seq.length s <= 32}
 
 type sub_matrix_t (nzeros: nat{nzeros > 0}) = m: matrix_seq{
-   forall i. i < Seq.length m ==> is_magic_matrix_elem nzeros i (Seq.index m i)
+   forall i. {:pattern (Seq.index m i)}
+     i < Seq.length m ==> is_magic_matrix_elem nzeros i (Seq.index m i)
 }
 
 type matrix_t (nzeros: nat{nzeros > 0}) = m: sub_matrix_t nzeros{Seq.length m == 32}

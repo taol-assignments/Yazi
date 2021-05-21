@@ -15,11 +15,13 @@ private unfold let table_group_correct h t8 t16 t24 t32 =
   Spec.table_correct 8 h t8 /\
   Spec.table_correct 16 h t16 /\
   Spec.table_correct 24 h t24 /\
-  Spec.table_correct 32 h t32
+  Spec.table_correct 32 h t32 /\
+  B.disjoint t8 t16 /\ B.disjoint t8 t24 /\ B.disjoint t8 t32 /\
+  B.disjoint t16 t24 /\ B.disjoint t16 t32 /\ B.disjoint t24 t32
 
 val crc32_impl:
-    #n: Ghost.erased nat{Ghost.reveal n == 0 /\ n > 32}
-  -> prev: Ghost.erased (BV.bv_t n)
+    n: Ghost.erased nat
+  -> data: Ghost.erased (Seq.seq U8.t){Seq.length data == Ghost.reveal n}
   -> t8: Spec.table_buf
   -> t16: Spec.table_buf
   -> t24: Spec.table_buf
@@ -30,9 +32,9 @@ val crc32_impl:
   -> ST.Stack U32.t
   (requires fun h ->
     B.live h buf /\
+    B.disjoint buf t8 /\ B.disjoint buf t16 /\ B.disjoint buf t24 /\ B.disjoint buf t32 /\
     table_group_correct h t8 t16 t24 t32 /\
-    Spec.crc32_matched #n prev crc true)
+    Spec.crc32_matched n data crc true)
   (ensures fun h0 res h1 ->
-    M.modifies M.loc_none h0 h1 /\
-    Spec.crc32_matched 
-      (Spec.crc32_append_buf #n #(U32.v len) prev (B.as_seq h1 buf)) res true)
+    M.modifies B.loc_none h0 h1 /\
+    Spec.crc32_matched (n + U32.v len) (Seq.append data (B.as_seq h1 buf)) crc true)

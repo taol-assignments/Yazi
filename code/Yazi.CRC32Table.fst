@@ -122,7 +122,7 @@ let poly_xor_aux (d: U32.t) (p: crc32_polynomial): Lemma
     UInt.nth (U32.v (U32.logxor d p)) i ==
     Seq.index (poly_xor (UInt.to_vec (U32.v d))) i) = ()
 
-#set-options "--z3rlimit 200 --z3seed 1"
+#set-options "--z3rlimit 200 --z3seed 1 --fuel 1 --ifuel 1"
 let poly_xor_poly_mod (d: U32.t) (p: crc32_polynomial): Lemma
   (requires UInt.nth (U32.v d) 31 == true)
   (ensures
@@ -191,6 +191,7 @@ private let rec calc_cell (m: Ghost.erased U32.t) (i: U32.t{U32.v i <= 7}) (d: U
   else
     calc_cell m (i -^ 1ul) (cell_xor d)
 
+#set-options "--fuel 0 --ifuel 0"
 private let rec gen_8bit_table
   (i: U32.t{U32.v i <= 255})
   (buf: table_buf):

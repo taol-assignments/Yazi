@@ -203,12 +203,13 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 # the files copied in dist, which includes kremlin-generated and hand-written,
 # copied files from HAND_WRITTEN_C_FILES.
 
-crc32_table_gen: dist/Yazi_CRC32Table.c
+crc32_table_gen: dist/Makefile.basic
 	cc -I ./dist \
 	   -I $(KREMLIN_HOME)/include \
 	   -I $(KREMLIN_HOME)/kremlib/dist/minimal \
-	   dist/Yazi_CRC32Table_Codegen.c dist/Yazi_CRC32Table.c
-	./dist/a.out
+	   dist/Yazi_CRC32Table_Codegen.c dist/Yazi_CRC32Table.c \
+	   -o ./dist/crc32_table_gen
+	./dist/crc32_table_gen
 
 dist/libz.a: dist/Makefile.basic crc32_table_gen
 	$(MAKE) -C $(dir $@) -f $(notdir $<)
