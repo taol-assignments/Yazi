@@ -78,7 +78,7 @@ private let crc32_pre_cond
   Spec.crc32_matched d.dlen d.data crc true
 
 [@ (CPrologue
-  "unsigned long crc32(unsigned int crc, const unsigned char *buf, unsigned int len);")]
+  "unsigned int crc32(unsigned int crc, const unsigned char *buf, unsigned int len);")]
 val crc32_impl:
     tg: table_group
   -> crc: U32.t

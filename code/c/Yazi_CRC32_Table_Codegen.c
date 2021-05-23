@@ -28,9 +28,9 @@ int main(int argc, const char **argv) {
   
   printf(
     "\n};\n\n"
-    "unsigned long crc32(unsigned int crc, const unsigned char *buf, unsigned int len) {\n"
+    "unsigned int crc32(unsigned int crc, const unsigned char *buf, unsigned int len) {\n"
     "  return Yazi_CRC32_crc32_impl((uint32_t *)crc32_table, crc, len, (uint8_t *) buf);\n"
     "}\n");
-  
+
   return 0;
 }
