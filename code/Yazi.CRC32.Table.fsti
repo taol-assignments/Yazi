@@ -1,4 +1,4 @@
-module Yazi.CRC32Table
+module Yazi.CRC32.Table
 
 module B = LowStar.Buffer
 module Spec = Spec.CRC32

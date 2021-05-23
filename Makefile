@@ -152,7 +152,7 @@ KRML=$(KREMLIN_HOME)/krml
 # easily turn this file into a .h, use -add-include '"Impl_Bignum_Intrinsics.h"'
 # and pass -static-header Impl.Bignum.Intrinsics as described in the
 # documentation.
-HAND_WRITTEN_C_FILES = code/c/Yazi_Allocator.h code/c/Yazi_Z_Stream_Fields.inc code/c/Yazi_CRC32Table_Codegen.c
+HAND_WRITTEN_C_FILES = code/c/Yazi_Allocator.h code/c/Yazi_Z_Stream_Fields.inc code/c/Yazi_CRC32_Table_Codegen.c
 
 # This is now the preferred and recommended way to compile C code with KreMLin.
 #
@@ -181,12 +181,13 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	  $(filter %.krml,$^) \
 	  -warn-error @4@5@18 \
 	  -drop LowStar.ConstBuffer,C.Loops,Spec.*,Prims\
-	  -no-prefix Yazi.CRC32Table \
+	  -no-prefix Yazi.CRC32_Table \
 	  -no-prefix Yazi.Util \
 	  -no-prefix Yazi.CFlags \
 	  -no-prefix Yazi.Types \
 	  -ftail-calls \
 	  -fparentheses \
+          -fcurly-braces \
 	  -minimal \
 	  -bundle 'FStar.*' \
 	  -add-include '<stdint.h>' \
@@ -207,9 +208,9 @@ crc32_table_gen: dist/Makefile.basic
 	cc -I ./dist \
 	   -I $(KREMLIN_HOME)/include \
 	   -I $(KREMLIN_HOME)/kremlib/dist/minimal \
-	   dist/Yazi_CRC32Table_Codegen.c dist/Yazi_CRC32Table.c \
+	   dist/Yazi_CRC32_Table_Codegen.c dist/Yazi_CRC32_Table.c \
 	   -o ./dist/crc32_table_gen
-	./dist/crc32_table_gen
+	./dist/crc32_table_gen >> ./dist/Yazi_CRC32.c
 
 dist/libz.a: dist/Makefile.basic crc32_table_gen
 	$(MAKE) -C $(dir $@) -f $(notdir $<)
