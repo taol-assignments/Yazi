@@ -4,6 +4,7 @@ module B = LowStar.Buffer
 module Ghost = FStar.Ghost
 module HS = FStar.HyperStack
 module U32 = FStar.UInt32
+module U64 = FStar.UInt64
 module U8 = FStar.UInt8
 module Seq = FStar.Seq
 module Spec = Spec.CRC32
@@ -93,3 +94,18 @@ val crc32_impl:
   (ensures fun h0 res h1 ->
     B.(modifies loc_none h0 h1) /\
     Spec.crc32_matched (d.dlen + U32.v len) (Seq.append d.data (B.as_seq h1 buf)) res true)
+
+val crc32_combine_impl:
+    s1: Ghost.erased (Seq.seq U8.t)
+  -> s2: Ghost.erased (Seq.seq U8.t)
+  -> crc1: U32.t
+  -> crc2: U32.t
+  -> length: U64.t
+  -> ST.Stack U32.t
+    (requires fun h ->
+      Spec.crc32_matched (Seq.length s1) s1 crc1 true /\
+      Spec.crc32_matched (Seq.length s2) s2 crc2 true /\
+      U64.v length == Seq.length s2)
+    (ensures fun h0 res h1 ->
+      B.(modifies loc_none h0 h1) /\
+      Spec.crc32_matched (Seq.length s1 + Seq.length s2) (Seq.append s1 s2) res true)

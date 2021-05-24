@@ -11,6 +11,15 @@ module UInt = FStar.UInt
 
 open FStar.Mul
 
+let rec uint_one_vec (#n: nat{n > 0}) (v: UInt.uint_t n): Lemma
+  (requires v == 1)
+  (ensures forall i. {:pattern UInt.nth v i}
+    (i == n - 1 ==> UInt.nth #n v i == true) /\
+    (i < n - 1 ==> UInt.nth #n v i == false)) =
+  match n with
+  | 1 -> ()
+  | _ -> uint_one_vec #(n - 1) v
+
 let rec logxor_vec_comm (#n: nat{n > 0}) (a b: BV.bv_t n): Lemma
   (ensures BV.logxor_vec a b == BV.logxor_vec b a)
   [SMTPat (BV.logxor_vec a b)] =

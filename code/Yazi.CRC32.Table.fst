@@ -15,15 +15,6 @@ open LowStar.BufferOps
 open Spec.CRC32
 
 #set-options "--z3rlimit 120 --z3seed 1"
-let rec uint_one_vec (#n: nat{n > 0}) (v: UInt.uint_t n): Lemma
-  (requires v == 1)
-  (ensures forall i. {:pattern UInt.nth v i}
-    (i == n - 1 ==> UInt.nth #n v i == true) /\
-    (i < n - 1 ==> UInt.nth #n v i == false)) =
-  match n with
-  | 1 -> ()
-  | _ -> uint_one_vec #(n - 1) v
-
 let mask_bit_status (#n: nat{n > 0}) (s: nat{s < n}) (v: UInt.uint_t n): Lemma
   (requires v == UInt.shift_left 1 s)
   (ensures forall j. {:pattern UInt.nth v j}

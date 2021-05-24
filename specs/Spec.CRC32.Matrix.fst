@@ -46,47 +46,11 @@ let rec magic_matrix_init s =
     calc (==) {
       Seq.index res l;
       =={seq_append_index_r s (Seq.create 1 (poly_mod n))}
-      Seq.index (Seq.create 1 (poly_mod n)) 0;
-      =={}
       poly_mod n;
     };
     magic_matrix_init res
   end else 
     s
-
-type matrix_dividend (nzeros: nat{nzeros > 0}) = d: BV.bv_t (nzeros + 32) {
-  forall i. i < nzeros ==> Seq.index d i == false
-}
-
-val bit_extract:
-    #nzeros: nat{nzeros > 0}
-  -> n: matrix_dividend nzeros
-  -> i: nat{i < 32}
-  -> res: BV.bv_t (nzeros + 32) {
-      forall j.
-        (j == nzeros + 31 - i ==> Seq.index res j == Seq.index n j) /\
-        (j <> nzeros + 31 - i ==> Seq.index res j == false)
-    }
-
-let bit_extract #nzeros n i =
-  let zero_left = BV.zero_vec #(nzeros + 32 - i - 1) in
-  let bit = zero_left @| (Seq.create 1 (Seq.index n (nzeros + 31 - i))) in
-  zero_vec_r #(nzeros + 32 - i) i bit
-
-val bit_sum:
-    #nzeros: nat{nzeros > 0}
-  -> n: matrix_dividend nzeros
-  -> i: nat{i < 32}
-  -> res: BV.bv_t (nzeros + 32) {
-    forall j.
-      (j >= nzeros + 31 - i ==> Seq.index res j == Seq.index n j) /\
-      (j < nzeros + 31 - i ==> Seq.index res j == false)
-  }
-
-let rec bit_sum #nzeros n i =
-  match i with
-  | 0 -> bit_extract #nzeros n i
-  | _ -> (bit_extract n i) +@ (bit_sum n (i - 1))
 
 val do_magic_matrix_times:
     #nzeros: nat{nzeros > 0}
