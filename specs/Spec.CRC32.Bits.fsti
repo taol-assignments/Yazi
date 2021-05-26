@@ -20,6 +20,29 @@ let rec uint_one_vec (#n: nat{n > 0}) (v: UInt.uint_t n): Lemma
   | 1 -> ()
   | _ -> uint_one_vec #(n - 1) v
 
+let mask_bit_status (#n: nat{n > 0}) (s: nat{s < n}) (v: UInt.uint_t n): Lemma
+  (requires v == UInt.shift_left 1 s)
+  (ensures forall j. {:pattern UInt.nth v j}
+    (j == n - 1 - s ==> UInt.nth v j == true) /\
+    (j <> n - 1 - s ==> UInt.nth v j == false)) =
+  uint_one_vec #n 1
+
+let mask_logor_status (#n: nat{n > 0}) (s: nat{s < n}) (mask v: UInt.uint_t n): Lemma
+  (requires mask == UInt.shift_left 1 s /\ UInt.nth v (n - 1 - s) == false)
+  (ensures
+    forall j. {:pattern UInt.nth (UInt.logor v mask) j}
+    (j <> n - 1 - s ==> UInt.nth (UInt.logor v mask) j == UInt.nth v j) /\
+    (j == n - 1 - s ==> UInt.nth (UInt.logor v mask) j == true)) =
+  mask_bit_status s mask
+
+let mask_logand_status (#n: nat{n > 0}) (s: nat{s < n}) (mask v: UInt.uint_t n): Lemma
+  (requires mask == UInt.shift_left 1 s)
+  (ensures
+    forall j. {:pattern UInt.nth (UInt.logand v mask) j}
+    (j <> n - 1 - s ==> UInt.nth (UInt.logand v mask) j == false) /\
+    (j == n - 1 - s ==> UInt.nth (UInt.logand v mask) j == (UInt.nth v (n - 1 - s) = true))) =
+  mask_bit_status s mask
+
 let rec logxor_vec_comm (#n: nat{n > 0}) (a b: BV.bv_t n): Lemma
   (ensures BV.logxor_vec a b == BV.logxor_vec b a)
   [SMTPat (BV.logxor_vec a b)] =
@@ -304,11 +327,11 @@ Lemma
   (ensures crc32_matched m data (U32.logxor crc 0xfffffffful) true) =
   let open U32 in
   calc (==) {
-      ((crc ^^ 0xfffffffful) ^^ 0xfffffffful);
-      =={UInt.logxor_associative (v crc) (v 0xfffffffful) (v 0xfffffffful)}
-      (crc ^^ (0xfffffffful ^^ 0xfffffffful));
-      =={UInt.logxor_self (v 0xfffffffful)}
-      crc ^^ 0ul;
-      =={UInt.logxor_lemma_1 (v crc)}
-      crc;
+    ((crc ^^ 0xfffffffful) ^^ 0xfffffffful);
+    =={UInt.logxor_associative (v crc) (v 0xfffffffful) (v 0xfffffffful)}
+    (crc ^^ (0xfffffffful ^^ 0xfffffffful));
+    =={UInt.logxor_self (v 0xfffffffful)}
+    crc ^^ 0ul;
+    =={UInt.logxor_lemma_1 (v crc)}
+    crc;
   }

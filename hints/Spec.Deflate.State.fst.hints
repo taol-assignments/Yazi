@@ -1,0 +1,111 @@
+[
+  "Å?û\u000f\u0012\u0003\u0015’ô1™T\nßg2",
+  [
+    [
+      "Spec.Deflate.State.stream_check_valid",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "bool_inversion",
+        "equation_FStar.Monotonic.HyperHeap.hmap",
+        "equation_FStar.Monotonic.HyperStack.is_tip",
+        "equation_FStar.Monotonic.HyperStack.is_wf_with_ctr_and_tip",
+        "equation_FStar.Monotonic.HyperStack.mem",
+        "equation_LowStar.Buffer.buffer",
+        "equation_LowStar.Buffer.pointer_or_null",
+        "function_token_typing_FStar.Monotonic.Heap.heap",
+        "kinding_Yazi.Types.deflate_state@tok",
+        "kinding_Yazi.Types.z_stream@tok",
+        "lemma_FStar.Map.lemma_ContainsDom",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_05e15190c946858f68c69156f585f95a",
+        "refinement_interpretation_Tm_refine_cd18e9962a0d204005dcfcda04529ffc",
+        "typing_FStar.Map.contains", "typing_FStar.Monotonic.HyperHeap.rid",
+        "typing_FStar.Monotonic.HyperStack.get_hmap",
+        "typing_FStar.Monotonic.HyperStack.get_tip",
+        "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.g_is_null"
+      ],
+      0,
+      "ca13b66dee96337a1c3e70faaf1b2118"
+    ],
+    [
+      "Spec.Deflate.State.stream_and_state_live",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "bool_inversion",
+        "equation_FStar.Monotonic.HyperHeap.hmap",
+        "equation_FStar.Monotonic.HyperStack.is_tip",
+        "equation_FStar.Monotonic.HyperStack.is_wf_with_ctr_and_tip",
+        "equation_FStar.Monotonic.HyperStack.mem",
+        "equation_LowStar.Buffer.buffer",
+        "equation_LowStar.Buffer.pointer_or_null",
+        "function_token_typing_FStar.Monotonic.Heap.heap",
+        "kinding_Yazi.Types.z_stream@tok",
+        "lemma_FStar.Map.lemma_ContainsDom",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_05e15190c946858f68c69156f585f95a",
+        "refinement_interpretation_Tm_refine_cd18e9962a0d204005dcfcda04529ffc",
+        "typing_FStar.Map.contains", "typing_FStar.Monotonic.HyperHeap.rid",
+        "typing_FStar.Monotonic.HyperStack.get_hmap",
+        "typing_FStar.Monotonic.HyperStack.get_tip",
+        "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.g_is_null"
+      ],
+      0,
+      "9ee5e20bc84be83414c796461a4d3b54"
+    ],
+    [
+      "Spec.Deflate.State.get_deflate_state",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_LowStar.Buffer.pointer",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_573cfed777dae20cc82e8fef9622857e"
+      ],
+      0,
+      "3740f996e2e867153927049b67f13f5f"
+    ],
+    [
+      "Spec.Deflate.State.get_deflate_state",
+      2,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "bool_inversion",
+        "equation_FStar.Monotonic.HyperHeap.hmap",
+        "equation_FStar.Monotonic.HyperStack.is_tip",
+        "equation_FStar.Monotonic.HyperStack.is_wf_with_ctr_and_tip",
+        "equation_FStar.Monotonic.HyperStack.mem",
+        "equation_LowStar.Buffer.buffer", "equation_LowStar.Buffer.pointer",
+        "equation_LowStar.Buffer.pointer_or_null",
+        "function_token_typing_FStar.Monotonic.Heap.heap",
+        "kinding_Yazi.Types.deflate_state@tok",
+        "lemma_FStar.Map.lemma_ContainsDom",
+        "proj_equation_Yazi.Types.Mkz_stream_state",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_05e15190c946858f68c69156f585f95a",
+        "refinement_interpretation_Tm_refine_365abba901205a01d0ef28ebf2198c47",
+        "refinement_interpretation_Tm_refine_573cfed777dae20cc82e8fef9622857e",
+        "refinement_interpretation_Tm_refine_5bfbe94aba19d3f95b14918babd3a2d8",
+        "refinement_interpretation_Tm_refine_cd18e9962a0d204005dcfcda04529ffc",
+        "typing_FStar.Map.contains", "typing_FStar.Monotonic.HyperHeap.rid",
+        "typing_FStar.Monotonic.HyperHeap.rid_freeable",
+        "typing_FStar.Monotonic.HyperHeap.root",
+        "typing_FStar.Monotonic.HyperStack.get_hmap",
+        "typing_FStar.Monotonic.HyperStack.get_tip",
+        "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.g_is_null"
+      ],
+      0,
+      "4b4aabb07a6efab978a593f49128560f"
+    ]
+  ]
+]

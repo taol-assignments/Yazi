@@ -3,6 +3,7 @@ module Yazi.CRC32.Table
 module B = LowStar.Buffer
 module BV = FStar.BitVector
 module CB = LowStar.ConstBuffer
+module CRC32 = Yazi.CRC32.Impl
 module Ghost = FStar.Ghost
 module HS = FStar.HyperStack
 module M = LowStar.Modifies
@@ -15,21 +16,6 @@ open LowStar.BufferOps
 open Spec.CRC32
 
 #set-options "--z3rlimit 120 --z3seed 1"
-let mask_bit_status (#n: nat{n > 0}) (s: nat{s < n}) (v: UInt.uint_t n): Lemma
-  (requires v == UInt.shift_left 1 s)
-  (ensures forall j. {:pattern UInt.nth v j}
-    (j == n - 1 - s ==> UInt.nth v j == true) /\
-    (j <> n - 1 - s ==> UInt.nth v j == false)) =
-  uint_one_vec #n 1
-
-let mask_logor_status (#n: nat{n > 0}) (s: nat{s < n}) (mask v: UInt.uint_t n): Lemma
-  (requires mask == UInt.shift_left 1 s /\ UInt.nth v (n - 1 - s) == false)
-  (ensures
-    forall j. {:pattern UInt.nth (UInt.logor v mask) j}
-    (j <> n - 1 - s ==> UInt.nth (UInt.logor v mask) j == UInt.nth v j) /\
-    (j == n - 1 - s ==> UInt.nth (UInt.logor v mask) j == true)) =
-  mask_bit_status s mask
-
 inline_for_extraction
 private let poly_mask (i: U32.t{(U32.v i) < 32}) (p: U32.t{
   let p' = U32.v p in
@@ -226,3 +212,53 @@ let gen_crc32_table t8 t16 t24 t32 =
   gen_large_table 8 0ul t8 t8 t16;
   gen_large_table 16 0ul t8 t16 t24;
   gen_large_table 24 0ul t8 t24 t32
+
+#set-options "--z3rlimit 120 --fuel 128 --ifuel 128 --z3seed 13"
+let one_shift_left (s: U32.t{U32.v s < 32}): Lemma
+  (ensures forall (i: nat{i < 32}).
+    (i == 31 - U32.v s ==> UInt.nth (U32.v (U32.shift_left 1ul s)) i == true) /\
+    (i <> 31 - U32.v s ==> UInt.nth (U32.v (U32.shift_left 1ul s)) i == false)) = ()
+
+#set-options "--fuel 1 --ifuel 1"
+let rec gf2_matrix_init
+  (p: U32.t{UInt.to_vec (U32.v p) == gf2_polynomial32})
+  (i: U32.t{U32.v i < 32})
+  (buf: matrix_buf):
+  ST.Stack unit
+  (decreases 32 - U32.v i)
+  (requires fun h -> is_sub_matrix_buf h (U32.v i) 1 buf)
+  (ensures fun h0 _ h1 -> B.modifies (B.loc_buffer buf) h0 h1 /\ is_matrix_buf h1 1 buf) =
+  let open U32 in
+  if i = 0ul then
+    let m = Ghost.hide (ones_vec_r 1 (BV.zero_vec #32)) in
+    calc (==) {
+      poly_mod #33 m;
+      =={assert(Seq.last m == true)}
+      unsnoc (m -@ poly 33);
+      =={assert(Seq.equal (unsnoc (m -@ poly 33)) gf2_polynomial32)}
+      UInt.to_vec (v p);
+    };
+    buf.(i) <- p
+  else begin
+    let pattern = Ghost.hide (magic_matrix_pattern 1 (U32.v i)) in
+    let elem = 1ul <<^ (i -^ 1ul) in 
+    one_shift_left (i -^ 1ul);
+    assert(Seq.equal (poly_mod #33 pattern) (unsnoc pattern));
+    assert(forall (j: nat{j < 32}). Seq.index (unsnoc pattern) j == UInt.nth (v elem) j);
+    assert(Seq.equal (UInt.to_vec (v elem)) (poly_mod #33 pattern));
+    buf.(i) <- 1ul <<^ (i -^ 1ul)
+  end;
+  if i <^ 31ul then gf2_matrix_init p (i +^ 1ul) buf else ()
+
+#set-options "--fuel 0 --ifuel 0"
+let gen_matrix_table buf =
+  ST.push_frame();
+  let t = B.alloca 0ul 32ul in
+  let p = gen_polynomial () in
+  assert(Seq.equal (UInt.to_vec (U32.v p)) gf2_polynomial32);
+  gf2_matrix_init p 0ul t;
+
+  CRC32.gf2_matrix_square 1 t buf;
+  CRC32.gf2_matrix_square 2 buf t;
+  CRC32.gf2_matrix_square 4 t buf;
+  ST.pop_frame()

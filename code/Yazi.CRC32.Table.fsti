@@ -26,3 +26,9 @@ val gen_crc32_table:
     Spec.table_correct 16 h1 t16 /\
     Spec.table_correct 24 h1 t24 /\
     Spec.table_correct 32 h1 t32)
+
+val gen_matrix_table:
+    buf: Spec.matrix_buf
+  -> ST.Stack unit
+  (requires fun h -> B.live h buf)
+  (ensures fun h0 _ h1 -> B.modifies (B.loc_buffer buf) h0 h1 /\ Spec.is_matrix_buf h1 8 buf)

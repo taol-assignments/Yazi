@@ -550,7 +550,50 @@ let crc32_data_to_bits_32bit_aux'''
     (i >= 32 /\ i < 40 ==> xor_status #(32 + m * 8) #32 res buf d i 32) /\
     (i < 32 ==> Seq.index res i == false)) = ()
 
-#set-options "--z3rlimit 400 --fuel 4 --ifuel 4"
+#set-options "--z3rlimit 400 --fuel 1 --ifuel 0"
+let crc32_data_to_bits_unfold'
+  (a b c d: U8.t)
+  (m: nat)
+  (data: Seq.seq U8.t{Seq.length data == m})
+  (buf: BV.bv_t (if m > 0 then 32 + m * 8 else 0){buf == crc32_data_to_bits m data}): Lemma
+  (ensures crc32_data_to_bits (m + 4) (data @| (crc32_dword_seq a b c d)) ==
+    crc32_append_8bit (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit
+      buf a) b) c) d) =
+  let s = crc32_dword_seq a b c d in
+  let buf = crc32_data_to_bits m data in
+  let m' = if m > 0 then 32 + 8 * m else 0 in
+  calc (==) {
+    crc32_data_to_bits (m + 4) (data @| s);
+    =={crc32_data_to_bits_append m 4 data s}
+    crc32_data_to_bits_cont #m' 4 s buf;
+    =={}
+    crc32_data_to_bits_cont 3 (Seq.tail s) (crc32_append_8bit buf a);
+    =={}
+    crc32_data_to_bits_cont
+      2 (Seq.tail (Seq.tail s))
+      (crc32_append_8bit (crc32_append_8bit buf a) b);
+    =={}
+    crc32_data_to_bits_cont
+      1 (Seq.tail (Seq.tail (Seq.tail s)))
+      (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit buf a) b) c);
+    =={}
+    crc32_data_to_bits_cont
+      0 (Seq.tail (Seq.tail (Seq.tail (Seq.tail s))))
+      (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit
+        buf a) b) c) d);
+    =={}
+    (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit
+        buf a) b) c) d);
+  }
+
+#set-options "--fuel 4"
+let crc32_data_to_bits_unfold''
+  (a b c d: U8.t): Lemma
+  (ensures crc32_data_to_bits 4 (crc32_dword_seq a b c d) ==
+    crc32_append_8bit (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit
+      #0 (Seq.empty #bool) a) b) c) d) = ()
+
+#set-options "--fuel 0 --ifuel 0"
 let crc32_data_to_bits_32bit #a #b #c #d m data buf r =
   let s = crc32_dword_seq a b c d in
 
@@ -562,17 +605,13 @@ let crc32_data_to_bits_32bit #a #b #c #d m data buf r =
     let buf' = crc32_append_8bit (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit
       buf a) b) c) d
     in
-    assert(crc32_data_to_bits (m + 4) (data @| s) == buf');
-
+    crc32_data_to_bits_unfold' a b c d m data buf;
     crc32_data_to_bits_32bit_aux' a b c d buf buf';
     assert(Seq.equal buf' res)
   end else begin
     let r' = zero_vec_l 32 (BV.ones_vec #32 +@ UInt.to_vec (U32.v r)) in
     crc32_data_to_bits_32bit_aux'' r r';
-    
-    assert(crc32_data_to_bits 4 s ==
-      (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit (crc32_append_8bit
-        #0 (Seq.empty #bool) a) b) c) d));
+    crc32_data_to_bits_unfold'' a b c d;
     crc32_data_to_bits_32bit_aux a b c d (crc32_data_to_bits 4 s);
 
     assert(Seq.equal r' (crc32_data_to_bits 4 s))

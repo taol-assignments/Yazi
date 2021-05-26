@@ -1,4 +1,4 @@
-module Yazi.CRC32
+module Yazi.CRC32.Impl
 module B = LowStar.Buffer
 module BV = FStar.BitVector
 module Cast = FStar.Int.Cast
@@ -296,7 +296,7 @@ let do4_logxor
       poly_mod ((crc32_data_to_bits m data) +@ (zero_vec_r (prev_len - 32) vsum));
     }
 
-#set-options "--z3rlimit 120 --fuel 0 --ifuel 0"
+#set-options "--z3rlimit 1024 --fuel 0 --ifuel 0"
 let do4_table_lookup
   (r: U32.t) (t0: U32.t{
     let open U32 in poly_mod_correct 32 (r &^ 0xFFul) t0
@@ -422,7 +422,45 @@ inline_for_extraction let rec iteration_4
   else
     (crc', stream', data')
 
-#set-options "--z3rlimit 1024 --fuel 0 --ifuel 0 --z3seed 13"
+inline_for_extraction let do8
+  (tg: table_group)
+  (p: crc32_current_state)
+  (d: Ghost.erased crc32_init_state)
+  (i: Ghost.erased nat):
+  ST.Stack (U32.t & (B.buffer U8.t) & Ghost.erased (Seq.seq U8.t))
+  (requires fun h -> do_pre_cond h tg p d i 8)
+  (ensures fun h0 res h1 -> do_post_cond h0 h1 tg p d res i 8 None) =
+  let open U32 in
+  let (c0, b0, d0) = do4 tg p d i in
+  let (c1, b1, d1) = do4 tg ({
+    clen = p.clen + 4;
+    consumed = d0;
+    crc = c0;
+    slen = p.slen -^ 4ul;
+    stream = b0;
+  }) d (i + 4) in
+  (c1, b1, d1)
+
+inline_for_extraction let do16
+  (tg: table_group)
+  (p: crc32_current_state)
+  (d: Ghost.erased crc32_init_state)
+  (i: Ghost.erased nat):
+  ST.Stack (U32.t & (B.buffer U8.t) & Ghost.erased (Seq.seq U8.t))
+  (requires fun h -> do_pre_cond h tg p d i 16)
+  (ensures fun h0 res h1 -> do_post_cond h0 h1 tg p d res i 16 None) =
+  let open U32 in
+  let (c0, b0, d0) = do8 tg p d i in
+  let (c1, b1, d1) = do8 tg ({
+    clen = p.clen + 8;
+    consumed = d0;
+    crc = c0;
+    slen = p.slen -^ 8ul;
+    stream = b0;
+  }) d (i + 8) in
+  (c1, b1, d1)
+
+#set-options "--z3rlimit 1024 --fuel 0 --ifuel 0"
 inline_for_extraction let do32
   (tg: table_group)
   (p: crc32_current_state)
@@ -432,24 +470,15 @@ inline_for_extraction let do32
   (requires fun h -> do_pre_cond h tg p d i 32)
   (ensures fun h0 res h1 -> do_post_cond h0 h1 tg p d res i 32 None) =
   let open U32 in
-  let mkparam (j: U32.t{
-    4 <= U32.v j /\ U32.v j <= 28 /\ U32.v j % 4 == 0
-  }) c b d: Tot crc32_current_state = {
-    clen = p.clen + (U32.v j);
-    consumed = d;
-    crc = c;
-    slen = p.slen -^ j;
-    stream = b;
-  } in
-  let (c0, b0, d0) = do4 tg p d i in
-  let (c1, b1, d1) = do4 tg (mkparam 4ul c0 b0 d0) d (i + 4) in
-  let (c2, b2, d2) = do4 tg (mkparam 8ul c1 b1 d1) d (i + 8) in
-  let (c3, b3, d3) = do4 tg (mkparam 12ul c2 b2 d2) d (i + 12) in
-  let (c4, b4, d4) = do4 tg (mkparam 16ul c3 b3 d3) d (i + 16) in
-  let (c5, b5, d5) = do4 tg (mkparam 20ul c4 b4 d4) d (i + 20) in
-  let (c6, b6, d6) = do4 tg (mkparam 24ul c5 b5 d5) d (i + 24) in
-  let (c7, b7, d7) = do4 tg (mkparam 28ul c6 b6 d6) d (i + 28) in
-  (c7, b7, d7)
+  let (c0, b0, d0) = do16 tg p d i in
+  let (c1, b1, d1) = do16 tg ({
+    clen = p.clen + 16;
+    consumed = d0;
+    crc = c0;
+    slen = p.slen -^ 16ul;
+    stream = b0;
+  }) d (i + 16) in
+  (c1, b1, d1)
 
 inline_for_extraction let rec iteration_32
   (tg: table_group)
@@ -525,45 +554,7 @@ let crc32_impl tg crc len buf d =
   crc32_matched_xor_inv_2 (d.dlen + v len) d2 c2;
   c2 ^^ 0xFFFFFFFFul
 
-#set-options "--fuel 128 --ifuel 128"
-let one_shift_left (s: U32.t{U32.v s < 32}): Lemma
-  (ensures forall (i: nat{i < 32}).
-    (i == 31 - U32.v s ==> UInt.nth (U32.v (U32.shift_left 1ul s)) i == true) /\
-    (i <> 31 - U32.v s ==> UInt.nth (U32.v (U32.shift_left 1ul s)) i == false)) = ()
-
 #set-options "--fuel 1 --ifuel 1"
-private type matrix_buf = m: B.buffer U32.t{B.length m == 32}
-
-let rec gf2_matrix_init
-  (p: U32.t{UInt.to_vec (U32.v p) == gf2_polynomial32})
-  (i: U32.t{U32.v i < 32})
-  (buf: matrix_buf):
-  ST.Stack unit
-  (decreases 32 - U32.v i)
-  (requires fun h -> is_sub_matrix_buf h (U32.v i) 1 buf)
-  (ensures fun h0 _ h1 -> B.modifies (B.loc_buffer buf) h0 h1 /\ is_matrix_buf h1 1 buf) =
-  let open U32 in
-  if i = 0ul then
-    let m = ones_vec_r 1 (BV.zero_vec #32) in
-    calc (==) {
-      poly_mod #33 m;
-      =={assert(Seq.last m == true)}
-      unsnoc (m -@ poly 33);
-      =={assert(Seq.equal (unsnoc (m -@ poly 33)) gf2_polynomial32)}
-      UInt.to_vec (v p);
-    };
-    buf.(i) <- p
-  else begin
-    let pattern = magic_matrix_pattern 1 (U32.v i) in
-    let elem = 1ul <<^ (i -^ 1ul) in 
-    one_shift_left (i -^ 1ul);
-    assert(Seq.equal (poly_mod pattern) (unsnoc pattern));
-    assert(forall (j: nat{j < 32}). Seq.index (unsnoc pattern) j == UInt.nth (v elem) j);
-    assert(Seq.equal (UInt.to_vec (v elem)) (poly_mod pattern));
-    buf.(i) <- 1ul <<^ (i -^ 1ul)
-  end;
-  if i <^ 31ul then gf2_matrix_init p (i +^ 1ul) buf else ()
-
 let logand_one_ne (#n: nat{n > 0}) (a: UInt.uint_t n): Lemma
   (requires UInt.logand a (UInt.one n) <> 1)
   (ensures UInt.logand a (UInt.one n) == 0) =
@@ -576,7 +567,7 @@ let logand_one_ne (#n: nat{n > 0}) (a: UInt.uint_t n): Lemma
   else
     UInt.nth_lemma s (UInt.zero n)
 
-#set-options "--z3rlimit 2048 --fuel 0 --ifuel 0 --z3seed 17"
+#set-options "--fuel 0 --ifuel 0"
 inline_for_extraction
 let rec do_gf2_matrix_times
   (nzeros: Ghost.erased nat{nzeros > 0})
@@ -594,19 +585,19 @@ let rec do_gf2_matrix_times
   (ensures fun h0 res h1 -> B.(modifies loc_none h0 h1)) =
   let open U32 in
   let vec'' = Ghost.hide (zero_vec_l nzeros (UInt.to_vec (v vec'))) in
-  let ext = Ghost.hide (bit_extract #nzeros vec'' (v i)) in
-  let prev = Ghost.hide (bit_sum #nzeros vec'' (v i - 1)) in
-  let current = Ghost.hide (bit_sum #nzeros vec'' (v i)) in
+  let ext = Ghost.hide (bit_extract #(nzeros + 32) vec'' (v i)) in
+  let prev = Ghost.hide (bit_sum #(nzeros + 32) vec'' (v i - 1)) in
+  let current = Ghost.hide (bit_sum #(nzeros + 32) vec'' (v i)) in
 
   let t = if (vec &^ 1ul) = 1ul then begin
     UInt.one_nth_lemma #32 31;
-    bit_extract_eq_pattern #nzeros vec'' (v i);
+    bit_extract_eq_pattern #(nzeros + 32) vec'' (v i);
     buf.(i)
   end else begin
     logand_one_ne (v vec);
     UInt.zero_nth_lemma #32 31;
     assert(Seq.equal ext (BV.zero_vec #(nzeros + 32)));
-    poly_mod_zero #(nzeros + 32) (bit_extract #nzeros vec'' (v i));
+    poly_mod_zero (bit_extract #(nzeros + 32) vec'' (v i));
     0ul
   end in
   assert(Seq.equal (UInt.to_vec (v t)) (poly_mod #(nzeros + 32) ext));
@@ -621,25 +612,22 @@ let rec do_gf2_matrix_times
   else
     sum'
 
-let gf2_matrix_times (nzeros: Ghost.erased nat{nzeros > 0}) (buf: matrix_buf) (vec: U32.t):
-  ST.Stack (matrix_times_product nzeros vec)
-  (requires fun h -> is_matrix_buf h nzeros buf)
-  (ensures fun h0 res h1 -> B.(modifies loc_none h0 h1)) =
+let gf2_matrix_times nzeros buf vec =
   let open U32 in
   let vec' = Ghost.hide (zero_vec_l nzeros (UInt.to_vec (v vec))) in
-  let ext = Ghost.hide (bit_extract #nzeros vec' 0) in
-  let current = Ghost.hide (bit_sum #nzeros vec' 0) in
+  let ext = Ghost.hide (bit_extract #(nzeros + 32) vec' 0) in
+  let current = Ghost.hide (bit_sum #(nzeros + 32) vec' 0) in
   assert(Seq.equal ext current);
 
   let sum = if (vec &^ 1ul) = 1ul then begin
     UInt.one_nth_lemma #32 31;
-    bit_extract_eq_pattern #nzeros vec' 0;
+    bit_extract_eq_pattern #(nzeros + 32) vec' 0;
     buf.(0ul)
   end else begin
     logand_one_ne (v vec);
     UInt.zero_nth_lemma #32 31;
     assert(Seq.equal ext (BV.zero_vec #(nzeros + 32)));
-    poly_mod_zero #(nzeros + 32) (bit_extract #nzeros vec' 0);
+    poly_mod_zero #(nzeros + 32) (bit_extract #(nzeros + 32) vec' 0);
     assert(Seq.equal (UInt.to_vec (v 0ul)) (poly_mod #(nzeros + 32) current));
     0ul
   end in
@@ -671,8 +659,8 @@ let rec do_gf2_matrix_square
   calc (==) {
     Ghost.reveal res';
     =={}
-    poly_mod (bit_sum #nzeros t' 31);
-    =={assert(Seq.equal (bit_sum #nzeros t' 31) t')}
+    poly_mod (bit_sum t' 31);
+    =={assert(Seq.equal (bit_sum t' 31) t')}
     poly_mod t';
     =={}
     poly_mod (zero_vec_l nzeros (poly_mod pat));
@@ -685,14 +673,4 @@ let rec do_gf2_matrix_square
   b1.(i) <- r;
   if i <^ 31ul then do_gf2_matrix_square nzeros b0 b1 (i +^ 1ul) else ()
 
-let gf2_matrix_square
-  (nzeros: Ghost.erased nat{nzeros > 0})
-  (b0 b1: matrix_buf): ST.Stack unit
-  (requires fun h -> B.live h b1 /\ B.disjoint b0 b1 /\ is_matrix_buf h nzeros b0)
-  (ensures fun h0 _ h1 ->
-    B.modifies (B.loc_buffer b1) h0 h1 /\
-    is_matrix_buf h1 (nzeros * 2) b1) = do_gf2_matrix_square nzeros b0 b1 0ul
-
-let crc32_combine_impl s1 s2 crc1 crc2 length =
-  admit();
-  0ul
+let gf2_matrix_square nzeros b0 b1 = do_gf2_matrix_square nzeros b0 b1 0ul

@@ -30,7 +30,7 @@ FSTAR_HINTS ?= --use_hints --use_hint_hashes --record_hints
 # the FStar namespace since it's already extracted and packaged as the ocamlfind
 # package fstarlib. Here, unlike in -bundle, +Spec matches both Spec and
 # Spec.*
-FSTAR_EXTRACT = --extract '-* +Spec'
+FSTAR_EXTRACT = --extract '-* -Spec'
 
 # Some reasonable flags to turn on:
 # - 247: checked file not written because some of its dependencies...
@@ -208,9 +208,9 @@ crc32_table_gen: dist/Makefile.basic
 	cc -I ./dist \
 	   -I $(KREMLIN_HOME)/include \
 	   -I $(KREMLIN_HOME)/kremlib/dist/minimal \
-	   dist/Yazi_CRC32_Table_Codegen.c dist/Yazi_CRC32_Table.c \
+	   dist/Yazi_CRC32_Table_Codegen.c dist/Yazi_CRC32_Table.c dist/Yazi_CRC32_Impl.c\
 	   -o ./dist/crc32_table_gen
-	./dist/crc32_table_gen >> ./dist/Yazi_CRC32.c
+	./dist/crc32_table_gen >> ./dist/Yazi_CRC32_Impl.c
 
 dist/libz.a: dist/Makefile.basic crc32_table_gen
 	$(MAKE) -C $(dir $@) -f $(notdir $<)

@@ -49,7 +49,6 @@ flycheck_*.el
 /network-security.data
 
 # FStar
-hints/
 obj/
 .depend
 dep.graph
