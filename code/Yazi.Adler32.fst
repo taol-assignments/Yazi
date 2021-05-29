@@ -276,22 +276,15 @@ let combine_sums
   (b: U64.t{sum_b_state data consumed b}):
   Tot (res: U32.t{adler32_matched #(m1 + m2) (data @| consumed) res}) =
   let open U64 in
-  let sa = Ghost.hide (sum_a data % base) in
   let a' = Cast.uint64_to_uint16 (a %^ base64) in
   let a'' = Cast.uint16_to_uint32 a' in
   sum_a_state_mod data consumed a;
   cast_zero_prefix (U16.v a') 32;
-  assert(forall (i: nat{i < 32}).
-    (i < 16 ==> UInt.nth (U32.v a'') i == false) /\
-    (i >= 16 ==> UInt.nth (U32.v a'') i == UInt.nth (U16.v a') (i - 16)));
 
   let b' = Cast.uint64_to_uint16 (b %^ base64) in
   let b'' = Cast.uint16_to_uint32 b' in
   sum_b_state_mod data consumed b;
   cast_zero_prefix (U16.v b') 32;
-  assert(forall (i: nat{i < 32}).
-    (i < 16 ==> UInt.nth (U32.v b'') i == false) /\
-    (i >= 16 ==> UInt.nth (U32.v b'') i == UInt.nth (U16.v b') (i - 16)));
   U32.logxor (U32.shift_left b'' 16ul) a''
 
 inline_for_extraction unfold let init_state'
@@ -451,3 +444,108 @@ let adler32 #m data adler buf len =
   else
     let (adler', _) = iteration_nmax data buf adler buf len in
     adler'
+
+let adler32_combine64 #m1 #m2 s1 s2 adler1 adler2 len2 =
+  let open U64 in
+  let (a1, b1) = extract_sums s1 adler1 in
+  let (a2, b2) = extract_sums s2 adler2 in
+  let a3 = (a1 +^ a2 +^ base64 -^ 1UL) %^ base64 in
+  calc (==) {
+    v a3;
+    =={}
+    (v a1 + v a2 + base - 1) % base;
+    =={}
+    ((base - 1) + (sum_a s1 % base) + (sum_a s2 % base)) % base;
+    =={Math.lemma_mod_add_distr ((base - 1) + (sum_a s1 % base)) (sum_a s2) base}
+    ((base - 1) + (sum_a s1 % base) + sum_a s2) % base;
+    =={Math.lemma_mod_add_distr ((base - 1) + sum_a s2) (sum_a s1) base}
+    (base - 1 + sum_a s1 + sum_a s2) % base;
+    =={Math.add_div_mod_1 (sum_a s1 + sum_a s2 - 1) base}
+    (sum_a s1 + sum_a s2 - 1) % base;
+    =={}
+    (sum_a s1 + sum_seq s2) % base;
+    =={sum_a_append s1 s2}
+    sum_a #(m1 + m2) (s1 @| s2) % base;
+  };
+  let len2' = len2 %^ base64 in
+  calc (<) {
+    v b1 + v len2' * v a1 + v b2 + base;
+    =={}
+    (sum_b s1 % base) + (m2 % base) * (sum_a s1 % base) + (sum_b s2 % base) + base;
+    <{Math.modulo_range_lemma (sum_b s1) base}
+    2 * base + (m2 % base) * (sum_a s1 % base) + (sum_b s2 % base);
+    <{Math.modulo_range_lemma (sum_b s2) base}
+    3 * base + (m2 % base) * (sum_a s1 % base);
+    <{
+      Math.modulo_range_lemma m2 base;
+      Math.modulo_range_lemma (sum_a s1) base;
+      Math.lemma_mult_lt_sqr (m2 % base) (sum_a s1 % base) base
+    }
+    3 * base + base * base;
+    <{}
+    UInt.max_int 64;
+  };
+  let b3 = (b1 +^ len2' *^ a1 +^ b2 +^ base64 -^ len2') %^ base64 in
+  calc (==) {
+    v b3;
+    =={}
+    (v b1 + (v len2 % base) * v a1 + v b2 + base - (v len2 % base)) % base;
+    =={}
+    ((sum_b s1 % base) + (m2 % base) * (sum_a s1 % base) +
+    (sum_b s2 % base) + base - (m2 % base)) % base;
+    =={
+      Math.lemma_mod_add_distr
+        ((m2 % base) * (sum_a s1 % base) + (sum_b s2 % base) + base - (m2 % base))
+        (sum_b s1)
+        base
+    }
+    (sum_b s1 + (m2 % base) * (sum_a s1 % base) +
+    (sum_b s2 % base) + base - (m2 % base)) % base;
+    =={
+      Math.lemma_mod_add_distr
+        ((m2 % base) * (sum_a s1 % base) + sum_b s1 + base - (m2 % base))
+        (sum_b s2)
+        base
+    }
+    (sum_b s1 + (m2 % base) * (sum_a s1 % base) + sum_b s2 + base - (m2 % base)) % base;
+    =={
+      Math.lemma_mod_sub_distr 
+        (sum_b s1 + (m2 % base) * (sum_a s1 % base) + sum_b s2 + base)
+        m2
+        base
+    }
+    (sum_b s1 + sum_b s2 + base - m2 + (m2 % base) * (sum_a s1 % base)) % base;
+    =={
+      Math.lemma_mod_add_distr
+        (sum_b s1 + sum_b s2 + base - m2)
+        ((m2 % base) * (sum_a s1 % base))
+        base
+    }
+    (sum_b s1 + sum_b s2 + base - m2 + (((m2 % base) * (sum_a s1 % base)) % base)) % base;
+    =={
+      Math.lemma_mod_mul_distr_l m2 (sum_a s1 % base) base;
+      Math.lemma_mod_mul_distr_r m2 (sum_a s1) base
+    }
+    (sum_b s1 + sum_b s2 + base - m2 + ((m2 * sum_a s1) % base)) % base;
+    =={
+      Math.lemma_mod_add_distr
+        (sum_b s1 + sum_b s2 + base - m2)
+        (m2 * sum_a s1)
+        base
+    }
+    (sum_b s1 + sum_b s2 + base - m2 + m2 * sum_a s1) % base;
+    =={}
+    ((sum_b s1 + sum_b s2 - m2 + m2 * sum_a s1) + base) % base;
+    =={Math.add_div_mod_1 (sum_b s1 + sum_b s2 - m2 + m2 * sum_a s1) base}
+    (sum_b s1 + sum_b s2 - m2 + m2 * sum_a s1) % base;
+    =={sum_b_append s1 s2}
+    sum_b #(m1 + m2) (s1 @| s2) % base;
+  };
+  let a' = Cast.uint64_to_uint16 a3 in
+  let a'' = Cast.uint16_to_uint32 a' in
+  cast_zero_prefix (U16.v a') 32;
+
+  let b' = Cast.uint64_to_uint16 b3 in
+  let b'' = Cast.uint16_to_uint32 b' in
+  cast_zero_prefix (U16.v b') 32;
+  U32.logxor (U32.shift_left b'' 16ul) a''
