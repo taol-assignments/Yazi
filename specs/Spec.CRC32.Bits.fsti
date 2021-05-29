@@ -10,38 +10,8 @@ module U32 = FStar.UInt32
 module UInt = FStar.UInt
 
 open FStar.Mul
-
-let rec uint_one_vec (#n: nat{n > 0}) (v: UInt.uint_t n): Lemma
-  (requires v == 1)
-  (ensures forall i. {:pattern UInt.nth v i}
-    (i == n - 1 ==> UInt.nth #n v i == true) /\
-    (i < n - 1 ==> UInt.nth #n v i == false)) =
-  match n with
-  | 1 -> ()
-  | _ -> uint_one_vec #(n - 1) v
-
-let mask_bit_status (#n: nat{n > 0}) (s: nat{s < n}) (v: UInt.uint_t n): Lemma
-  (requires v == UInt.shift_left 1 s)
-  (ensures forall j. {:pattern UInt.nth v j}
-    (j == n - 1 - s ==> UInt.nth v j == true) /\
-    (j <> n - 1 - s ==> UInt.nth v j == false)) =
-  uint_one_vec #n 1
-
-let mask_logor_status (#n: nat{n > 0}) (s: nat{s < n}) (mask v: UInt.uint_t n): Lemma
-  (requires mask == UInt.shift_left 1 s /\ UInt.nth v (n - 1 - s) == false)
-  (ensures
-    forall j. {:pattern UInt.nth (UInt.logor v mask) j}
-    (j <> n - 1 - s ==> UInt.nth (UInt.logor v mask) j == UInt.nth v j) /\
-    (j == n - 1 - s ==> UInt.nth (UInt.logor v mask) j == true)) =
-  mask_bit_status s mask
-
-let mask_logand_status (#n: nat{n > 0}) (s: nat{s < n}) (mask v: UInt.uint_t n): Lemma
-  (requires mask == UInt.shift_left 1 s)
-  (ensures
-    forall j. {:pattern UInt.nth (UInt.logand v mask) j}
-    (j <> n - 1 - s ==> UInt.nth (UInt.logand v mask) j == false) /\
-    (j == n - 1 - s ==> UInt.nth (UInt.logand v mask) j == (UInt.nth v (n - 1 - s) = true))) =
-  mask_bit_status s mask
+open Lib.Seq
+open Lib.UInt
 
 let rec logxor_vec_comm (#n: nat{n > 0}) (a b: BV.bv_t n): Lemma
   (ensures BV.logxor_vec a b == BV.logxor_vec b a)
@@ -120,15 +90,6 @@ unfold let gf2_sub (#n: nat{n > 0}) (a b: BV.bv_t n) : Tot (BV.bv_t n) =
   BV.logxor_vec a b
 
 let (-@) #n = gf2_sub #n
-
-let unsnoc (#a: Type) (s: Seq.seq a{
-  Seq.length s > 0
-}): Tot (res: Seq.seq a{
-  (Seq.length res == Seq.length s - 1) /\
-  (forall (i: nat{i < Seq.length s - 1}).
-    Seq.index s i == Seq.index res i)
-}) =
-  Seq.slice s 0 (Seq.length s - 1)
 
 let gf2_polynomial = Seq.init #bool 33 (fun i ->
   i = 0 || i = 1 || i = 2 || i = 4 || i = 5 || i = 7 || i = 8 || i = 10 || i = 11 ||

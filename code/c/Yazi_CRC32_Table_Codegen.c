@@ -78,6 +78,3 @@ int main(int argc, const char **argv) {
   return 0;
 }
 
-static uint32_t m1[32] = {0};
-
-

@@ -6,6 +6,9 @@ module Seq = FStar.Seq
 module U32 = FStar.UInt32
 module UInt = FStar.UInt
 
+open Lib.Seq
+open Lib.UInt
+
 #set-options "--z3rlimit 200 --z3seed 1 --fuel 1 --ifuel 1"
 let poly_xor_zero_prefix (#n: nat{n >= 32}) (a: BV.bv_t n) (m: nat{m > 0}): Lemma
   (ensures forall (i: nat{i > 0}).

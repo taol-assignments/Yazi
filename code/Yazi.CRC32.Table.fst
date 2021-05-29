@@ -12,6 +12,8 @@ module Seq = FStar.Seq
 module U32 = FStar.UInt32
 
 open FStar.Tactics
+open Lib.Seq
+open Lib.UInt
 open LowStar.BufferOps
 open Spec.CRC32
 
@@ -70,8 +72,7 @@ let gen_polynomial _: Tot crc32_polynomial =
 
 let poly_mod_head_zero (d: U32.t): Lemma
   (requires UInt.nth (U32.v d) 31 == false)
-  (ensures poly_mod_correct 1 d (U32.shift_right d 1ul)) =
-  ()
+  (ensures poly_mod_correct 1 d (U32.shift_right d 1ul)) = ()
 
 let bv_one_aux (#n: nat{n > 0}) (v: BV.bv_t n): Lemma
   (requires forall i.
@@ -212,12 +213,6 @@ let gen_crc32_table t8 t16 t24 t32 =
   gen_large_table 8 0ul t8 t8 t16;
   gen_large_table 16 0ul t8 t16 t24;
   gen_large_table 24 0ul t8 t24 t32
-
-#set-options "--z3rlimit 120 --fuel 128 --ifuel 128 --z3seed 13"
-let one_shift_left (s: U32.t{U32.v s < 32}): Lemma
-  (ensures forall (i: nat{i < 32}).
-    (i == 31 - U32.v s ==> UInt.nth (U32.v (U32.shift_left 1ul s)) i == true) /\
-    (i <> 31 - U32.v s ==> UInt.nth (U32.v (U32.shift_left 1ul s)) i == false)) = ()
 
 #set-options "--fuel 1 --ifuel 1"
 let rec gf2_matrix_init

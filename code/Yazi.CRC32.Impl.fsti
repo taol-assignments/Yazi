@@ -106,7 +106,7 @@ val gf2_matrix_times:
   (ensures fun h0 res h1 -> B.(modifies loc_none h0 h1))
 
 [@ (CPrologue
-  "uint32_t crc32_combine64(uint32_t crc1, uint32_t crc2, uint64_t len2);\nuint32_t crc32_combine(uint32_t crc1, uint32_t crc2, uint32_t len2);")]
+  "uint32_t crc32_combine64(uint32_t crc1, uint32_t crc2, uint64_t len2);uint32_t crc32_combine(uint32_t crc1, uint32_t crc2, uint32_t len2);")]
 val gf2_matrix_square:
     nzeros: Ghost.erased nat{nzeros > 0}
   -> b0: matrix_buf

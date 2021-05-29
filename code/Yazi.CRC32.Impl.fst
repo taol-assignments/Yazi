@@ -8,6 +8,7 @@ module UInt = FStar.UInt
 
 open FStar.Mul
 open FStar.Seq
+open Lib.UInt
 open LowStar.BufferOps
 open Spec.CRC32
 
@@ -71,42 +72,6 @@ private unfold let do_post_cond
   Seq.equal data' (d.data @| (Seq.slice base' 0 i')) /\
   
   crc32_matched (d.dlen + i') data' crc' false
-    
-#set-options "--z3rlimit 120 --z3seed 1 --fuel 16 --ifuel 16"
-let rec cast_zero_prefix (#n: nat) (v: UInt.uint_t n) (m: nat{m >= n}): Lemma
-  (requires pow2 n <= pow2 m)
-  (ensures UInt.to_vec #m v == (Seq.create (m - n) false) @| (UInt.to_vec v)) =
-  match m - n with
-  | 0 -> assert(Seq.equal (UInt.to_vec #m v) ((Seq.create (m - n) false) @| (UInt.to_vec v)))
-  | _ ->
-    if n >= 1 then
-      calc (==) {
-        UInt.to_vec #m v;
-        =={}
-        (UInt.to_vec #(m - 1) (v / 2)) @| (Seq.create 1 (v % 2 = 1));
-        =={
-          Math.Lemmas.pow2_le_compat (m - 1) (n - 1);
-          assert(v / 2 <= pow2 (n - 1));
-          cast_zero_prefix #(n - 1) (v / 2) (m - 1)
-        }
-        ((Seq.create (m - n) false) @| (UInt.to_vec #(n - 1) (v / 2))) @|
-        (Seq.create 1 (v % 2 = 1));
-        =={
-          Seq.append_assoc
-            (Seq.create (m - n) false)
-            (UInt.to_vec #(n - 1) (v / 2))
-            (Seq.create 1 (v % 2 = 1))
-        }
-        (Seq.create (m - n) false) @|
-        ((UInt.to_vec #(n - 1) (v / 2)) @| (Seq.create 1 (v % 2 = 1)));
-        =={}
-        (Seq.create (m - n) false) @| (UInt.to_vec v);
-      }
-    else begin
-      assert(Seq.equal (UInt.to_vec #m v) (Seq.create m false));
-      assert(UInt.to_vec #n v == Seq.empty #bool);
-      assert(Seq.equal (UInt.to_vec #m v) ((Seq.create m false) @| (Seq.empty #bool)))
-    end
 
 private unfold let u8_padding
   (b: U8.t)
@@ -150,20 +115,6 @@ let do1_logxor
   else
     assert(Seq.equal (zero_vec_l 24 (UInt.to_vec (U8.v b))) vb32)
   
-#set-options "--z3rlimit 200 --ifuel 128 --fuel 128 --z3seed 1"
-let logand_256 (r: U32.t): Lemma
-  (ensures forall (i: nat{i < 32}).
-    (i < 32 - 8 ==> UInt.nth (U32.v (U32.logand r 0xFFul)) i == false) /\
-    (i >= 32 - 8 ==> UInt.nth (U32.v (U32.logand r 0xFFul)) i == UInt.nth (U32.v r) i)) =
-  let open U32 in
-  let mask = v 0xFFul in
-  assert(forall (i: nat{i < 32}).
-    (i < 32 - 8 ==> UInt.nth mask i == false) /\
-    (i >= 32 - 8 ==> UInt.nth mask i == true));
-  assert(forall (i: nat{i < 32}).
-    (i < 32 - 8 ==> UInt.nth (UInt.logand (v r) (v 0xFFul)) i == false) /\
-    (i >= 32 - 8 ==> UInt.nth (UInt.logand (v r) (v 0xFFul)) i == UInt.nth (U32.v r) i))
-
 #set-options "--z3seed 1 --fuel 0 --ifuel 0"
 let do1_shift_right_logxor (r: U32.t) (t: U32.t): Lemma
   (requires poly_mod_correct 8 (U32.logand r 0xFFul) t)
@@ -553,19 +504,6 @@ let crc32_impl tg crc len buf d =
   ST.pop_frame ();
   crc32_matched_xor_inv_2 (d.dlen + v len) d2 c2;
   c2 ^^ 0xFFFFFFFFul
-
-#set-options "--fuel 1 --ifuel 1"
-let logand_one_ne (#n: nat{n > 0}) (a: UInt.uint_t n): Lemma
-  (requires UInt.logand a (UInt.one n) <> 1)
-  (ensures UInt.logand a (UInt.one n) == 0) =
-  let one = UInt.one n in
-  let s = UInt.logand a one in
-  uint_one_vec one;
-  assert(forall i. i < n - 1 ==> UInt.nth s i == false);
-  if UInt.nth (UInt.logand a one) (n - 1) then
-    UInt.nth_lemma s one
-  else
-    UInt.nth_lemma s (UInt.zero n)
 
 #set-options "--fuel 0 --ifuel 0"
 inline_for_extraction

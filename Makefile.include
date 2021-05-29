@@ -15,7 +15,7 @@ endif
 # I prefer to always check all fst files in the source directories; otherwise,
 # it's too easy to add a new file only to find out later that it's not being
 # checked. Note the usage of YAZI_HOME
-SOURCE_DIRS = $(YAZI_HOME)/code $(YAZI_HOME)/specs
+SOURCE_DIRS = $(YAZI_HOME)/code $(YAZI_HOME)/specs $(YAZI_HOME)/lib
 
 # We want our source tree on the include path, along with pre-built ulib and
 # kremlib so that F* can reuse these build artifacts rather than reverify F* and
