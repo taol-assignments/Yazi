@@ -1,5 +1,5 @@
 [
-  "µx…]\u0010øÕ\u0007\u0005²WU1ªxj",
+  "~}ú\r=hz¾\u0017…)÷û\u0014¸U",
   [
     [
       "Yazi.Adler32.empty_seq_aux",
@@ -13,7 +13,7 @@
         "typing_LowStar.Buffer.trivial_preorder"
       ],
       0,
-      "1c0a8823ffe4828d766d8bed368eb1b4"
+      "a0b8dbfc31df4db2947e701ed718cd6d"
     ],
     [
       "Yazi.Adler32.adler32",
@@ -38,7 +38,48 @@
         "typing_LowStar.Monotonic.Buffer.length", "typing_Spec.Adler32.input"
       ],
       0,
-      "9ca82fab89a02e8fcef8ef049efc02e2"
+      "abc6542532372c3df10d2b893b1f099a"
+    ],
+    [
+      "Yazi.Adler32.adler32_combine64",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Adler32.input",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_14c9c2b72600489f45acf1262e6cedf9",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_FStar.Ghost.reveal", "typing_FStar.UInt8.t",
+        "typing_Spec.Adler32.input"
+      ],
+      0,
+      "4dd199281e2ff481387f7507230232c9"
+    ],
+    [
+      "Yazi.Adler32.adler32_combine",
+      1,
+      2,
+      1,
+      [ "@query" ],
+      0,
+      "74bbddb299e481f8c80fb5d19403436c"
+    ],
+    [
+      "Yazi.Adler32.adler32_combine",
+      2,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "refinement_interpretation_Tm_refine_c910d8a5fe034e0b618ee2f4fb9d186b"
+      ],
+      0,
+      "e44bf54fe9ea30732c355220d38c4851"
     ]
   ]
 ]
