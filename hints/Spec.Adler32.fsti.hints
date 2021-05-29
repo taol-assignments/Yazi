@@ -1,0 +1,342 @@
+[
+  "\u0002ÿhP\bišÚ\u0000\u0003Ô0-÷m’",
+  [
+    [
+      "Spec.Adler32.sum_seq",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt8_pretyping_512f0e4172b97206a8b0e16196475713", "b2t_def",
+        "binder_x_295824e592ae7f8981d978330ccb642d_1",
+        "binder_x_bb4e1c9af0265270f8e7a5f250f730e2_0",
+        "equation_FStar.Seq.Properties.tail", "equation_FStar.UInt.fits",
+        "equation_FStar.UInt.min_int", "equation_FStar.UInt.size",
+        "equation_FStar.UInt.uint_t", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Adler32.input", "int_inversion",
+        "int_typing", "lemma_FStar.Seq.Base.lemma_len_slice",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_AmpAmp",
+        "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_14c9c2b72600489f45acf1262e6cedf9",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
+        "typing_FStar.UInt8.t", "well-founded-ordering-on-nat"
+      ],
+      0,
+      "6df6ea4f881d4c04c618faf34a878c27"
+    ],
+    [
+      "Spec.Adler32.sum_a",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Adler32.sum_seq.fuel_instrumented",
+        "@query", "equation_Prims.nat", "int_inversion",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_Spec.Adler32.sum_seq"
+      ],
+      0,
+      "ff16210dae64c9a95805e91ed04f7964"
+    ],
+    [
+      "Spec.Adler32.sum_a_upper_bound",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.nat",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_Multiply",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
+      ],
+      0,
+      "73623b0bee260f9e013a47dc98318fdc"
+    ],
+    [
+      "Spec.Adler32.sum_seq_append_byte",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt8_pretyping_512f0e4172b97206a8b0e16196475713",
+        "equation_FStar.Seq.Properties.snoc", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Adler32.input", "int_inversion",
+        "int_typing", "lemma_FStar.Seq.Base.lemma_create_len",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_14c9c2b72600489f45acf1262e6cedf9",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_FStar.Seq.Base.create", "typing_FStar.UInt8.t"
+      ],
+      0,
+      "597c518902923a122de613c63938a695"
+    ],
+    [
+      "Spec.Adler32.sum_seq_upper_bound",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.nat",
+        "primitive_Prims.op_Multiply", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
+      ],
+      0,
+      "7208d03fcd49e773d3175b5d49243471"
+    ],
+    [
+      "Spec.Adler32.sum_seq_upper_bound_aux",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
+        "@fuel_correspondence_Spec.Adler32.sum_seq.fuel_instrumented",
+        "@fuel_irrelevance_Prims.pow2.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Adler32.sum_seq.fuel_instrumented", "@query",
+        "b2t_def", "binder_x_295824e592ae7f8981d978330ccb642d_1",
+        "binder_x_bb4e1c9af0265270f8e7a5f250f730e2_0",
+        "equation_FStar.Seq.Properties.tail", "equation_FStar.UInt.fits",
+        "equation_FStar.UInt.max_int", "equation_FStar.UInt.size",
+        "equation_FStar.UInt.uint_t", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Adler32.input",
+        "equation_Spec.Adler32.sum_seq_upper_bound",
+        "equation_with_fuel_Spec.Adler32.sum_seq.fuel_instrumented",
+        "int_inversion", "int_typing",
+        "lemma_FStar.Seq.Base.lemma_len_slice",
+        "lemma_FStar.UInt.pow2_values", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_AmpAmp", "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_LessThanOrEqual", "primitive_Prims.op_Multiply",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_14c9c2b72600489f45acf1262e6cedf9",
+        "refinement_interpretation_Tm_refine_167ef714932ec832fb671890fc3eee6c",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
+        "typing_FStar.Seq.Properties.head", "typing_FStar.UInt8.t",
+        "typing_FStar.UInt8.v", "typing_Spec.Adler32.sum_seq_upper_bound",
+        "well-founded-ordering-on-nat"
+      ],
+      0,
+      "18465993c198c6aef773fa944131518e"
+    ],
+    [
+      "Spec.Adler32.sum_a_seq_u64_upper_bound",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
+        "@fuel_correspondence_Spec.Adler32.sum_seq.fuel_instrumented",
+        "@fuel_irrelevance_Prims.pow2.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Adler32.sum_seq.fuel_instrumented", "@query",
+        "equation_FStar.UInt.max_int", "equation_Prims.nat",
+        "equation_Spec.Adler32.base",
+        "equation_Spec.Adler32.sum_seq_upper_bound", "int_typing",
+        "lemma_FStar.UInt.pow2_values",
+        "lemma_Spec.Adler32.sum_seq_upper_bound_aux",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_Modulus",
+        "primitive_Prims.op_Multiply", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_acb5998c326faf921fae850df3bc818b"
+      ],
+      0,
+      "985e32b68ec367668f7da21ce56e5c1e"
+    ],
+    [
+      "Spec.Adler32.sum_a_append",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Adler32.input", "int_inversion",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_14c9c2b72600489f45acf1262e6cedf9",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_FStar.UInt8.t"
+      ],
+      0,
+      "68e1b87de3e34181edf046781063c033"
+    ],
+    [
+      "Spec.Adler32.sum_b'",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt8_pretyping_512f0e4172b97206a8b0e16196475713", "b2t_def",
+        "binder_x_295824e592ae7f8981d978330ccb642d_1",
+        "binder_x_bb4e1c9af0265270f8e7a5f250f730e2_0",
+        "equation_FStar.Seq.Properties.tail", "equation_FStar.UInt.fits",
+        "equation_FStar.UInt.min_int", "equation_FStar.UInt.size",
+        "equation_FStar.UInt.uint_t", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Adler32.input", "int_inversion",
+        "int_typing", "lemma_FStar.Seq.Base.lemma_len_slice",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_AmpAmp",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Multiply", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_14c9c2b72600489f45acf1262e6cedf9",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
+        "typing_FStar.UInt8.t", "well-founded-ordering-on-nat"
+      ],
+      0,
+      "96faba09d6452544f1918d5a482ee99a"
+    ],
+    [
+      "Spec.Adler32.sum_b_append",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Adler32.input", "int_inversion",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_14c9c2b72600489f45acf1262e6cedf9",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_FStar.UInt8.t"
+      ],
+      0,
+      "66a4c0f68b750a7335df4f96d520df41"
+    ],
+    [
+      "Spec.Adler32.sum_b_upper_bound",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.nat",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_Division",
+        "primitive_Prims.op_Multiply", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
+      ],
+      0,
+      "35e9691bbda98803020e67ed8a0012c5"
+    ],
+    [
+      "Spec.Adler32.sum_b'_upper_bound_aux",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Adler32.sum_b_.fuel_instrumented",
+        "@query", "equation_Prims.nat", "equation_Spec.Adler32.sum_b",
+        "equation_with_fuel_Spec.Adler32.sum_b_.fuel_instrumented",
+        "int_inversion", "lemma_Spec.Adler32.sum_b_upper_bound_aux",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_Spec.Adler32.sum_b_"
+      ],
+      0,
+      "fbe649d379062b1c6848b551181ce328"
+    ],
+    [
+      "Spec.Adler32.sum_b'_sum_seq",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt8_pretyping_512f0e4172b97206a8b0e16196475713",
+        "equation_FStar.Seq.Properties.snoc", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Adler32.input", "int_inversion",
+        "int_typing", "lemma_FStar.Seq.Base.lemma_create_len",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_14c9c2b72600489f45acf1262e6cedf9",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_FStar.Seq.Base.create", "typing_FStar.UInt8.t"
+      ],
+      0,
+      "b9f02b24bf7ee44876058767fec20411"
+    ],
+    [
+      "Spec.Adler32.sum_b'_u64_uppser_bound",
+      1,
+      0,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
+        "@fuel_correspondence_Spec.Adler32.sum_b_.fuel_instrumented",
+        "@query", "equation_FStar.UInt.max_int", "equation_Prims.nat",
+        "equation_Spec.Adler32.base", "equation_Spec.Adler32.nmax",
+        "equation_Spec.Adler32.sum_b_upper_bound", "int_inversion",
+        "int_typing", "lemma_FStar.UInt.pow2_values",
+        "lemma_Spec.Adler32.sum_b__upper_bound_aux",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_Division",
+        "primitive_Prims.op_Modulus", "primitive_Prims.op_Multiply",
+        "primitive_Prims.op_Subtraction", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_a807b862d4810618313f8e8fe134573b"
+      ],
+      0,
+      "47d24b0fafa55b837714dc0cb9fe8368"
+    ],
+    [
+      "Spec.Adler32.adler32_pair",
+      1,
+      0,
+      1,
+      [
+        "@query", "equation_Spec.Adler32.base",
+        "projection_inverse_BoxInt_proj_0"
+      ],
+      0,
+      "35ed5a74adb021409dd97120f30cc26b"
+    ],
+    [
+      "Spec.Adler32.adler32_matched",
+      1,
+      0,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented", "@query",
+        "b2t_def", "equation_FStar.UInt.fits", "equation_FStar.UInt.max_int",
+        "equation_FStar.UInt.min_int", "equation_FStar.UInt.size",
+        "equation_Prims.nat", "equation_Spec.Adler32.base", "int_inversion",
+        "int_typing", "lemma_FStar.UInt.pow2_values",
+        "primitive_Prims.op_AmpAmp", "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Modulus", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_da1b0dfb8283502ec162998a8bbb6431"
+      ],
+      0,
+      "0003ac7f4421eb081eb7df23f67b2bdf"
+    ]
+  ]
+]
