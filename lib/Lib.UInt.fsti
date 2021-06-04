@@ -1,8 +1,12 @@
 module Lib.UInt
 
+module BV = FStar.BitVector
+module Math = FStar.Math.Lemmas
 module U32 = FStar.UInt32
 module UInt = FStar.UInt
 module Seq = FStar.Seq
+
+open FStar.Mul
 
 #set-options "--z3rlimit 120 --z3seed 1 --fuel 16 --ifuel 16"
 val cast_zero_prefix:
@@ -79,3 +83,29 @@ let one_shift_left (s: U32.t{U32.v s < 32}): Lemma
   (ensures forall (i: nat{i < 32}).
     (i == 31 - U32.v s ==> UInt.nth (U32.v (U32.shift_left 1ul s)) i == true) /\
     (i <> 31 - U32.v s ==> UInt.nth (U32.v (U32.shift_left 1ul s)) i == false)) = ()
+
+let logxor_logand_distr (#n: nat{n > 0}) (a b c: UInt.uint_t n): Lemma
+  (ensures
+    UInt.logand (UInt.logxor a b) c ==
+    UInt.logxor (UInt.logand a c) (UInt.logand b c)) =
+  assert(Seq.equal
+    (UInt.to_vec (UInt.logand (UInt.logxor a b) c))
+    (UInt.to_vec (UInt.logxor (UInt.logand a c) (UInt.logand b c))))
+
+#set-options "--fuel 0 --ifuel 0"
+let shift_left_append (#n: nat{n > 0}) (a s1 s2: UInt.uint_t n): Lemma
+  (ensures UInt.shift_left (UInt.shift_left a s1) s2 == UInt.shift_left a (s1 + s2))
+  [SMTPat (UInt.shift_left (UInt.shift_left a s1) s2)] =
+  calc (==) {
+    UInt.shift_left (UInt.shift_left a s1) s2;
+    =={}
+    (((a * pow2 s1) % pow2 n) * pow2 s2) % pow2 n;
+    =={Math.lemma_mod_mul_distr_l (a * pow2 s1) (pow2 s2) (pow2 n)}
+    ((a * pow2 s1) * pow2 s2) % pow2 n;
+    =={Math.paren_mul_right a (pow2 s1) (pow2 s2)}
+    (a * ((pow2 s1) * (pow2 s2))) % pow2 n;
+    =={Math.pow2_plus s1 s2}
+    (a * pow2 (s1 + s2)) % pow2 n;
+    =={UInt.shift_left_value_lemma a (s1 + s2)}
+    UInt.shift_left a (s1 + s2);
+  }

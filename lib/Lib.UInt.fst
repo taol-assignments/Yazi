@@ -1,5 +1,6 @@
 module Lib.UInt
 
+module BV = FStar.BitVector
 module U32 = FStar.UInt32
 module UInt = FStar.UInt
 
