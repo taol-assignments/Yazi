@@ -45,7 +45,7 @@ FSTAR_EXTRACT = --extract '-* -Spec'
 FSTAR_NO_FLAGS = $(FSTAR_HOME)/bin/fstar.exe $(FSTAR_HINTS) \
   --odir obj --cache_checked_modules $(FSTAR_INCLUDES) --cmi \
   --already_cached 'Prims FStar LowStar TestLib' --warn_error '+241@247+285' \
-  --cache_dir obj --hint_dir hints
+  --cache_dir obj --hint_dir hints --z3rlimit 120
 
 # Initial dependency analysis
 # ---------------------------
@@ -192,6 +192,7 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	  -minimal \
 	  -bundle 'FStar.*' \
 	  -add-include '<stdint.h>' \
+	  -add-include '<string.h>' \
 	  -add-early-include '"Yazi_Allocator.h"' \
 	  -add-include '"kremlin/internal/target.h"' \
 	  -o libz.a

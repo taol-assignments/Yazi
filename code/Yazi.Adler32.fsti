@@ -9,13 +9,7 @@ module Seq = FStar.Seq
 module HS = FStar.HyperStack
 module ST = FStar.HyperStack.ST
 
-let empty_seq_aux (#a: Type) (h: HS.mem) (buf: B.buffer a) (s: Seq.seq a): Lemma
-  (requires B.length buf == 0)
-  (ensures Seq.append s (B.as_seq h buf) == s)
-  [SMTPat (Seq.append s (B.as_seq h buf))] =
-  assert(Seq.length (B.as_seq h buf) == 0);
-  Seq.lemma_empty (B.as_seq h buf);
-  Seq.append_empty_r s
+open Lib.Buffer
 
 [@ (CPrologue "uint32_t adler32_z(uint32_t adler, const unsigned char *buf, size_t len);")]
 val adler32:

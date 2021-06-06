@@ -31,7 +31,7 @@ type window_mask (bits: window_bits) = m: nat{is_window_mask bits m}
 unfold let is_window_size (b: window_bits) (s: nat) = s == pow2 b
 type window_size (bits: window_bits) = s: nat{is_window_size bits s}
 
-#set-options "--z3rlimit 120 --fuel 4 --ifuel 4"
+#set-options "--z3rlimit 120 --fuel 8 --ifuel 8"
 let is_rolling_hash (bits: hash_bits) (a b c: U8.t) (h: U16.t) =
   let open FStar.Mul in
   let shift = (bits + min_match - 1) / min_match in
