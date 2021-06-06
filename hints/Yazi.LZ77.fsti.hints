@@ -1,0 +1,31 @@
+[
+  "+Ô∫8'\u001dä\u007f∏Ñny~\u0005ø∂",
+  [
+    [
+      "Yazi.LZ77.read_buf",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_FStar.UInt.uint_t", "equation_LowStar.Buffer.buffer",
+        "equation_LowStar.Buffer.pointer",
+        "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
+        "equation_Yazi.LZ77.stream_state", "int_inversion",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_GreaterThan",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_373541f973617a3b14bcb71b47128e0a",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_573cfed777dae20cc82e8fef9622857e",
+        "refinement_interpretation_Tm_refine_662a9e96bb2c01fe2ff5fc9df1dd18d8",
+        "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
+        "typing_FStar.UInt32.t", "typing_FStar.UInt32.v",
+        "typing_LowStar.Buffer.trivial_preorder"
+      ],
+      0,
+      "087bb7c4fc4af9783ad4cde2e7371718"
+    ]
+  ]
+]

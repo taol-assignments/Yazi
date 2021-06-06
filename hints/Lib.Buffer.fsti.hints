@@ -1,0 +1,19 @@
+[
+  "ŽXÖ9ô•Xh¯X{â\tÖÃc",
+  [
+    [
+      "Lib.Buffer.append_empty_buf_r",
+      1,
+      2,
+      1,
+      [
+        "@query", "equation_LowStar.Buffer.buffer",
+        "equation_LowStar.Buffer.trivial_preorder",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "typing_LowStar.Buffer.trivial_preorder"
+      ],
+      0,
+      "97f0b2b7ed955bb7f9230d77f8bf45fc"
+    ]
+  ]
+]

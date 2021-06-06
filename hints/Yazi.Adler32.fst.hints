@@ -2,21 +2,6 @@
   "†\u000f\rOÂÇ¢uäY¢çˆ\u000fÛ≤",
   [
     [
-      "Yazi.Adler32.empty_seq_aux",
-      1,
-      0,
-      0,
-      [
-        "@query", "equation_FStar.Seq.Base.op_At_Bar",
-        "equation_LowStar.Buffer.buffer",
-        "equation_LowStar.Buffer.trivial_preorder",
-        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
-        "typing_LowStar.Buffer.trivial_preorder"
-      ],
-      0,
-      "31af03485a8ca7944e795a5763abbb6f"
-    ],
-    [
       "Yazi.Adler32.base_64_correct",
       1,
       2,
@@ -41,7 +26,7 @@
         "typing_Yazi.Adler32.base64"
       ],
       0,
-      "4e7d7942e8b43aa3158218953ee94c21"
+      "276e9edee972b5d4dd4c9fb381c99713"
     ],
     [
       "Yazi.Adler32.nmax32_correct",
@@ -68,7 +53,7 @@
         "typing_Yazi.Adler32.nmax32"
       ],
       0,
-      "8550b019414d55eaae4e19cc9f5bd1bb"
+      "330396f0dd560dce3a779bb71790d289"
     ],
     [
       "Yazi.Adler32.__proj__Mkdo_init_state__item__data",
@@ -80,7 +65,7 @@
         "projection_inverse_Yazi.Adler32.Mkdo_init_state_dlen"
       ],
       0,
-      "460a5345c1e837d2733354d8dfe29ec3"
+      "8cd22951ecf1216cfc54cdffc026917d"
     ],
     [
       "Yazi.Adler32.__proj__Mkdo_state__item__consumed",
@@ -92,7 +77,7 @@
         "projection_inverse_Yazi.Adler32.Mkdo_state_clen"
       ],
       0,
-      "5eff1dfafb244357cdec3ee2b3c90fea"
+      "05c2577310762a1e53f4d7538475b98c"
     ],
     [
       "Yazi.Adler32.sum_a_state",
@@ -104,7 +89,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "35a09fd638dbc623c46065d5e2cc44d6"
+      "285d18309621cebbc7fa523cd5962d30"
     ],
     [
       "Yazi.Adler32.sum_b_state",
@@ -116,7 +101,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "f4bd46954222b16e85c7b4b2c5bfc93c"
+      "85c6240329a71579762daa2cd6168247"
     ],
     [
       "Yazi.Adler32.do_pre_cond",
@@ -125,7 +110,7 @@
       0,
       [ "@query" ],
       0,
-      "fc8c99e3c72df783f656e2582623af3a"
+      "189e31ea22b4ff32dc69abd0dc9ddf43"
     ],
     [
       "Yazi.Adler32.do_post_cond",
@@ -160,7 +145,7 @@
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__stream"
       ],
       0,
-      "da1d17da1c90985a67c72a1adbfe345c"
+      "78c92ba3be83bbb625ab6de97a8c7e5e"
     ],
     [
       "Yazi.Adler32.sum_a_state_mod",
@@ -181,7 +166,7 @@
         "typing_FStar.UInt8.t"
       ],
       0,
-      "4c7b6e10bee338f82c14a79835215da3"
+      "6ed1b12b074c1779ffae257f53634365"
     ],
     [
       "Yazi.Adler32.sum_b_state_mod",
@@ -206,7 +191,7 @@
         "typing_FStar.UInt8.t"
       ],
       0,
-      "ae40beb06abb13e60375469644f1ee4e"
+      "d88aa7f9a80fe0cbd1e4270d13c71db4"
     ],
     [
       "Yazi.Adler32.do1",
@@ -332,7 +317,7 @@
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__stream"
       ],
       0,
-      "76cb81ed916883b64d4f4e5e95c05024"
+      "ecd42e9dd1734e3b638cc26872b51e8d"
     ],
     [
       "Yazi.Adler32.iteration_1",
@@ -426,7 +411,7 @@
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__stream"
       ],
       0,
-      "fa648339b3e2298fca933476b9fca325"
+      "cc420d30420cbf6d89bda92461ed88c6"
     ],
     [
       "Yazi.Adler32.iteration_1_remaining",
@@ -526,7 +511,7 @@
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__stream"
       ],
       0,
-      "b7e55461262d3c8064741f7364c3381b"
+      "21754940d28c04762966218f96414d58"
     ],
     [
       "Yazi.Adler32.do2",
@@ -606,7 +591,7 @@
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__stream"
       ],
       0,
-      "95a9f0abff084133c65747846c10d661"
+      "bbffc771a2ce8f5ed514158c38c56361"
     ],
     [
       "Yazi.Adler32.do4",
@@ -685,7 +670,7 @@
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__stream"
       ],
       0,
-      "c658e316630c0216a098bc201ffca6d8"
+      "e9c0402c65dfad1f89185c7739d15477"
     ],
     [
       "Yazi.Adler32.do8",
@@ -764,7 +749,7 @@
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__stream"
       ],
       0,
-      "64ce7306d32e6385fcb8a757305aae61"
+      "c19dd98ce8144bace397fe355670c09d"
     ],
     [
       "Yazi.Adler32.do16",
@@ -843,7 +828,7 @@
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__stream"
       ],
       0,
-      "6f5d9c8a0628719abd6187632700ce72"
+      "3245396648152338ab07ab462c863a51"
     ],
     [
       "Yazi.Adler32.iteration_16",
@@ -935,7 +920,7 @@
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__stream"
       ],
       0,
-      "1293002fd938879cdb9730a2da7f4ee0"
+      "586e00961fe15e7fd620f08c43ebb6c5"
     ],
     [
       "Yazi.Adler32.extract_sums",
@@ -992,7 +977,7 @@
         "typing_FStar.UInt32.v"
       ],
       0,
-      "2e63664ba8fa4e990b402667e7e6dfb4"
+      "8da0ada947ae7273e53a5a8b8bd03c97"
     ],
     [
       "Yazi.Adler32.combine_sums",
@@ -1065,7 +1050,7 @@
         "typing_Spec.Adler32.input"
       ],
       0,
-      "de71255459c62b73737233c163c35487"
+      "b55029755ec20465bfb5e435f014cab4"
     ],
     [
       "Yazi.Adler32.init_state'",
@@ -1074,7 +1059,7 @@
       0,
       [ "@query" ],
       0,
-      "54d485f85d79455bfa6674cf3a6b2228"
+      "fcc01dde2d0b070af225d3e92489eeb2"
     ],
     [
       "Yazi.Adler32.init_state'",
@@ -1095,7 +1080,7 @@
         "typing_LowStar.Monotonic.Buffer.length"
       ],
       0,
-      "688655affff1517bb8821931be29f1e5"
+      "4b5624e640acb135a57cc0c665321a91"
     ],
     [
       "Yazi.Adler32.init_state",
@@ -1104,7 +1089,7 @@
       0,
       [ "@query" ],
       0,
-      "5b21c1ba863fcd72fe9e7bd2d9450bf4"
+      "d79ed4d96ce420b520cd6e3fff97cfa7"
     ],
     [
       "Yazi.Adler32.init_state",
@@ -1140,7 +1125,7 @@
         "typing_Spec.Adler32.sum_seq", "typing_Yazi.Adler32.extract_sums"
       ],
       0,
-      "9b834e5a394f5deb4d560f44b01df75f"
+      "7c70dd4190bea66e8f248387fe28ad7c"
     ],
     [
       "Yazi.Adler32.do_iteration_nmax",
@@ -1278,7 +1263,7 @@
         "typing_Yazi.Adler32.nmax32"
       ],
       0,
-      "d704d208edb9940976adb6f0e4f8b4b1"
+      "30849de121ea2721577fb0ce3388417e"
     ],
     [
       "Yazi.Adler32.iteration_nmax",
@@ -1402,7 +1387,7 @@
         "typing_Yazi.Adler32.extract_sums"
       ],
       0,
-      "977b154a1674e3f1b74d081787f5e1a5"
+      "bec6df0ae48ade79d6e94ad4f2a25531"
     ],
     [
       "Yazi.Adler32.adler32",
@@ -1548,7 +1533,7 @@
         "typing_Yazi.Adler32.extract_sums"
       ],
       0,
-      "89a979b256e965ea037faaf7fdc44a0a"
+      "7231a99cd098134ac50d75a797e66e4f"
     ],
     [
       "Yazi.Adler32.adler32",
@@ -1601,10 +1586,11 @@
         "lemma_FStar.Seq.Base.lemma_index_app2",
         "lemma_FStar.Seq.Base.lemma_len_append",
         "lemma_FStar.Seq.Base.lemma_len_slice",
+        "lemma_FStar.Seq.Properties.slice_is_empty",
         "lemma_FStar.Seq.Properties.slice_length",
         "lemma_FStar.Set.lemma_equal_refl", "lemma_FStar.UInt.pow2_values",
         "lemma_FStar.UInt.shift_right_value_lemma",
-        "lemma_FStar.UInt32.vu_inv",
+        "lemma_FStar.UInt32.vu_inv", "lemma_Lib.Buffer.append_empty_buf_r",
         "lemma_LowStar.Monotonic.Buffer.lemma_live_equal_mem_domains",
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "lemma_LowStar.Monotonic.Buffer.length_null_1",
@@ -1616,11 +1602,11 @@
         "lemma_LowStar.Monotonic.Buffer.modifies_trans_linear",
         "lemma_Spec.Adler32.sum_b__upper_bound_aux",
         "lemma_Spec.Adler32.sum_seq_upper_bound_aux",
-        "lemma_Yazi.Adler32.empty_seq_aux", "primitive_Prims.op_Addition",
-        "primitive_Prims.op_AmpAmp", "primitive_Prims.op_Division",
-        "primitive_Prims.op_Equality", "primitive_Prims.op_LessThan",
-        "primitive_Prims.op_LessThanOrEqual", "primitive_Prims.op_Modulus",
-        "primitive_Prims.op_Multiply", "primitive_Prims.op_Subtraction",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_AmpAmp",
+        "primitive_Prims.op_Division", "primitive_Prims.op_Equality",
+        "primitive_Prims.op_LessThan", "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Modulus", "primitive_Prims.op_Multiply",
+        "primitive_Prims.op_Subtraction",
         "proj_equation_Yazi.Adler32.Mkdo_init_state_base",
         "proj_equation_Yazi.Adler32.Mkdo_init_state_blen",
         "proj_equation_Yazi.Adler32.Mkdo_init_state_data",
@@ -1663,6 +1649,7 @@
         "refinement_interpretation_Tm_refine_8a26f94a65d964259ebbb50482d92f8f",
         "refinement_interpretation_Tm_refine_aac77109d03701060a9eccb3c030f4a5",
         "refinement_interpretation_Tm_refine_ac201cf927190d39c033967b63cb957b",
+        "refinement_interpretation_Tm_refine_b361ba8089a6e963921008d537e799a1",
         "refinement_interpretation_Tm_refine_b6a3cafc76ea004fb36b97efd3fa4f84",
         "refinement_interpretation_Tm_refine_b913a3f691ca99086652e0a655e72f17",
         "refinement_interpretation_Tm_refine_d15a9766d4c1ec94d1574f05b54a618b",
@@ -1687,8 +1674,8 @@
         "typing_LowStar.Monotonic.Buffer.length",
         "typing_LowStar.Monotonic.Buffer.loc_buffer",
         "typing_LowStar.Monotonic.Buffer.loc_none",
-        "typing_Spec.Adler32.input", "typing_Spec.Adler32.sum_b_",
-        "typing_Spec.Adler32.sum_seq",
+        "typing_Spec.Adler32.input", "typing_Spec.Adler32.nmax",
+        "typing_Spec.Adler32.sum_b_", "typing_Spec.Adler32.sum_seq",
         "typing_Yazi.Adler32.__proj__Mkdo_init_state__item__base",
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__clen",
         "typing_Yazi.Adler32.__proj__Mkdo_state__item__consumed",
@@ -1697,7 +1684,7 @@
         "typing_Yazi.Adler32.extract_sums"
       ],
       0,
-      "78b936b8332a9db4c80c1fd1573b14b9"
+      "67caef26d600183a7f311da534cfb720"
     ],
     [
       "Yazi.Adler32.adler32_combine64",
@@ -1717,7 +1704,7 @@
         "typing_Spec.Adler32.input"
       ],
       0,
-      "81ef9465573078c34d700d40aa7f9128"
+      "a94887d5c6d80c3a9bfd97ea80f9b06d"
     ],
     [
       "Yazi.Adler32.adler32_combine64",
@@ -1726,7 +1713,7 @@
       0,
       [ "@query" ],
       0,
-      "a1f93711aece25cfdea168d15440e76c"
+      "199a857e37d619be97fe2f9527b0803f"
     ],
     [
       "Yazi.Adler32.adler32_combine64",
@@ -1809,7 +1796,7 @@
         "typing_Spec.Adler32.input", "typing_Yazi.Adler32.extract_sums"
       ],
       0,
-      "8a5b6ce74e37f3d94c6c6f171cd14b71"
+      "19fe3eb4adb6d0a1b8397b4ad98e3708"
     ],
     [
       "Yazi.Adler32.adler32_combine",
@@ -1818,7 +1805,7 @@
       0,
       [ "@query" ],
       0,
-      "a9d83dbff91f2ab9e3e30ae2e7f069e1"
+      "de4261805c56ffaeef49eba1fda0fd62"
     ],
     [
       "Yazi.Adler32.adler32_combine",
@@ -1830,7 +1817,7 @@
         "refinement_interpretation_Tm_refine_c910d8a5fe034e0b618ee2f4fb9d186b"
       ],
       0,
-      "97fd5666a5fda4c33b75b9063ff94132"
+      "59cd466e1f65f6e0d63e52b27cadfe17"
     ]
   ]
 ]
