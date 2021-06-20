@@ -3,14 +3,9 @@ module Yazi.LZ77
 module B = LowStar.Buffer
 module CB = LowStar.ConstBuffer
 module CFlags = Yazi.CFlags
-module HS = FStar.HyperStack
-module I32 = FStar.Int32
 module S = Spec.LZ77
-module SS = Spec.Stream
-module Seq = FStar.Seq
 module ST = FStar.HyperStack.ST
 module U32 = FStar.UInt32
-module U8 = FStar.UInt8
 
 include Yazi.LZ77.Types
 
