@@ -4,18 +4,19 @@ module B = LowStar.Buffer
 module LB = Lib.Buffer
 module S = Spec.LZ77
 module ST = FStar.HyperStack.ST
+module U16 = FStar.UInt16
 module U32 = FStar.UInt32
+module U8 = FStar.UInt8
 
 open FStar.Mul
 open LowStar.BufferOps
-
-type lz77_state = B.lbuffer U32.t 8
+open Yazi.LZ77.Types
 
 inline_for_extraction
 let set_match_start
   (bits: Ghost.erased S.window_bits)
   (w_size: Ghost.erased (S.window_size bits))
-  (state: lz77_state)
+  (state: lz77_state_t)
   (match_start: U32.t{U32.v match_start < 2 * w_size}):
   ST.Stack unit
   (ensures fun h -> B.live h state)
@@ -26,7 +27,7 @@ let set_match_start
   state.(2ul) <- match_start
 
 inline_for_extraction
-let get_match_start (state: lz77_state):
+let get_match_start (state: lz77_state_t):
   ST.Stack U32.t
   (ensures fun h -> B.live h state)
   (requires fun h0 res h1 ->
@@ -38,7 +39,7 @@ inline_for_extraction
 let set_strstart
   (bits: Ghost.erased S.window_bits)
   (w_size: Ghost.erased (S.window_size bits))
-  (state: lz77_state)
+  (state: lz77_state_t)
   (strstart: U32.t{U32.v strstart < 2 * w_size}):
   ST.Stack unit
   (ensures fun h -> B.live h state)
@@ -49,7 +50,7 @@ let set_strstart
   state.(5ul) <- strstart
 
 inline_for_extraction
-let get_strstart (state: lz77_state):
+let get_strstart (state: lz77_state_t):
   ST.Stack U32.t
   (ensures fun h -> B.live h state)
   (requires fun h0 res h1 ->
@@ -58,7 +59,7 @@ let get_strstart (state: lz77_state):
   state.(5ul)
 
 inline_for_extraction
-let get_lookahead (state: lz77_state):
+let get_lookahead (state: lz77_state_t):
   ST.Stack U32.t
   (ensures fun h -> B.live h state)
   (requires fun h0 res h1 ->
@@ -67,7 +68,7 @@ let get_lookahead (state: lz77_state):
   state.(6ul)
 
 inline_for_extraction
-let get_insert (state: lz77_state):
+let get_insert (state: lz77_state_t):
   ST.Stack U32.t
   (ensures fun h -> B.live h state)
   (requires fun h0 res h1 ->
