@@ -117,31 +117,35 @@ unfold let head_valid
     head window
 
 #set-options "--z3rlimit 120 --fuel 0 --ifuel 0"
-let sub_prev_valid
+unfold let sub_prev_valid
   (h: HS.mem)
   (w_bits: U16.t {is_window_bits (U16.v w_bits)})
   (w_size: U32.t{is_window_size (U16.v w_bits) (U32.v w_size)})
+  (w_range: U32.t{U32.v w_range <= 2 * U32.v w_size})
   (range: (i: nat) -> (p: Type0{p ==> i < U32.v w_size}))
   (prev: B.lbuffer U16.t (U32.v w_size))
-  (window: B.buffer U8.t{B.length window <= 2 * U32.v w_size}) =
+  (window: B.lbuffer U8.t (U32.v w_range)) =
+  let open U32 in
   let open Lib.Seq in
   let prev' = B.as_seq h prev in
   let window' = B.as_seq h window in
   B.live h prev /\ B.live h window /\ B.disjoint prev window /\
-  (forall (i: nat{i < B.length window}).
-    let j = i % U32.v w_size in
-    Math.lemma_mod_lt i (U32.v w_size);
-    range j ==>
-      (U16.v prev'.[j] < i /\
-      (U16.v prev'.[j] <> 0 ==> window'.[U16.v prev'.[j]] == window'.[j])))
+  (forall (i: nat{range i}).
+    (i + v w_size < v w_range ==>
+      (U16.v prev'.[i] < i + v w_size /\
+      (U16.v prev'.[i] <> 0 ==> window'.[U16.v prev'.[i]] == window'.[i + v w_size]))) /\
+    (i + v w_size >= v w_range /\ i < v w_range /\ i >= min_match ==>
+      (U16.v prev'.[i] < i /\
+      (U16.v prev'.[i] <> 0 ==> window'.[U16.v prev'.[i]] == window'.[i]))))
 
-unfold let prev_valid
+let prev_valid
   (h: HS.mem)
   (w_bits: U16.t {is_window_bits (U16.v w_bits)})
   (w_size: U32.t{is_window_size (U16.v w_bits) (U32.v w_size)})
+  (w_range: U32.t{U32.v w_range <= 2 * U32.v w_size})
   (prev: B.lbuffer U16.t (U32.v w_size))
-  (window: B.buffer U8.t{B.length window <= 2 * U32.v w_size}) =
-  sub_prev_valid h w_bits w_size (fun j -> j < U32.v w_size) prev window
+  (window: B.lbuffer U8.t (U32.v w_range)) =
+  sub_prev_valid h w_bits w_size w_range (fun j -> j < U32.v w_size) prev window
 
 unfold let hash_chain_valid
   (h: HS.mem)
@@ -151,12 +155,12 @@ unfold let hash_chain_valid
   (h_size: U32.t{is_hash_size (U16.v h_bits) (U32.v h_size)})
   (head: B.lbuffer U16.t (U32.v h_size))
   (prev: B.lbuffer U16.t (U32.v w_size))
-  (window: B.buffer U8.t)
-  (w_range: U32.t{U32.v w_range <= 2 * U32.v w_size}) =
+  (w_range: U32.t{U32.v w_range <= 2 * U32.v w_size})
+  (window: B.lbuffer U8.t (U32.v w_range)) =
   B.length window >= U32.v w_range /\
   (CFlags.fastest == false ==>
-    prev_valid h w_bits w_size prev (B.gsub window 0ul w_range)) /\
-  head_valid h h_bits w_size w_range h_size head (B.gsub window 0ul w_range)
+    prev_valid h w_bits w_size w_range prev window) /\
+  head_valid h h_bits w_size w_range h_size head window
 
 type lz77_state = s:Seq.seq U32.t{Seq.length s == 8}
 

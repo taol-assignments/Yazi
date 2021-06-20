@@ -75,6 +75,23 @@ let update_hash
   S.roll_hash_eq bits' m s a b c d hash;
   ins_h *= (((hash <<^ s') ^^ d') &^ m)
 
+inline_for_extraction
+let clear_hash (ctx: context_p):
+  ST.StackInline unit
+  (ensures fun h -> context_valid h ctx)
+  (requires fun h0 _ h1 ->
+    context_valid h1 ctx /\
+    (let ctx' = B.get h1 (CB.as_mbuf ctx) 0 in
+    B.modifies (B.loc_buffer ctx'.head) h0 h1 /\
+    S.hash_chain_valid h1
+      ctx'.w_bits ctx'.h_bits
+      ctx'.w_size ctx'.h_size
+      ctx'.head ctx'.prev
+      0ul (B.gsub ctx'.window 0ul 0ul))) =
+  let head = (CB.index ctx 0ul).head in
+  let h_size = (CB.index ctx 0ul).h_size in
+  B.fill head 0us h_size
+
 #set-options "--z3rlimit 200 --fuel 0 --ifuel 0"
 let read_buf ss uncompressed next_in buf size wrap =
   let open U32 in
@@ -119,7 +136,7 @@ let rec slide_head (ctx: context_p) (h_size w_range: Ghost.erased U32.t) (i: U32
     (let ctx' = B.get h (CB.as_mbuf ctx) 0 in
     U32.v i <= U32.v ctx'.h_size /\
     U32.v h_size == U32.v ctx'.h_size /\
-    U32.v ctx'.w_size <= U32.v w_range /\ U32.v w_range <= 2 * U32.v ctx'.w_size /\
+    U32.v ctx'.w_size < U32.v w_range /\ U32.v w_range <= 2 * U32.v ctx'.w_size /\
     S.sub_head_valid
       h ctx'.h_bits ctx'.w_size w_range ctx'.h_size
       (fun j -> j >= U32.v i /\ j < U32.v ctx'.h_size)
@@ -149,6 +166,7 @@ let rec slide_head (ctx: context_p) (h_size w_range: Ghost.erased U32.t) (i: U32
   end else
     ()
 
+#set-options "--z3rlimit 8192 --fuel 0 --ifuel 0"
 inline_for_extraction
 let rec slide_prev (ctx: context_p) (w_size w_range: Ghost.erased U32.t) (i: U32.t):
   ST.Stack unit
@@ -159,21 +177,22 @@ let rec slide_prev (ctx: context_p) (w_size w_range: Ghost.erased U32.t) (i: U32
     CFlags.fastest == false /\
     U32.v i <= U32.v ctx'.w_size /\
     U32.v w_size == U32.v ctx'.w_size /\
-    U32.v ctx'.w_size <= U32.v w_range /\ U32.v w_range <= 2 * U32.v ctx'.w_size /\
+    U32.v ctx'.w_size < U32.v w_range /\ U32.v w_range <= 2 * U32.v ctx'.w_size /\
     S.sub_prev_valid h
-      ctx'.w_bits ctx'.w_size
+      ctx'.w_bits ctx'.w_size w_range
       (fun j -> v i <= j /\ j < v w_size)
       ctx'.prev (B.gsub ctx'.window 0ul w_range) /\
     S.sub_prev_valid h
-      ctx'.w_bits ctx'.w_size
+      ctx'.w_bits ctx'.w_size (w_range -^ w_size)
       (fun j -> j < v i)
       ctx'.prev (S.slided_window ctx'.w_size w_range ctx'.window)))
   (ensures fun h0 _ h1 ->
+    let open U32 in
     context_valid h1 ctx /\
     (let ctx' = B.get h1 (CB.as_mbuf ctx) 0 in
     B.modifies (B.loc_buffer ctx'.prev) h0 h1 /\
     S.prev_valid h1
-      ctx'.w_bits ctx'.w_size
+      ctx'.w_bits ctx'.w_size (w_range -^ w_size)
       ctx'.prev (S.slided_window ctx'.w_size w_range ctx'.window)))
   (decreases U32.v w_size - U32.v i) =
   let open U32 in
@@ -227,7 +246,7 @@ let slide_window
   (ctx: context_p)
   (state: lz77_state)
   (block_start: B.pointer I32.t):
-  ST.Stack U32.t
+  ST.StackInline U32.t
   (requires fun h ->
     let open U32 in
     let ctx' = B.get h (CB.as_mbuf ctx) 0 in
@@ -242,8 +261,8 @@ let slide_window
     S.hash_chain_valid h
       ctx'.w_bits ctx'.h_bits
       ctx'.w_size ctx'.h_size
-      ctx'.head ctx'.prev (B.gsub ctx'.window 0ul w_range)
-      w_range))
+      ctx'.head ctx'.prev
+      w_range (B.gsub ctx'.window 0ul w_range)))
   (ensures fun h0 more h1 ->
     let open U32 in
     let ctx' = B.get h0 (CB.as_mbuf ctx) 0 in
@@ -265,28 +284,26 @@ let slide_window
         ctx'.w_bits state block_start
         ctx'.w_size ctx'.window len /\
       (let w_range = uint_to_t (S.strstart s1 - S.insert s1) in
-      B.as_seq h0 (B.gsub ctx'.window ctx'.w_size w_range) ==
-      B.as_seq h1 (B.gsub ctx'.window 0ul w_range) /\
       S.hash_chain_valid h1
         ctx'.w_bits ctx'.h_bits
         ctx'.w_size ctx'.h_size
-        ctx'.head ctx'.prev ctx'.window
-        w_range
+        ctx'.head ctx'.prev
+        w_range (B.gsub ctx'.window 0ul w_range)
       )))) =
   let h0 = Ghost.hide (ST.get ()) in
   let open U32 in
   let strstart = get_strstart state in
   let w_size = (CB.index ctx 0ul).w_size in
-  let w_bits = Ghost.hide (CB.index ctx 0ul).w_bits in
-  let w_range = Ghost.hide (strstart -^ get_insert state) in
+  let w_range = strstart -^ get_insert state in
   let h_size = Ghost.hide (CB.index ctx 0ul).h_size in
-  let h_bits = Ghost.hide (CB.index ctx 0ul).h_bits in
   let window = Ghost.hide (CB.index ctx 0ul).window in
-  let head = Ghost.hide (CB.index ctx 0ul).head in
   let more = (CB.index ctx 0ul).window_size -^ get_lookahead state -^ strstart in
   if strstart >=^ w_size then begin
-    slide_head ctx h_size w_range 0ul;
-    if CFlags.fastest then () else slide_prev ctx w_size w_range 0ul;
+    if w_range >^ w_size then begin
+      slide_head ctx h_size w_range 0ul;
+      if CFlags.fastest then () else slide_prev ctx w_size w_range 0ul
+    end else
+      clear_hash ctx;
     slide_window_buf ctx state block_start (w_size -^ more);
 
     let h1 = Ghost.hide (ST.get ()) in
