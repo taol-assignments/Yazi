@@ -1,4 +1,4 @@
-module Spec.State
+module Spec.Stream
 
 module Adler32 = Spec.Adler32
 module B = LowStar.Buffer
