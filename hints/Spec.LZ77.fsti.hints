@@ -1,5 +1,5 @@
 [
-  "¼¶Z¥~Âcœž_I®0ëÝÍ",
+  "²\n,J\b\tp\u0002)\u0014î©\u001cŽ\u001c€",
   [
     [
       "Spec.LZ77.is_hash_size",
@@ -8,7 +8,7 @@
       1,
       [ "@query" ],
       0,
-      "f110b1966334c7dacd669170056e98d8"
+      "312019421f9a365fa915037d1af80770"
     ],
     [
       "Spec.LZ77.is_hash_shift",
@@ -20,7 +20,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "8c3ffe9ec3e5828a85bd4f56e30e956a"
+      "efc00abad6f1f083eb855ad70d974795"
     ],
     [
       "Spec.LZ77.is_window_size",
@@ -29,7 +29,7 @@
       1,
       [ "@query" ],
       0,
-      "1f7d5e45bc97294f5a0a2dfcac4e772f"
+      "7da336c546b30e2092e277e0f47df2e3"
     ],
     [
       "Spec.LZ77.window_size_upper_bound",
@@ -51,7 +51,35 @@
         "refinement_interpretation_Tm_refine_c3930f0ddc72052d207a968201e5d813"
       ],
       0,
-      "ea193a63f6ef549434322a2ec088cc04"
+      "9b827e1ca048bc2ee9d9e3b1415153e7"
+    ],
+    [
+      "Spec.LZ77.rolling_hash",
+      1,
+      8,
+      8,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
+        "@fuel_irrelevance_Prims.pow2.fuel_instrumented", "@query",
+        "b2t_def", "equation_FStar.UInt.fits", "equation_FStar.UInt.max_int",
+        "equation_FStar.UInt.min_int", "equation_FStar.UInt.size",
+        "equation_Prims.nat", "equation_Prims.pos",
+        "equation_Spec.LZ77.hash_bits", "equation_Spec.LZ77.min_match",
+        "equation_with_fuel_Prims.pow2.fuel_instrumented", "int_inversion",
+        "int_typing", "lemma_FStar.UInt.pow2_values",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_AmpAmp",
+        "primitive_Prims.op_Division", "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Multiply", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "refinement_interpretation_Tm_refine_e3f1cc3cd4392bc413193b3ffff20fbe",
+        "typing_Prims.pow2"
+      ],
+      0,
+      "c39b77cb685f313328eafad11d637cda"
     ],
     [
       "Spec.LZ77.is_rolling_hash",
@@ -99,7 +127,7 @@
         "typing_FStar.UInt8.v", "typing_Prims.pow2"
       ],
       0,
-      "0440f11caba62f89416d0abe51f45b7b"
+      "c53abbd0c07e23f247792655d9e0a4ad"
     ],
     [
       "Spec.LZ77.hash_mask_ones",
@@ -132,7 +160,7 @@
         "typing_Prims.pow2"
       ],
       0,
-      "9afaf0f706d4fa44579b2aa7d03ff48f"
+      "4aa32fe2c108848a932d3b43dd1e5ca6"
     ],
     [
       "Spec.LZ77.roll_hash_eq",
@@ -156,7 +184,7 @@
         "typing_FStar.Int.Cast.uint16_to_uint32"
       ],
       0,
-      "a138dc76550d71389b35bb8b25df0cad"
+      "e06445d557a7c1940f5277c203227ad9"
     ],
     [
       "Spec.LZ77.context_valid",
@@ -178,7 +206,7 @@
         "typing_FStar.Monotonic.HyperHeap.root"
       ],
       0,
-      "16820795b8cd321a2557ca2285850b66"
+      "ac99e1771f2cd5a34cf45d07fb72d32b"
     ],
     [
       "Spec.LZ77.hash_range",
@@ -194,7 +222,7 @@
         "refinement_interpretation_Tm_refine_91bb9c9868edb3500acafb70db0c5a00"
       ],
       0,
-      "c377e6eb3915d16f58db3e177c04e7b8"
+      "4a9674eed57dba0c1f2087ca5fdc0fd2"
     ],
     [
       "Spec.LZ77.slided_flag",
@@ -210,7 +238,7 @@
         "refinement_interpretation_Tm_refine_91bb9c9868edb3500acafb70db0c5a00"
       ],
       0,
-      "7c46ff26d7653452ef86059617d237cf"
+      "546272d9f2c3eab78557cae1c589f2e4"
     ],
     [
       "Spec.LZ77.slided_value",
@@ -245,7 +273,7 @@
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__prev"
       ],
       0,
-      "496bdaabeab3007d2a9e32663efa6069"
+      "24ccc4f1d2bc1215a4db5bbf25244338"
     ],
     [
       "Spec.LZ77.sub_head_valid",
@@ -261,7 +289,7 @@
         "refinement_interpretation_Tm_refine_91bb9c9868edb3500acafb70db0c5a00"
       ],
       0,
-      "d32d99f74a98570d68adda0d683d4b52"
+      "769013870c0a61fb48d994cd6a7c623c"
     ],
     [
       "Spec.LZ77.sub_head_valid",
@@ -331,7 +359,7 @@
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__window"
       ],
       0,
-      "10ebeab44c622329d58c20a3ecd486f3"
+      "4f1196194d7b6f524f8b7c5e418201e2"
     ],
     [
       "Spec.LZ77.head_valid",
@@ -347,7 +375,7 @@
         "refinement_interpretation_Tm_refine_91bb9c9868edb3500acafb70db0c5a00"
       ],
       0,
-      "cb1e06a3e8cddd215cf46ff1b32b0989"
+      "1653ee1f4bbdce0dabb324339af5e1ac"
     ],
     [
       "Spec.LZ77.sub_prev_valid",
@@ -363,7 +391,7 @@
         "refinement_interpretation_Tm_refine_91bb9c9868edb3500acafb70db0c5a00"
       ],
       0,
-      "0b432f49c62725b3e08bea2b242173cb"
+      "c917404f001bb1b9e1b528fc8923ce2e"
     ],
     [
       "Spec.LZ77.sub_prev_valid",
@@ -423,7 +451,7 @@
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__window_size"
       ],
       0,
-      "f04cb1051794b4f7350f1555dc20c319"
+      "c6736f079a17d3e5a4869bf88548380f"
     ],
     [
       "Spec.LZ77.prev_valid",
@@ -439,7 +467,7 @@
         "refinement_interpretation_Tm_refine_91bb9c9868edb3500acafb70db0c5a00"
       ],
       0,
-      "5769727d12664d931261ff0ad78d956c"
+      "4eff1aab174bd016b05567dd56aed9c8"
     ],
     [
       "Spec.LZ77.ins_h",
@@ -452,7 +480,7 @@
         "refinement_interpretation_Tm_refine_a72742027d5232f154ed9c05e736990a"
       ],
       0,
-      "2f5950c4296f3f795fbc04ffe24581a8"
+      "ce4ac373fdd5fcb5289072f8de9c2f80"
     ],
     [
       "Spec.LZ77.match_length",
@@ -465,7 +493,7 @@
         "refinement_interpretation_Tm_refine_a72742027d5232f154ed9c05e736990a"
       ],
       0,
-      "21e9f511dd2a63cb3a94c47be968263d"
+      "7134ccec9fe7b222c6c0ec3faf737280"
     ],
     [
       "Spec.LZ77.match_start",
@@ -478,7 +506,7 @@
         "refinement_interpretation_Tm_refine_a72742027d5232f154ed9c05e736990a"
       ],
       0,
-      "eb294fa1e7b5c0571786a4f42ab692d7"
+      "3e25f0de41d2faad5b4af27978d67ef4"
     ],
     [
       "Spec.LZ77.prev_match",
@@ -491,7 +519,7 @@
         "refinement_interpretation_Tm_refine_a72742027d5232f154ed9c05e736990a"
       ],
       0,
-      "36c47d20f24c716575bf5f9fcbe9c473"
+      "50de9777f4d62e3b37050c990d7c9c57"
     ],
     [
       "Spec.LZ77.prev_length",
@@ -504,7 +532,7 @@
         "refinement_interpretation_Tm_refine_a72742027d5232f154ed9c05e736990a"
       ],
       0,
-      "e121b9f9f1e67a770d7d8014c307cce3"
+      "bdaee766c29b20d0941daffcbd49303f"
     ],
     [
       "Spec.LZ77.strstart",
@@ -517,7 +545,7 @@
         "refinement_interpretation_Tm_refine_a72742027d5232f154ed9c05e736990a"
       ],
       0,
-      "eaece9e5a32985ae881094e1dada70ff"
+      "775dfc6507a859778675467b34e8b99b"
     ],
     [
       "Spec.LZ77.lookahead",
@@ -530,7 +558,7 @@
         "refinement_interpretation_Tm_refine_a72742027d5232f154ed9c05e736990a"
       ],
       0,
-      "728131e8b0c82bd753d5516051b3f54b"
+      "77e4079aa21c5eee2a04b92cbfc2583b"
     ],
     [
       "Spec.LZ77.insert",
@@ -543,24 +571,36 @@
         "refinement_interpretation_Tm_refine_a72742027d5232f154ed9c05e736990a"
       ],
       0,
-      "b06008b1ba096495efa48864f103c50b"
+      "163bf4b8287662037ad5e67248acb9b4"
     ],
     [
-      "Spec.LZ77.strstart_lookahead_valid",
+      "Spec.LZ77.state_valid",
       1,
       0,
       0,
       [
-        "@MaxIFuel_assumption", "@query", "b2t_def",
-        "equation_FStar.UInt.fits", "equation_FStar.UInt.min_int",
-        "equation_FStar.UInt.size", "primitive_Prims.op_AmpAmp",
-        "primitive_Prims.op_LessThanOrEqual",
-        "projection_inverse_BoxBool_proj_0",
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_LowStar.Buffer.trivial_preorder",
+        "equation_LowStar.ConstBuffer.length",
+        "equation_LowStar.ConstBuffer.qbuf_pre", "equation_Prims.eqtype",
+        "equation_Spec.LZ77.context_valid",
+        "equation_Yazi.LZ77.Types.lz77_context_p",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
+        "kinding_Yazi.LZ77.Types.lz77_context@tok",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_a6743ad28e4c4585de0ca76033151177"
+        "refinement_interpretation_Tm_refine_20071f0d44de746e09eab0aa9382c760",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_f793c70c622a44f1572107a4a61b5796",
+        "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.ConstBuffer.as_qbuf",
+        "typing_LowStar.ConstBuffer.q_preorder",
+        "typing_LowStar.ConstBuffer.qbuf_qual",
+        "typing_LowStar.Monotonic.Buffer.len"
       ],
       0,
-      "de6cbb4cf25ed86df46971745c15f181"
+      "44c2a3893991a55669663d2328f98733"
     ],
     [
       "Spec.LZ77.slide_window_pre",
@@ -574,8 +614,8 @@
         "equation_LowStar.Buffer.trivial_preorder",
         "equation_LowStar.ConstBuffer.length",
         "equation_LowStar.ConstBuffer.qbuf_pre", "equation_Prims.eqtype",
-        "equation_Spec.LZ77.context_valid",
         "equation_Yazi.LZ77.Types.lz77_context_p",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
         "kinding_Yazi.LZ77.Types.lz77_context@tok",
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "projection_inverse_BoxInt_proj_0",
@@ -590,7 +630,7 @@
         "typing_LowStar.Monotonic.Buffer.len"
       ],
       0,
-      "ca00ec670f829aaad194945f83fa70e6"
+      "0a6e237dd39320291c56dbf8f3a15849"
     ],
     [
       "Spec.LZ77.slide_window_buf_post'",
@@ -604,9 +644,12 @@
         "equation_LowStar.Buffer.buffer", "equation_LowStar.Buffer.pointer",
         "equation_LowStar.Buffer.trivial_preorder",
         "equation_LowStar.ConstBuffer.length",
-        "equation_LowStar.ConstBuffer.qbuf_pre", "equation_Prims.eqtype",
+        "equation_LowStar.ConstBuffer.qbuf_pre",
+        "equation_LowStar.Monotonic.Buffer.get", "equation_Prims.eqtype",
         "equation_Prims.nat", "equation_Spec.LZ77.context_valid",
-        "equation_Yazi.LZ77.Types.lz77_context_p", "int_inversion",
+        "equation_Spec.LZ77.state_valid",
+        "equation_Yazi.LZ77.Types.lz77_context_p",
+        "equation_Yazi.LZ77.Types.lz77_state_t", "int_inversion",
         "kinding_Yazi.LZ77.Types.lz77_context@tok",
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "primitive_Prims.op_Addition", "primitive_Prims.op_AmpAmp",
@@ -630,7 +673,7 @@
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__window"
       ],
       0,
-      "fba3a56f9769c4a804fd60c110cdfdd6"
+      "58cc092683dcd86bfda6641b358c5ead"
     ],
     [
       "Spec.LZ77.slide_window_buf_post",
@@ -638,12 +681,14 @@
       0,
       0,
       [
-        "@query", "equation_LowStar.ConstBuffer.length",
-        "equation_Spec.LZ77.context_valid",
-        "projection_inverse_BoxInt_proj_0"
+        "@MaxIFuel_assumption", "@query",
+        "equation_LowStar.ConstBuffer.length",
+        "equation_Yazi.LZ77.Types.lz77_context_p",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_20071f0d44de746e09eab0aa9382c760"
       ],
       0,
-      "06373e8880a523e94a33313721690ed6"
+      "6465072dc499c94a29d380e332a3425b"
     ],
     [
       "Spec.LZ77.slide_window_post",
@@ -673,7 +718,9 @@
         "equation_LowStar.Monotonic.Buffer.disjoint",
         "equation_LowStar.Monotonic.Buffer.get", "equation_Prims.eqtype",
         "equation_Prims.nat", "equation_Spec.LZ77.context_valid",
+        "equation_Spec.LZ77.state_valid",
         "equation_Yazi.LZ77.Types.lz77_context_p",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
         "function_token_typing_FStar.Monotonic.Heap.heap",
         "function_token_typing_Prims.int",
         "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_typing",
@@ -739,10 +786,11 @@
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__head",
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__prev",
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__shift",
+        "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__w_size",
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__window"
       ],
       0,
-      "aa606d5f9abcc8e160e4cba12e0c82e6"
+      "8d211b502e99831fa59e5a27dedd0b51"
     ]
   ]
 ]

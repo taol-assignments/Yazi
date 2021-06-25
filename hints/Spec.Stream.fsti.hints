@@ -204,7 +204,7 @@
         "typing_LowStar.Monotonic.Buffer.len"
       ],
       0,
-      "256f690b16561ced888bb12f09a8e261"
+      "1226f51a6aa9b36a09c89f48d6df82b6"
     ],
     [
       "Spec.Stream.stream_valid",
@@ -236,7 +236,7 @@
         "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder"
       ],
       0,
-      "ec4cce7070c5719fd7628863040c4454"
+      "2750d1130b2cb3344c105c5a74fe69a5"
     ],
     [
       "Spec.Stream.read_buf_pre",
@@ -245,7 +245,7 @@
       1,
       [ "@query" ],
       0,
-      "216bb7da390e23b1db69e0eab812fa80"
+      "10fca5a60366825319746e9b23b39ba8"
     ],
     [
       "Spec.Stream.read_buf_post",
@@ -265,7 +265,7 @@
         "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder"
       ],
       0,
-      "a9b3d4e58007211492c81cbe2048866f"
+      "1d2c95c46793193a830ef05700421805"
     ]
   ]
 ]
