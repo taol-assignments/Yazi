@@ -45,8 +45,7 @@ let window_size_upper_bound (b: window_bits) (w_size: window_size b): Lemma
   (ensures w_size <= 32768) = assert_norm(w_size == pow2 b)
 
 #set-options "--z3rlimit 120 --fuel 8 --ifuel 8"
-let is_rolling_hash (bits: hash_bits) (a b c: U8.t) (h: U16.t) =
-  let open FStar.Mul in
+let rolling_hash (bits: hash_bits) (a b c: U8.t) =
   let shift = (bits + min_match - 1) / min_match in
   let mask = (pow2 bits) - 1 in
   let a' = Cast.uint8_to_uint16 a in
@@ -54,7 +53,12 @@ let is_rolling_hash (bits: hash_bits) (a b c: U8.t) (h: U16.t) =
   let c' = Cast.uint8_to_uint16 c in
   let a'' = UInt.shift_left (U16.v a') (shift * 2) in
   let b'' = UInt.shift_left (U16.v b') shift in
-  U16.v h == UInt.logand (UInt.logxor (UInt.logxor a'' b'') (U16.v c')) mask
+  UInt.logand (UInt.logxor (UInt.logxor a'' b'') (U16.v c')) mask
+
+let is_rolling_hash (bits: hash_bits) (a b c: U8.t) (h: U16.t) =
+  let open FStar.Mul in
+  let shift = (bits + min_match - 1) / min_match in
+  U16.v h == rolling_hash bits a b c
 
 #set-options "--fuel 16 --ifuel 16"
 let hash_mask_ones (n: hash_bits): Lemma
@@ -120,7 +124,7 @@ let slided_value
   else
     B.as_seq h ctx'.window
   in
-  (h_range', window')
+  (U32.v h_range' - min_match, window')
 
 unfold let sub_head_valid
   (h: HS.mem)
@@ -133,7 +137,7 @@ unfold let sub_head_valid
   let head' = B.as_seq h ctx'.head in
   let (h_range', window') = slided_value ctx h_range slided in
   (forall (i: nat{range i /\ U16.v head'.[i] <> 0}).
-    U16.v head'.[i] <= v h_range' - min_match /\
+    U16.v head'.[i] <= h_range' /\
     is_rolling_hash
       (U16.v ctx'.h_bits)
       window'.[U16.v head'.[i]]
@@ -155,20 +159,26 @@ unfold let sub_prev_valid
   (h_range: hash_range h ctx)
   (range: (i: nat) -> (p:Type0{p ==> i < U32.v (B.get h (CB.as_mbuf ctx) 0).w_size}))
   (slided: slided_flag h_range) =
-  let open U32 in
-  let open Lib.Seq in
+  let open U32 in let open Lib.Seq in
   let ctx' = B.get h (CB.as_mbuf ctx) 0 in
   let prev' = B.as_seq h ctx'.prev in
-  let (h_range', window') = slided_value ctx h_range slided in
-  (forall (i: nat{range i}).
-    (i + v ctx'.w_size < v h_range' ==>
-      (U16.v prev'.[i] < i + v ctx'.w_size /\
-      (U16.v prev'.[i] <> 0 ==> window'.[U16.v prev'.[i]] == window'.[i + v ctx'.w_size]))) /\
-    (i + v ctx'.w_size >= v h_range' /\ i < v h_range' /\ i >= min_match ==>
-      (U16.v prev'.[i] < i /\
-      (U16.v prev'.[i] <> 0 ==> window'.[U16.v prev'.[i]] == window'.[i]))))
+  let (h_range', window) = slided_value ctx h_range slided in
+  let rh = rolling_hash (U16.v ctx'.h_bits) in
+  (h_range' >= 0 ==> (forall (i: nat{range i}).
+    let b = U16.v prev'.[i] in
+    let b' = i + v ctx'.w_size in
+    b <= h_range' /\
+    (b <> 0 ==>
+      ((b' <= h_range' ==>
+        (b < i + v ctx'.w_size /\
+        rh window.[b] window.[b + 1] window.[b + 2] ==
+        rh window.[b'] window.[b' + 1] window.[b' + 2]))) /\
+      (h_range' < b' /\ i <= h_range' ==>
+        (b < i /\
+        rh window.[b] window.[b + 1] window.[b + 2] ==
+        rh window.[i] window.[i + 1] window.[i + 2])))))
 
-let prev_valid
+unfold let prev_valid
   (h: HS.mem)
   (ctx: valid_context_p h)
   (h_range: hash_range h ctx)
@@ -203,44 +213,47 @@ unfold let strstart_unchange (s0 s1: lz77_state) = strstart s0 == strstart s1
 unfold let lookahead_unchange (s0 s1: lz77_state) = lookahead s0 == lookahead s1
 unfold let insert_unchange (s0 s1: lz77_state) = insert s0 == insert s1
 
-let strstart_lookahead_valid
-  (s: lz77_state)
-  (w_bits: U16.t{is_window_bits (U16.v w_bits)})
-  (w_size: U32.t{is_window_size (U16.v w_bits) (U32.v w_size)}) =
-  strstart s + lookahead s <= 2 * U32.v w_size
+// This condition should hold in all acases for all LZ77 states.
+let state_valid (h: HS.mem) (ctx: lz77_context_p) (s: lz77_state_t) =
+  context_valid h ctx /\ B.live h s /\
+  B.disjoint (CB.as_mbuf ctx) s /\
+  (let ctx' = B.get h (CB.as_mbuf ctx) 0 in
+  let s' = B.as_seq h s in
+  HS.disjoint (B.frameOf s) (B.frameOf ctx'.head) /\
+  
+  strstart s' + lookahead s' <= 2 * U32.v ctx'.w_size /\
+  insert s' <= strstart s' /\
+  match_length s' <= min_match /\
+  prev_length s' <= min_match /\
+  match_start s' <= 2 * U32.v ctx'.w_size - min_match /\
+  prev_match s' <= 2 * U32.v ctx'.w_size - min_match)
 
 // TODO: verify block_start's lower bound
 unfold let slide_window_pre
   (h: HS.mem)
   (ctx: lz77_context_p)
-  (state: B.lbuffer U32.t 8)
+  (state: lz77_state_t)
   (block_start: B.pointer I32.t) =
   let open U32 in
   let state' = B.as_seq h state in
-  context_valid h ctx /\
+  state_valid h ctx state /\
   (let ctx' = B.get h (CB.as_mbuf ctx) 0 in
-  B.live h state /\ B.live h block_start /\
-  B.disjoint (CB.as_mbuf ctx) state /\
-  B.disjoint (CB.as_mbuf ctx) block_start /\
-  B.disjoint state block_start /\
-  HS.disjoint (B.frameOf state) (B.frameOf ctx'.head) /\
+  B.live h block_start /\
+  B.disjoint (CB.as_mbuf ctx) block_start /\ B.disjoint state block_start /\
   HS.disjoint (B.frameOf block_start) (B.frameOf ctx'.head) /\
     
   match_start state' >= v ctx'.w_size /\
-  match_start state' < 2 * v ctx'.w_size /\
   strstart state' >= v ctx'.w_size /\
-  strstart state' < 2 * v ctx'.w_size /\
   insert state' <= strstart state' - v ctx'.w_size /\
-  strstart_lookahead_valid state' ctx'.w_bits ctx'.w_size /\
   I32.v (B.get h block_start 0) >= -8454144)
 
 private unfold let slide_window_buf_post'
   (h0 h1: HS.mem)
   (ctx: lz77_context_p)
-  (state: B.lbuffer U32.t 8)
+  (state: lz77_state_t)
   (block_start: B.pointer I32.t)
   (len: nat) =
-  context_valid h0 ctx /\
+  state_valid h0 ctx state /\
   (let ctx' = B.get h0 (CB.as_mbuf ctx) 0 in
   let s0 = B.as_seq h0 state in
   let s1 = B.as_seq h1 state in
@@ -253,7 +266,6 @@ private unfold let slide_window_buf_post'
   
   strstart s0 - U32.v ctx'.w_size == strstart s1 /\
   match_start s0 - U32.v ctx'.w_size == match_start s1 /\
-  strstart_lookahead_valid s1 ctx'.w_bits ctx'.w_size /\
 
   len <= U32.v ctx'.w_size /\
   I32.v (B.get h0 block_start 0) - U32.v ctx'.w_size == I32.v (B.get h1 block_start 0) /\
@@ -262,19 +274,20 @@ private unfold let slide_window_buf_post'
 let slide_window_buf_post
   (h0 h1: HS.mem)
   (ctx: lz77_context_p)
-  (state: B.lbuffer U32.t 8)
+  (state: lz77_state_t)
   (block_start: B.pointer I32.t)
   (len: nat) =
   slide_window_buf_post' h0 h1 ctx state block_start len /\
   B.modifies (
     B.loc_buffer block_start `B.loc_union`
     B.loc_buffer state `B.loc_union`
-    B.loc_buffer (B.get h0 (CB.as_mbuf ctx) 0).window) h0 h1
+    B.loc_buffer (B.get h0 (CB.as_mbuf ctx) 0).window) h0 h1 /\
+  state_valid h1 ctx state
 
 let slide_window_post
   (h0: HS.mem) (more: U32.t) (h1: HS.mem)
   (ctx: lz77_context_p{context_valid h0 ctx})
-  (state: B.lbuffer U32.t 8)
+  (state: lz77_state_t)
   (block_start: B.pointer I32.t) =
   let open U32 in
   let ctx' = B.get h0 (CB.as_mbuf ctx) 0 in
@@ -296,4 +309,5 @@ let slide_window_post
     (let len = strstart s1 + lookahead s1 in
     slide_window_buf_post' h0 h1 ctx state block_start len /\
     len <= v ctx'.w_size /\
-    hash_chain_valid h1 ctx (uint_to_t (strstart s1 - insert s1)) false))
+    hash_chain_valid h1 ctx (uint_to_t (strstart s1 - insert s1)) false /\
+    state_valid h1 ctx state))

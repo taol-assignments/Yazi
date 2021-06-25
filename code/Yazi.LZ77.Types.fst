@@ -2,6 +2,7 @@ module Yazi.LZ77.Types
 
 module B = LowStar.Buffer
 module CB = LowStar.ConstBuffer
+module I32 = FStar.Int32
 module LB = Lib.Buffer
 module ST = FStar.HyperStack.ST
 module U16 = FStar.UInt16

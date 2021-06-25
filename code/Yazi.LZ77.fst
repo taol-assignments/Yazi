@@ -70,8 +70,49 @@ let clear_hash (ctx: lz77_context_p):
   let h_size = (CB.index ctx 0ul).h_size in
   B.fill head 0us h_size
 
+[@@ CInline ]
+let rec init_hash_for_new_data (ctx: lz77_context_p) (state: lz77_state_t):
+  ST.Stack unit
+  (requires fun h ->
+    S.state_valid h ctx state /\
+    (let ctx' = B.get h (CB.as_mbuf ctx) 0 in
+    let state' = B.as_seq h state in
+    let h_range = U32.uint_to_t (S.strstart state' - S.insert state') in
+    S.lookahead state' + S.insert state' >= S.min_match /\
+    S.hash_chain_valid h ctx h_range false))
+  (ensures fun h0 _ h1 ->
+    S.state_valid h1 ctx state /\
+    (let ctx' = B.get h0 (CB.as_mbuf ctx) 0 in
+    let state' = B.as_seq h1 state in
+    let h_range = U32.uint_to_t (S.strstart state' - S.insert state') in
+    B.modifies (
+      (B.loc_buffer ctx'.head) `B.loc_union`
+      (if CFlags.fastest then B.loc_none else B.loc_buffer ctx'.prev)) h0 h1 /\
+    S.hash_chain_valid h1 ctx h_range false)) = admit()
+(*
+        if (s->lookahead + s->insert >= MIN_MATCH) {
+            uInt str = s->strstart - s->insert;
+            s->ins_h = s->window[str];
+            UPDATE_HASH(s, s->ins_h, s->window[str + 1]);
+#if MIN_MATCH != 3
+            Call UPDATE_HASH() MIN_MATCH-3 more times
+#endif
+            while (s->insert) {
+                UPDATE_HASH(s, s->ins_h, s->window[str + MIN_MATCH-1]);
+#ifndef FASTEST
+                s->prev[str & s->w_mask] = s->head[s->ins_h];
+#endif
+                s->head[s->ins_h] = (Pos)str;
+                str++;
+                s->insert--;
+                if (s->lookahead + s->insert < MIN_MATCH)
+                    break;
+            }
+        }
+        *)
+
 #set-options "--z3rlimit 200 --fuel 0 --ifuel 0"
-let read_buf 
+inline_for_extraction let read_buf 
   (ss: stream_state_t)
   (uncompressed: Ghost.erased (Seq.seq U8.t))
   (next_in: B.pointer (B.buffer U8.t))
@@ -115,7 +156,6 @@ let w_size_fit_u32 (w_size: U32.t{U32.v w_size < pow2 15}): Lemma
 
 #set-options "--z3rlimit 2048 --fuel 0 --ifuel 0"
 [@@ CInline ]
-inline_for_extraction
 let rec slide_head (ctx: lz77_context_p) (h_size h_range: Ghost.erased U32.t) (i: U32.t):
   ST.Stack unit
   (requires fun h ->
@@ -142,7 +182,7 @@ let rec slide_head (ctx: lz77_context_p) (h_size h_range: Ghost.erased U32.t) (i
     ()
 
 [@@ CInline ]
-inline_for_extraction
+#set-options "--z3rlimit 2048 --fuel 0 --ifuel 0"
 let rec slide_prev (ctx: lz77_context_p) (w_size h_range: Ghost.erased U32.t) (i: U32.t):
   ST.Stack unit
   (requires fun h ->
@@ -159,6 +199,7 @@ let rec slide_prev (ctx: lz77_context_p) (w_size h_range: Ghost.erased U32.t) (i
     let open U32 in
     S.context_valid h1 ctx /\
     B.modifies (B.loc_buffer (B.get h0 (CB.as_mbuf ctx) 0).prev) h0 h1 /\
+    hash_range_pre_cond (B.get h1 (CB.as_mbuf ctx) 0) h_range /\
     S.prev_valid h1 ctx h_range true)
   (decreases U32.v w_size - U32.v i) =
   let open U32 in
@@ -168,6 +209,13 @@ let rec slide_prev (ctx: lz77_context_p) (w_size h_range: Ghost.erased U32.t) (i
     let m = prev.(i) in
     [@inline_let] let m' = Cast.uint16_to_uint32 m in
     prev.(i) <- Cast.uint32_to_uint16 (if m' >=^ w_size' then m' -^ w_size' else 0ul);
+    let h = Ghost.hide (ST.get ()) in
+    assert(forall (j: nat{U32.v w_size <= j /\ j < U32.v h_range}).
+      let ctx' = Ghost.hide (B.get h (CB.as_mbuf ctx) 0) in
+      let window' = Ghost.hide (B.gsub ctx'.window w_size (h_range -^ w_size)) in
+      let s0 = B.as_seq h ctx'.window in
+      let s1 = B.as_seq h window' in
+      s0.[j] == s1.[j - U32.v w_size]);
     slide_prev ctx w_size h_range (i +^ 1ul)
   end else
     ()
