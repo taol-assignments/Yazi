@@ -49,6 +49,9 @@ assume val hash:
     B.modifies B.loc_none h0 h1 /\
     U32.v res == hv)
 
+[@@ CMacro ]
+let min_match = 4ul
+
 [@@ CInline ]
 inline_for_extraction
 let clear_hash (ctx: lz77_context_p):
@@ -110,7 +113,7 @@ let rec do_init_input_hash
   decr_insert state;
 
   let insert = get_insert state in
-  if (lookahead +^ insert <^ 4ul) || (insert = 0ul) then
+  if (lookahead +^ insert <^ min_match) || (insert = 0ul) then
     ()
   else
     do_init_input_hash ctx state (i +^ 1ul) lookahead (U32.v insert)
@@ -124,7 +127,7 @@ let init_input_hash (ctx: lz77_context_p) (state: lz77_state_t):
   let open U32 in
   let lookahead = get_lookahead state in
   let insert = get_insert state in
-  if insert >^ 0ul && lookahead +^ insert >=^ 4ul then
+  if insert >^ 0ul && lookahead +^ insert >=^ min_match then
     do_init_input_hash ctx state (get_strstart state -^ insert) lookahead (v insert)
   else
     ()
@@ -145,7 +148,7 @@ let init_dict_hash ctx state =
   let open U32 in
   do_init_dict_hash ctx state
     (get_strstart state)
-    (get_strstart state +^ get_lookahead state -^ 3ul)
+    (get_strstart state +^ get_lookahead state -^ (min_match -^ 1ul))
   
 inline_for_extraction let read_buf 
   (ss: stream_state_t)
@@ -326,7 +329,7 @@ let slide_window
     slide_window_buf ctx state block_start (w_size -^ more);
     let h1 = Ghost.hide (ST.get ()) in
     LB.as_seq_gsub_eq h0 h1 window window
-      w_size 0ul (w_size -^ more) (h_range -^ w_size +^ 3ul);
+      w_size 0ul (w_size -^ more) (h_range -^ w_size +^ (min_match -^ 1ul));
     more +^ w_size
   end else
     more
