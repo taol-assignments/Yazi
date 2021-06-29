@@ -11,20 +11,20 @@ include Yazi.LZ77.Types
 
 private unfold let hash_range_pre_cond (ctx: lz77_context) (h_range: U32.t) =
   let open FStar.Mul in
-  U32.v ctx.w_size < U32.v h_range /\ U32.v h_range <= 2 * U32.v ctx.w_size
-  
-val slide_hash:
-    ctx: lz77_context_p
-  -> h_range: U32.t
-  -> ST.Stack unit
+  U32.v ctx.w_size < U32.v h_range /\ U32.v h_range <= U32.v ctx.window_size - S.min_match + 1
+
+val init_dict_hash: ctx: lz77_context_p -> state: lz77_state_t ->
+  ST.Stack unit
+  (requires fun h -> S.init_dict_hash_pre h ctx state)
+  (ensures fun h0 _ h1 -> S.init_dict_hash_post h0 h1 ctx state)
+
+val slide_hash: ctx: lz77_context_p -> h_range: U32.t -> ST.Stack unit
   (requires fun h ->
+    let open FStar.Mul in
     S.context_valid h ctx /\
     (let ctx' = B.get h (CB.as_mbuf ctx) 0 in
-    (ctx'.w_size == h_range \/ hash_range_pre_cond ctx' h_range) /\
+    (U32.v ctx'.w_size == U32.v h_range \/ hash_range_pre_cond ctx' h_range) /\
     S.hash_chain_valid h ctx h_range false))
   (ensures fun h0 _ h1 ->
-    let ctx' = B.get h0 (CB.as_mbuf ctx) 0 in
-    B.modifies (
-      (B.loc_buffer ctx'.head) `B.loc_union`
-      (if CFlags.fastest then B.loc_none else B.loc_buffer ctx'.prev)) h0 h1 /\
+    B.modifies (S.hash_loc_buffer h0 ctx) h0 h1 /\
     S.hash_chain_valid h1 ctx h_range true)

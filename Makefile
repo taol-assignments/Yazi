@@ -186,11 +186,13 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	  -no-prefix Yazi.Util \
 	  -no-prefix Yazi.CFlags \
 	  -no-prefix Yazi.Types \
+	  -fextern-c \
 	  -ftail-calls \
 	  -fparentheses \
           -fcurly-braces \
 	  -minimal \
 	  -bundle 'FStar.*' \
+	  -bundle Yazi.LZ77=Yazi.LZ77,Yazi.LZ77.* \
 	  -add-include '<stdint.h>' \
 	  -add-include '<string.h>' \
 	  -add-early-include '"Yazi_Allocator.h"' \

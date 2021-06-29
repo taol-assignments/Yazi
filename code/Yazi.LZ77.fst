@@ -16,6 +16,7 @@ module ST = FStar.HyperStack.ST
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
 module U8 = FStar.UInt8
+module UInt = FStar.UInt
 
 open LowStar.BufferOps
 open FStar.Mul
@@ -24,45 +25,36 @@ open Lib.Buffer
 open Yazi.LZ77.State
 open Yazi.Stream.Types
 
-#set-options "--fuel 0 --ifuel 0"
-[@@ CInline ]
-inline_for_extraction
-let update_hash
-  (a b c: Ghost.erased U8.t)
-  (ctx: lz77_context_p)
-  (ins_h: B.pointer U16.t)
-  (d: U8.t):
-  ST.StackInline unit
-  (ensures fun h ->
-    let open U16 in
-    S.context_valid h ctx /\
-    B.live h ins_h /\ B.disjoint ins_h (CB.as_mbuf ctx) /\
-    (let ctx' = B.get h (CB.as_mbuf ctx) 0 in
-    HS.disjoint (B.frameOf ins_h) (B.frameOf ctx'.head) /\
-    S.is_rolling_hash (v ctx'.h_bits) a b c (B.get h ins_h 0)))
-  (requires fun h0 _ h1 ->
-    let open U16 in
-    let ctx' = B.get h1 (CB.as_mbuf ctx) 0 in
-    let hash = B.get h1 ins_h 0 in
-    B.modifies (B.loc_buffer ins_h) h0 h1 /\
-    S.is_rolling_hash (v ctx'.h_bits) b c d (B.get h1 ins_h 0)) =
-  let open U16 in
-  [@inline_let] let d' = Cast.uint8_to_uint16 d in
-  let bits = (CB.index ctx 0ul).h_bits in
-  let bits': Ghost.erased S.hash_bits = Ghost.hide (v bits) in
-  let s = (CB.index ctx 0ul).shift in
-  let m = (CB.index ctx 0ul).h_mask in
-  [@inline_let] let s' = Cast.uint16_to_uint32 s in
-  let hash = !*ins_h in
-  S.roll_hash_eq bits' m s a b c d hash;
-  ins_h *= (((hash <<^ s') ^^ d') &^ m)
+[@
+  (CPrologue "#include <string.h>
+static inline uint32_t lz77_hash(uint16_t h_bits, const unsigned char *buf) {
+  uint32_t n;
+  memcpy(&n, buf, sizeof(n));
+  return (n * 0x1E35A7BD) >> (32 - h_bits);\n}")
+  (CEpilogue "#define Yazi_LZ77_hash(ctx, i) lz77_hash((ctx)->h_bits, &((ctx)->window[i]))")]
+assume val hash:
+    ctx: lz77_context_p
+  -> state: Ghost.erased lz77_state_t
+  -> i: U32.t
+  -> ST.Stack U32.t
+  (requires fun h ->
+    S.state_valid h ctx state /\
+    (let state' = B.as_seq h state in
+    U32.v i <= S.strstart state' + S.lookahead state' - S.min_match))
+  (ensures fun h0 res h1 ->
+    let ctx' = B.get h0 (CB.as_mbuf ctx) 0 in
+    let w = B.as_seq h0 ctx'.window in
+    let i' = U32.v i in
+    let hv = U32.v (S.hash (U16.v ctx'.h_bits) w.[i'] w.[i' + 1] w.[i' + 2] w.[i' + 3]) in
+    B.modifies B.loc_none h0 h1 /\
+    U32.v res == hv)
 
 [@@ CInline ]
 inline_for_extraction
 let clear_hash (ctx: lz77_context_p):
   ST.StackInline unit
-  (ensures fun h -> S.context_valid h ctx)
-  (requires fun h0 _ h1 ->
+  (requires fun h -> S.context_valid h ctx)
+  (ensures fun h0 _ h1 ->
     S.context_valid h1 ctx /\
     B.modifies (B.loc_buffer (B.get h1 (CB.as_mbuf ctx) 0).head) h0 h1 /\
     S.hash_chain_valid h1 ctx 0ul false) =
@@ -70,48 +62,91 @@ let clear_hash (ctx: lz77_context_p):
   let h_size = (CB.index ctx 0ul).h_size in
   B.fill head 0us h_size
 
-[@@ CInline ]
-let rec init_hash_for_new_data (ctx: lz77_context_p) (state: lz77_state_t):
+#set-options "--z3rlimit 2048 --fuel 0 --ifuel 0"
+inline_for_extraction
+let insert_hash (ctx: lz77_context_p) (state: Ghost.erased lz77_state_t) (i: U32.t):
   ST.Stack unit
   (requires fun h ->
-    S.state_valid h ctx state /\
-    (let ctx' = B.get h (CB.as_mbuf ctx) 0 in
     let state' = B.as_seq h state in
-    let h_range = U32.uint_to_t (S.strstart state' - S.insert state') in
-    S.lookahead state' + S.insert state' >= S.min_match /\
-    S.hash_chain_valid h ctx h_range false))
+    S.state_valid h ctx state /\
+    U32.v i <= S.strstart state' + S.lookahead state' - S.min_match /\
+    S.hash_chain_valid h ctx i false)
   (ensures fun h0 _ h1 ->
+    B.modifies (S.hash_loc_buffer h0 ctx) h0 h1 /\
     S.state_valid h1 ctx state /\
-    (let ctx' = B.get h0 (CB.as_mbuf ctx) 0 in
-    let state' = B.as_seq h1 state in
-    let h_range = U32.uint_to_t (S.strstart state' - S.insert state') in
-    B.modifies (
-      (B.loc_buffer ctx'.head) `B.loc_union`
-      (if CFlags.fastest then B.loc_none else B.loc_buffer ctx'.prev)) h0 h1 /\
-    S.hash_chain_valid h1 ctx h_range false)) = admit()
-(*
-        if (s->lookahead + s->insert >= MIN_MATCH) {
-            uInt str = s->strstart - s->insert;
-            s->ins_h = s->window[str];
-            UPDATE_HASH(s, s->ins_h, s->window[str + 1]);
-#if MIN_MATCH != 3
-            Call UPDATE_HASH() MIN_MATCH-3 more times
-#endif
-            while (s->insert) {
-                UPDATE_HASH(s, s->ins_h, s->window[str + MIN_MATCH-1]);
-#ifndef FASTEST
-                s->prev[str & s->w_mask] = s->head[s->ins_h];
-#endif
-                s->head[s->ins_h] = (Pos)str;
-                str++;
-                s->insert--;
-                if (s->lookahead + s->insert < MIN_MATCH)
-                    break;
-            }
-        }
-        *)
+    S.hash_chain_valid h1 ctx (U32.add i 1ul) false) =
+  let open U32 in
+  let head = (CB.index ctx 0ul).head in
+  let prev = (CB.index ctx 0ul).prev in
+  let w_mask = (CB.index ctx 0ul).w_mask in
+  let h0 = Ghost.hide (ST.get ()) in
+  let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
+  let h = hash ctx state i in
+  
+  S.window_index_upper_bound h0 ctx (v i);
+  S.window_mask_aux (U16.v ctx'.w_bits) (v ctx'.w_size) (U16.v ctx'.w_mask) (v i);
+  
+  if CFlags.fastest then begin
+    head.(h) <- Cast.uint32_to_uint16 i
+  end else begin
+    UInt.logand_mask (v i) (U16.v ctx'.w_bits);
+    prev.(i &^ Cast.uint16_to_uint32 w_mask) <- head.(h);
+    head.(h) <- Cast.uint32_to_uint16 i
+  end
 
-#set-options "--z3rlimit 200 --fuel 0 --ifuel 0"
+[@@ CInline ]
+let rec do_init_input_hash
+  (ctx: lz77_context_p)
+  (state: lz77_state_t)
+  (i lookahead: U32.t)
+  (insert: Ghost.erased (UInt.uint_t 32)):
+  ST.Stack unit
+  (requires fun h ->
+    S.do_init_input_hash_pre h ctx state i lookahead insert)
+  (ensures fun h0 _ h1 -> S.do_init_input_hash_post h0 h1 ctx state)
+  (decreases U32.v lookahead + insert) =
+  let open U32 in
+  insert_hash ctx state i;
+  decr_insert state;
+
+  let insert = get_insert state in
+  if (lookahead +^ insert <^ 4ul) || (insert = 0ul) then
+    ()
+  else
+    do_init_input_hash ctx state (i +^ 1ul) lookahead (U32.v insert)
+
+[@@ CInline ]
+inline_for_extraction
+let init_input_hash (ctx: lz77_context_p) (state: lz77_state_t):
+  ST.Stack unit
+  (requires fun h -> S.init_input_hash_pre h ctx state)
+  (ensures fun h0 _ h1 -> S.init_input_hash_post h0 h1 ctx state) =
+  let open U32 in
+  let lookahead = get_lookahead state in
+  let insert = get_insert state in
+  if insert >^ 0ul && lookahead +^ insert >=^ 4ul then
+    do_init_input_hash ctx state (get_strstart state -^ insert) lookahead (v insert)
+  else
+    ()
+
+[@@ CInline ]
+let rec do_init_dict_hash (ctx: lz77_context_p) (state: lz77_state_t) (i h_end: U32.t):
+  ST.Stack unit
+  (requires fun h -> S.do_init_dict_hash_pre h ctx state i (U32.v h_end))
+  (ensures fun h0 _ h1 -> S.do_init_dict_hash_post h0 h1 ctx state) =
+  let open U32 in
+  insert_hash ctx state i;
+  if i +^ 1ul <^ h_end then
+    do_init_dict_hash ctx state (i +^ 1ul) h_end
+  else
+    ()
+
+let init_dict_hash ctx state =
+  let open U32 in
+  do_init_dict_hash ctx state
+    (get_strstart state)
+    (get_strstart state +^ get_lookahead state -^ 3ul)
+  
 inline_for_extraction let read_buf 
   (ss: stream_state_t)
   (uncompressed: Ghost.erased (Seq.seq U8.t))
@@ -224,14 +259,16 @@ let slide_hash ctx h_range =
   ST.push_frame ();
   let open U32 in
   let w_size = (CB.index ctx 0ul).w_size in
+  let h_size = (CB.index ctx 0ul).h_size in
   if CFlags.fastest then
     if h_range >^ w_size then begin
-      slide_head ctx (CB.index ctx 0ul).h_size h_range 0ul
+      slide_head ctx h_size h_range 0ul;
+      let h = ST.get () in assert(S.head_valid h ctx h_range true)
     end else
       clear_hash ctx
   else
     if h_range >^ w_size then begin
-      slide_head ctx (CB.index ctx 0ul).h_size h_range 0ul;
+      slide_head ctx h_size h_range 0ul;
       slide_prev ctx w_size h_range 0ul
     end else
       clear_hash ctx;
@@ -274,10 +311,11 @@ let slide_window
     let open U32 in
     let state' = B.as_seq h state in
     S.slide_window_pre h ctx state block_start /\
+    S.lookahead state' + S.insert state' >= S.min_match /\
     S.hash_chain_valid h ctx (U32.uint_to_t (S.strstart state' - S.insert state')) false)
   (ensures fun h0 more h1 -> S.slide_window_post h0 more h1 ctx state block_start) =
-  let h0 = Ghost.hide (ST.get ()) in
   let open U32 in
+  let h0 = Ghost.hide (ST.get ()) in
   let strstart = get_strstart state in
   let w_size = (CB.index ctx 0ul).w_size in
   let h_range = strstart -^ get_insert state in
@@ -287,7 +325,8 @@ let slide_window
     slide_hash ctx h_range;
     slide_window_buf ctx state block_start (w_size -^ more);
     let h1 = Ghost.hide (ST.get ()) in
-    LB.as_seq_gsub_eq h0 h1 window window w_size 0ul (w_size -^ more) (h_range -^ w_size);
+    LB.as_seq_gsub_eq h0 h1 window window
+      w_size 0ul (w_size -^ more) (h_range -^ w_size +^ 3ul);
     more +^ w_size
   end else
     more

@@ -19,21 +19,21 @@ let set_match_start
   (state: lz77_state_t)
   (match_start: U32.t{U32.v match_start < 2 * w_size}):
   ST.Stack unit
-  (ensures fun h -> B.live h state)
-  (requires fun h0 _ h1 ->
+  (requires fun h -> B.live h state)
+  (ensures fun h0 _ h1 ->
     B.modifies (B.loc_buffer state) h0 h1 /\
     S.match_start (B.as_seq h1 state) == U32.v match_start /\
-    LB.unchange_except h0 h1 state 2) =
-  state.(2ul) <- match_start
+    LB.unchange_except h0 h1 state 1) =
+  state.(1ul) <- match_start
 
 inline_for_extraction
 let get_match_start (state: lz77_state_t):
   ST.Stack U32.t
-  (ensures fun h -> B.live h state)
-  (requires fun h0 res h1 ->
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
     B.modifies B.loc_none h0 h1 /\
     S.match_start (B.as_seq h0 state) == U32.v res) =
-  state.(2ul)
+  state.(1ul)
 
 inline_for_extraction
 let set_strstart
@@ -42,36 +42,49 @@ let set_strstart
   (state: lz77_state_t)
   (strstart: U32.t{U32.v strstart < 2 * w_size}):
   ST.Stack unit
-  (ensures fun h -> B.live h state)
-  (requires fun h0 _ h1 ->
+  (requires fun h -> B.live h state)
+  (ensures fun h0 _ h1 ->
     B.modifies (B.loc_buffer state) h0 h1 /\
     S.strstart (B.as_seq h1 state) == U32.v strstart /\
-    LB.unchange_except h0 h1 state 5) =
-  state.(5ul) <- strstart
+    LB.unchange_except h0 h1 state 4) =
+  state.(4ul) <- strstart
 
 inline_for_extraction
 let get_strstart (state: lz77_state_t):
   ST.Stack U32.t
-  (ensures fun h -> B.live h state)
-  (requires fun h0 res h1 ->
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
     B.modifies B.loc_none h0 h1 /\
     S.strstart (B.as_seq h0 state) == U32.v res) =
-  state.(5ul)
+  state.(4ul)
 
 inline_for_extraction
 let get_lookahead (state: lz77_state_t):
   ST.Stack U32.t
-  (ensures fun h -> B.live h state)
-  (requires fun h0 res h1 ->
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
     B.modifies B.loc_none h0 h1 /\
     S.lookahead (B.as_seq h0 state) == U32.v res) =
-  state.(6ul)
+  state.(5ul)
 
 inline_for_extraction
 let get_insert (state: lz77_state_t):
   ST.Stack U32.t
-  (ensures fun h -> B.live h state)
-  (requires fun h0 res h1 ->
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
     B.modifies B.loc_none h0 h1 /\
     S.insert (B.as_seq h0 state) == U32.v res) =
-  state.(7ul)
+  state.(6ul)
+
+inline_for_extraction
+let decr_insert (state: lz77_state_t):
+  ST.Stack unit
+  (requires fun h ->
+    B.live h state /\
+    S.insert (B.as_seq h state) > 0)
+  (ensures fun h0 res h1 ->
+    B.modifies (B.loc_buffer state) h0 h1 /\
+    S.insert (B.as_seq h0 state) == S.insert (B.as_seq h1 state) + 1 /\
+    LB.unchange_except h0 h1 state 6) =
+  let open U32 in
+  state.(6ul) <- state.(6ul) -^ 1ul

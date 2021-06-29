@@ -47,4 +47,4 @@ noeq type lz77_context = {
 
 type lz77_context_p = ctx: CB.const_buffer lz77_context {CB.length ctx == 1}
 
-type lz77_state_t = B.lbuffer U32.t 8
+type lz77_state_t = B.lbuffer U32.t 7
