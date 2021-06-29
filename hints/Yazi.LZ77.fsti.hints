@@ -1,5 +1,5 @@
 [
-  "´e0R‰)\u0006ˆË∫Ë:∂Ò¬r",
+  "í)óLê\"%êæø˜!≥»4´",
   [
     [
       "Yazi.LZ77.slide_hash",
@@ -12,9 +12,8 @@
         "Yazi.LZ77.Types_pretyping_646435539fd07c510b56e1e98168d2f3",
         "b2t_def", "bool_typing", "data_elim_Yazi.LZ77.Types.Mklz77_context",
         "equation_FStar.Monotonic.HyperHeap.disjoint",
-        "equation_FStar.UInt.fits", "equation_FStar.UInt.min_int",
-        "equation_FStar.UInt.size", "equation_FStar.UInt.uint_t",
-        "equation_LowStar.Buffer.buffer",
+        "equation_FStar.UInt.fits", "equation_FStar.UInt.size",
+        "equation_FStar.UInt.uint_t", "equation_LowStar.Buffer.buffer",
         "equation_LowStar.Buffer.trivial_preorder",
         "equation_LowStar.ConstBuffer.as_mbuf",
         "equation_LowStar.ConstBuffer.length",
@@ -24,10 +23,12 @@
         "equation_LowStar.Monotonic.Buffer.get",
         "equation_LowStar.Monotonic.Buffer.length", "equation_Prims.eqtype",
         "equation_Prims.nat", "equation_Spec.LZ77.context_valid",
+        "equation_Spec.LZ77.hash_loc_buffer",
+        "equation_Spec.LZ77.valid_context_p",
         "equation_Yazi.LZ77.Types.lz77_context_p",
         "fuel_guarded_inversion_Yazi.LZ77.Types.lz77_context",
         "function_token_typing_Prims.int",
-        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_inversion",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_typing",
         "kinding_Yazi.LZ77.Types.lz77_context@tok",
         "lemma_LowStar.Monotonic.Buffer.address_liveness_insensitive_buffer",
         "lemma_LowStar.Monotonic.Buffer.loc_disjoint_addresses",
@@ -40,8 +41,7 @@
         "lemma_LowStar.Monotonic.Buffer.modifies_buffer_elim",
         "lemma_LowStar.Monotonic.Buffer.modifies_liveness_insensitive_buffer",
         "lemma_LowStar.Monotonic.Buffer.modifies_liveness_insensitive_buffer_weak",
-        "primitive_Prims.op_AmpAmp", "primitive_Prims.op_LessThanOrEqual",
-        "primitive_Prims.op_Multiply",
+        "primitive_Prims.op_AmpAmp",
         "proj_equation_Yazi.LZ77.Types.Mklz77_context_head",
         "proj_equation_Yazi.LZ77.Types.Mklz77_context_prev",
         "proj_equation_Yazi.LZ77.Types.Mklz77_context_window",
@@ -50,7 +50,9 @@
         "refinement_interpretation_Tm_refine_20071f0d44de746e09eab0aa9382c760",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "refinement_interpretation_Tm_refine_7867a8deb754ad2fd61c0c07a9c0caff",
+        "refinement_interpretation_Tm_refine_91bb9c9868edb3500acafb70db0c5a00",
+        "refinement_interpretation_Tm_refine_c16bc1b61f58b349bf6fc1c94dcaf83b",
+        "refinement_interpretation_Tm_refine_d6225e321027e5ade5a684ec797532e7",
         "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
         "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "typing_FStar.Set.singleton", "typing_FStar.UInt16.t",
@@ -62,17 +64,17 @@
         "typing_LowStar.Monotonic.Buffer.address_liveness_insensitive_locs",
         "typing_LowStar.Monotonic.Buffer.as_addr",
         "typing_LowStar.Monotonic.Buffer.frameOf",
+        "typing_LowStar.Monotonic.Buffer.get",
         "typing_LowStar.Monotonic.Buffer.len",
-        "typing_LowStar.Monotonic.Buffer.length",
         "typing_LowStar.Monotonic.Buffer.loc_addresses",
         "typing_LowStar.Monotonic.Buffer.loc_buffer",
-        "typing_LowStar.Monotonic.Buffer.loc_union",
+        "typing_Spec.LZ77.hash_loc_buffer",
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__head",
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__prev",
         "typing_Yazi.LZ77.Types.__proj__Mklz77_context__item__window"
       ],
       0,
-      "ae6c53e34b0308ed1f29059c4645784d"
+      "1d379568f2b593a9d95b3d7d56d7f49c"
     ]
   ]
 ]
