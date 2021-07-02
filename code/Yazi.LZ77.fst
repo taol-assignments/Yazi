@@ -24,6 +24,7 @@ open Lib.Seq
 open Lib.Buffer
 open Yazi.LZ77.State
 open Yazi.Stream.Types
+open Yazi.Stream.State
 
 [@
   (CPrologue "#include <string.h>
@@ -149,19 +150,19 @@ let init_dict_hash ctx state =
   do_init_dict_hash ctx state
     (get_strstart state)
     (get_strstart state +^ get_lookahead state -^ (min_match -^ 1ul))
-  
+
 inline_for_extraction let read_buf 
   (ss: stream_state_t)
-  (uncompressed: Ghost.erased (Seq.seq U8.t))
-  (next_in: B.pointer (B.buffer U8.t))
+  (block_data: Ghost.erased (Seq.seq U8.t))
+  (next_in: io_buffer)
   (buf: B.buffer U8.t)
   (size: U32.t)
-  (wrap: I32.t):
+  (wrap: wrap_t):
   ST.Stack (U32.t & Ghost.erased (B.buffer U8.t))
-  (requires fun h -> SS.read_buf_pre h ss uncompressed next_in buf size wrap)
-  (ensures fun h0 res h1 -> SS.read_buf_post h0 res h1 ss uncompressed next_in buf size wrap) =
+  (requires fun h -> SS.read_buf_pre h ss block_data next_in buf size wrap)
+  (ensures fun h0 res h1 -> SS.read_buf_post h0 res h1 ss block_data next_in buf size wrap) =
   let open U32 in
-  let avail_in = ss.(0ul) in
+  let avail_in = get_avail_in ss in
   let len = if avail_in >^ size then
     size
   else
@@ -169,22 +170,22 @@ inline_for_extraction let read_buf
   in
   let avail_in' = B.sub ss 0ul 1ul in
   let next_in' = !*next_in in
-  let ulen = Ghost.hide (Seq.length uncompressed) in
+  let ulen = Ghost.hide (Seq.length block_data) in
     
   B.blit next_in' 0ul buf 0ul len;
   let buf' = B.sub next_in' 0ul (Ghost.hide len) in
-  if wrap = 1l then begin
-    ss.(4ul) <- (Adler32.adler32 #ulen (Ghost.reveal uncompressed) ss.(4ul) buf' len)
-  end else if CFlags.gzip then
+  if wrap = 1l then
+    set_adler ss (Adler32.adler32 #ulen (Ghost.reveal block_data) (get_adler ss) buf' len)
+  else if CFlags.gzip then
     if wrap = 2l then
-      ss.(4ul) <- (CRC32.crc32 uncompressed ss.(4ul) buf' len)
+      set_adler ss (CRC32.crc32 block_data (get_adler ss) buf' len)
     else
       ()
   else
     ();
   next_in *= (B.sub next_in' len (avail_in -^ len));
-  ss.(0ul) <- avail_in -^ len;
-  ss.(1ul) <- U32.add_underspec ss.(1ul) len;
+  set_avail_in ss (avail_in -^ len);
+  set_total_in ss (U32.add_underspec (get_total_in ss) len);
   (len, Ghost.hide buf')
 
 let w_size_fit_u32 (w_size: U32.t{U32.v w_size < pow2 15}): Lemma
@@ -220,7 +221,7 @@ let rec slide_head (ctx: lz77_context_p) (h_size h_range: Ghost.erased U32.t) (i
     ()
 
 [@@ CInline ]
-#set-options "--z3rlimit 2048 --fuel 0 --ifuel 0"
+#set-options "--z3rlimit 2048 --fuel 0 --ifuel 0 --z3seed 25"
 let rec slide_prev (ctx: lz77_context_p) (w_size h_range: Ghost.erased U32.t) (i: U32.t):
   ST.Stack unit
   (requires fun h ->
@@ -315,7 +316,7 @@ let slide_window
     let state' = B.as_seq h state in
     S.slide_window_pre h ctx state block_start /\
     S.lookahead state' + S.insert state' >= S.min_match /\
-    S.hash_chain_valid h ctx (U32.uint_to_t (S.strstart state' - S.insert state')) false)
+    S.hash_chain_valid h ctx (U32.uint_to_t (S.hash_end state')) false)
   (ensures fun h0 more h1 -> S.slide_window_post h0 more h1 ctx state block_start) =
   let open U32 in
   let h0 = Ghost.hide (ST.get ()) in
@@ -333,3 +334,109 @@ let slide_window
     more +^ w_size
   end else
     more
+
+inline_for_extraction
+let min_lookahead (ctx: lz77_context_p):
+  ST.Stack U32.t
+  (requires fun h -> S.context_valid h ctx)
+  (ensures fun h0 res h1 ->
+    B.modifies B.loc_none h0 h1 /\
+    U32.v res = S.min_lookahead (B.get h1 (CB.as_mbuf ctx) 0)) =
+  if (CB.index ctx 0ul).w_bits = 8us then 256ul else 258ul
+
+[@@ CInline ]
+let rec do_fill_window
+  (ss:stream_state_t)
+  (ctx: lz77_context_p)
+  (ls: lz77_state_t)
+  (next_in: io_buffer)
+  (wrap: wrap_t)
+  (avail_in: Ghost.erased (UInt.uint_t 32))
+  (block_data: Ghost.erased (Seq.seq U8.t)):
+  ST.Stack (Ghost.erased (Seq.seq U8.t))
+  (requires fun h ->
+    let ss' = B.as_seq h ss in
+    let ls' = B.as_seq h ls in
+    let ctx' = B.get h (CB.as_mbuf ctx) 0 in
+    HS.disjoint (B.frameOf ss) (B.frameOf ls) /\
+    HS.disjoint (B.frameOf ss) (B.frameOf (CB.as_mbuf ctx)) /\
+    HS.disjoint (B.frameOf ss) (B.frameOf ctx'.window) /\
+    
+    S.window_valid h ctx ls block_data /\
+    SS.istream_valid h ss next_in wrap block_data /\
+    S.hash_chain_valid h ctx (U32.uint_to_t (S.hash_end ls')) false /\
+    S.lookahead ls' < S.min_lookahead ctx' /\ S.strstart ls' < U32.v ctx'.w_size /\
+    U32.v ctx'.window_size > S.window_end ls' /\
+    Ghost.reveal avail_in == SS.avail_in ss' /\ avail_in > 0)
+  (ensures fun h0 block_data' h1 ->
+    let ctx' = B.get h1 (CB.as_mbuf ctx) 0 in
+    let ss0 = B.as_seq h0 ss in
+    let ss1 = B.as_seq h1 ss in
+    let ls1 = B.as_seq h1 ls in
+    let len0 = Seq.length (Ghost.reveal block_data) in
+    let len1 = Seq.length (Ghost.reveal block_data') in
+    B.modifies (
+      B.loc_buffer ss `B.loc_union`
+      B.loc_buffer ls `B.loc_union`
+      B.loc_buffer ctx'.window `B.loc_union`
+      B.loc_buffer next_in `B.loc_union`
+      S.hash_loc_buffer h0 ctx
+    ) h0 h1 /\
+    S.window_valid h1 ctx ls block_data' /\
+    SS.istream_valid h1 ss next_in wrap block_data' /\
+    len0 <= len1 /\
+    (forall (i: nat{i < len0}). block_data'.[i] == block_data.[i]) /\
+    (S.lookahead ls1 >= S.min_lookahead ctx' \/ SS.avail_in ss1 == 0) /\
+    S.hash_chain_valid h1 ctx (U32.uint_to_t (S.hash_end ls1)) false /\
+    SS.avail_out_unchange ss0 ss1 /\ SS.total_out_unchange ss0 ss1)
+  (decreases avail_in) =
+    let open U32 in let open FStar.Seq in
+    let h0 = Ghost.hide (ST.get ()) in
+    let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
+    let w_bits = Ghost.hide (U16.v ctx'.w_bits) in
+    let w_size = Ghost.hide (v ctx'.w_size) in
+    S.window_size_lower_bound (U16.v ctx'.w_bits) (U32.v ctx'.w_size);
+    S.window_size_upper_bound (U16.v ctx'.w_bits) (U32.v ctx'.w_size);
+    
+    let window = (CB.index ctx 0ul).window in
+    let window_size = (CB.index ctx 0ul).window_size in
+    let lookahead = get_lookahead ls in
+    let strstart = get_strstart ls in
+    
+    let w_end = strstart +^ lookahead in
+    let w_end' = Ghost.hide (U32.v w_end) in
+    let w_left = Ghost.hide (B.gsub window 0ul w_end) in
+    
+    [@inline_let] let more = window_size -^ w_end in
+    let w_right= B.sub window w_end more in
+
+    let (len, rbuf) = read_buf ss block_data next_in w_right more wrap in
+    let h1 = Ghost.hide (ST.get ()) in
+    let rbuf' = Ghost.hide (B.as_seq h0 rbuf) in
+    assert(forall (i: nat{i < S.hash_end (B.as_seq h0 ls) + S.min_match - 1}).
+      (B.as_seq h0 window).[i] == (B.as_seq h1 w_left).[i] /\
+      (B.as_seq h1 window).[i] == (B.as_seq h1 w_left).[i]);
+
+    let total_in = Ghost.hide (Seq.length block_data) in
+    assert(forall (i: nat{i < U32.v len}). 
+       (B.as_seq h1 rbuf).[i] == (B.as_seq h1 window).[i + w_end']);
+    assert(forall (i: nat{i < w_end'}).
+      block_data.[total_in - w_end' + i] == (B.as_seq h1 w_left).[i] /\
+      (B.as_seq h1 w_left).[i] == (B.as_seq h1 window).[i]);
+    assert(forall (i: nat{i < w_end'}).
+      block_data.[total_in - w_end' + i] == (B.as_seq h1 window).[i]);
+    assert((forall (i: nat{i < Seq.length block_data}).
+      (block_data @| rbuf').[i] == block_data.[i]));
+    
+    set_lookahead w_bits w_size ls (lookahead +^ len);
+    let lookahead' = get_lookahead ls in
+    let avail_in' = get_avail_in ss in
+    init_input_hash ctx ls;
+
+    let min_lookahead = min_lookahead ctx in
+    S.min_lookahead_upper_bound h0 ctx;
+    
+    if lookahead' <^ min_lookahead && avail_in' >^ 0ul then
+      do_fill_window ss ctx ls next_in wrap (U32.v avail_in') (block_data @| rbuf')
+    else
+      Ghost.hide (block_data @| rbuf')

@@ -59,6 +59,20 @@ let get_strstart (state: lz77_state_t):
   state.(4ul)
 
 inline_for_extraction
+let set_lookahead
+  (bits: Ghost.erased S.window_bits)
+  (w_size: Ghost.erased (S.window_size bits))
+  (state: lz77_state_t)
+  (lookahead: U32.t{U32.v lookahead <= 2 * w_size}):
+  ST.Stack unit
+  (requires fun h -> B.live h state)
+  (ensures fun h0 _ h1 ->
+    B.modifies (B.loc_buffer state) h0 h1 /\
+    S.lookahead (B.as_seq h1 state) == U32.v lookahead /\
+    LB.unchange_except h0 h1 state 5) =
+  state.(5ul) <- lookahead
+
+inline_for_extraction
 let get_lookahead (state: lz77_state_t):
   ST.Stack U32.t
   (requires fun h -> B.live h state)
