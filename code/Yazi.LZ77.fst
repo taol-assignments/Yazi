@@ -293,15 +293,28 @@ let slide_window_buf
     S.slide_window_buf_post h0 h1 ctx state block_start (U32.v len)) =
   let open U32 in
   let w_size = (CB.index ctx 0ul).w_size in
+  let w_size' = Ghost.hide (U32.v w_size) in
   let window = (CB.index ctx 0ul).window in
   let w_bits = Ghost.hide (CB.index ctx 0ul).w_bits in
   S.window_size_upper_bound (U16.v w_bits) (v w_size);
   let left = B.sub window 0ul w_size in
   let right = B.sub window w_size w_size in
+  let h0 = Ghost.hide (ST.get ()) in
+  let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
+  let w0 = Ghost.hide (B.as_seq h0 ctx'.window) in
+  
   B.blit right 0ul left 0ul len;
   set_match_start (U16.v w_bits) (v w_size) state ((get_match_start state) -^ w_size);
   set_strstart (U16.v w_bits) (v w_size) state ((get_strstart state) -^ w_size);
-  block_start *= I32.sub (!*block_start) (Cast.uint32_to_int32 w_size)
+  block_start *= I32.sub (!*block_start) (Cast.uint32_to_int32 w_size);
+  let h1 = Ghost.hide (ST.get ()) in
+  let w1 = Ghost.hide (B.as_seq h1 ctx'.window) in
+  assert(forall (i: nat{i < U32.v len}).
+    (B.as_seq h0 (B.gsub ctx'.window ctx'.w_size len)).[i] == w0.[i + w_size'] /\
+    (B.as_seq h1 (B.gsub ctx'.window 0ul len)).[i] ==
+    (B.as_seq h0 (B.gsub ctx'.window ctx'.w_size len)).[i] /\
+    (B.as_seq h1 (B.gsub ctx'.window 0ul len)).[i] == w1.[i]);
+  assert(forall (i: nat{i < U32.v len}). w0.[i + w_size'] == w1.[i])
 
 #set-options "--z3rlimit 4096 --fuel 0 --ifuel 0"
 [@@ CInline ]
@@ -315,7 +328,6 @@ let slide_window
     let open U32 in
     let state' = B.as_seq h state in
     S.slide_window_pre h ctx state block_start /\
-    S.lookahead state' + S.insert state' >= S.min_match /\
     S.hash_chain_valid h ctx (U32.uint_to_t (S.hash_end state')) false)
   (ensures fun h0 more h1 -> S.slide_window_post h0 more h1 ctx state block_start) =
   let open U32 in
@@ -344,6 +356,7 @@ let min_lookahead (ctx: lz77_context_p):
     U32.v res = S.min_lookahead (B.get h1 (CB.as_mbuf ctx) 0)) =
   if (CB.index ctx 0ul).w_bits = 8us then 256ul else 258ul
 
+#set-options "--z3rlimit 8192 --fuel 0 --ifuel 1 --z3seed 13"
 [@@ CInline ]
 let rec do_fill_window
   (ss:stream_state_t)
@@ -354,41 +367,9 @@ let rec do_fill_window
   (avail_in: Ghost.erased (UInt.uint_t 32))
   (block_data: Ghost.erased (Seq.seq U8.t)):
   ST.Stack (Ghost.erased (Seq.seq U8.t))
-  (requires fun h ->
-    let ss' = B.as_seq h ss in
-    let ls' = B.as_seq h ls in
-    let ctx' = B.get h (CB.as_mbuf ctx) 0 in
-    HS.disjoint (B.frameOf ss) (B.frameOf ls) /\
-    HS.disjoint (B.frameOf ss) (B.frameOf (CB.as_mbuf ctx)) /\
-    HS.disjoint (B.frameOf ss) (B.frameOf ctx'.window) /\
-    
-    S.window_valid h ctx ls block_data /\
-    SS.istream_valid h ss next_in wrap block_data /\
-    S.hash_chain_valid h ctx (U32.uint_to_t (S.hash_end ls')) false /\
-    S.lookahead ls' < S.min_lookahead ctx' /\ S.strstart ls' < U32.v ctx'.w_size /\
-    U32.v ctx'.window_size > S.window_end ls' /\
-    Ghost.reveal avail_in == SS.avail_in ss' /\ avail_in > 0)
-  (ensures fun h0 block_data' h1 ->
-    let ctx' = B.get h1 (CB.as_mbuf ctx) 0 in
-    let ss0 = B.as_seq h0 ss in
-    let ss1 = B.as_seq h1 ss in
-    let ls1 = B.as_seq h1 ls in
-    let len0 = Seq.length (Ghost.reveal block_data) in
-    let len1 = Seq.length (Ghost.reveal block_data') in
-    B.modifies (
-      B.loc_buffer ss `B.loc_union`
-      B.loc_buffer ls `B.loc_union`
-      B.loc_buffer ctx'.window `B.loc_union`
-      B.loc_buffer next_in `B.loc_union`
-      S.hash_loc_buffer h0 ctx
-    ) h0 h1 /\
-    S.window_valid h1 ctx ls block_data' /\
-    SS.istream_valid h1 ss next_in wrap block_data' /\
-    len0 <= len1 /\
-    (forall (i: nat{i < len0}). block_data'.[i] == block_data.[i]) /\
-    (S.lookahead ls1 >= S.min_lookahead ctx' \/ SS.avail_in ss1 == 0) /\
-    S.hash_chain_valid h1 ctx (U32.uint_to_t (S.hash_end ls1)) false /\
-    SS.avail_out_unchange ss0 ss1 /\ SS.total_out_unchange ss0 ss1)
+  (requires fun h -> S.do_fill_window_pre h ss ctx ls next_in wrap avail_in block_data)
+  (ensures fun h0 res h1 ->
+    S.do_fill_window_post h0 res h1 ss ctx ls next_in wrap avail_in block_data)
   (decreases avail_in) =
     let open U32 in let open FStar.Seq in
     let h0 = Ghost.hide (ST.get ()) in
@@ -440,3 +421,17 @@ let rec do_fill_window
       do_fill_window ss ctx ls next_in wrap (U32.v avail_in') (block_data @| rbuf')
     else
       Ghost.hide (block_data @| rbuf')
+
+#set-options "--z3rlimit 8192 --fuel 0 --ifuel 0"
+let fill_window ss ctx ls next_in wrap block_start block_data =
+  ST.push_frame ();
+  let open U32 in
+  let more = slide_window ctx ls block_start in
+  let avail_in = get_avail_in ss in
+  let res = if avail_in>^ 0ul then
+    do_fill_window ss ctx ls next_in wrap (U32.v avail_in) block_data
+  else
+    block_data
+  in
+  ST.pop_frame ();
+  res

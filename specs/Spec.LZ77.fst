@@ -8,6 +8,7 @@ module HS = FStar.HyperStack
 module I32 = FStar.Int32
 module LB = Lib.Buffer
 module Math = FStar.Math.Lemmas
+module SS = Spec.Stream
 module U8 = FStar.UInt8
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
@@ -15,6 +16,7 @@ module U32 = FStar.UInt32
 open FStar.Mul
 open Lib.UInt
 open Lib.Seq
+open Yazi.Stream.Types
 open Yazi.LZ77.Types
 
 let min_match = 4
@@ -272,9 +274,8 @@ unfold let window_valid
   let w_end = window_end s' in
   state_valid h ctx s /\
   total_in >= w_end /\
-  Seq.equal
-    (B.as_seq h (B.gsub ctx'.window 0ul (U32.uint_to_t w_end)))
-    (Seq.slice block_data (total_in - w_end) total_in)
+  (forall (i: nat{i < w_end}).
+    (B.as_seq h ctx'.window).[i] == block_data.[total_in - w_end + i])
 
 let do_init_input_hash_pre
   (h: HS.mem)
@@ -369,8 +370,8 @@ unfold let slide_window_pre
     
   match_start state' >= v ctx'.w_size /\
   strstart state' >= v ctx'.w_size /\
-  insert state' <= strstart state' - v ctx'.w_size /\
-  strstart state' - insert state' < v ctx'.window_size - min_match + 1 /\
+  hash_end state' >= v ctx'.w_size /\
+  hash_end state' < v ctx'.window_size - min_match + 1 /\
   I32.v (B.get h block_start 0) >= -8454144)
 
 private unfold let slide_window_buf_post'
@@ -395,9 +396,12 @@ private unfold let slide_window_buf_post'
 
   len <= U32.v ctx'.w_size /\
   I32.v (B.get h0 block_start 0) - U32.v ctx'.w_size == I32.v (B.get h1 block_start 0) /\
-  Seq.slice w0 w_size' (w_size' + len) == Seq.slice w1 0 len)
+  Seq.equal
+    (B.as_seq h0 (B.gsub ctx'.window ctx'.w_size (U32.uint_to_t len)))
+    (B.as_seq h1 (B.gsub ctx'.window 0ul (U32.uint_to_t len))) /\
+  (forall (i: nat{i < len}). w0.[i + w_size'] == w1.[i]))
 
-let slide_window_buf_post
+unfold let slide_window_buf_post
   (h0 h1: HS.mem)
   (ctx: lz77_context_p)
   (state: lz77_state_t)
@@ -436,3 +440,172 @@ unfold let slide_window_post
     len <= v ctx'.w_size /\
     hash_chain_valid h1 ctx (uint_to_t (strstart s1 - insert s1)) false /\
     state_valid h1 ctx state))
+
+unfold let do_fill_window_disjoint_cond
+  (h: HS.mem) (ss: stream_state_t) (ctx: lz77_context_p) (ls: lz77_state_t) =
+  HS.disjoint (B.frameOf ss) (B.frameOf ls) /\
+  HS.disjoint (B.frameOf ss) (B.frameOf (CB.as_mbuf ctx)) /\
+  HS.disjoint (B.frameOf ss) (B.frameOf (B.get h (CB.as_mbuf ctx) 0).window)
+
+unfold let do_fill_window_pre
+  (h: HS.mem)
+  (ss: stream_state_t)
+  (ctx: lz77_context_p)
+  (ls: lz77_state_t)
+  (next_in: io_buffer)
+  (wrap: wrap_t)
+  (avail_in: UInt.uint_t 32)
+  (block_data: Seq.seq U8.t) =
+    let ss' = B.as_seq h ss in
+    let ls' = B.as_seq h ls in
+    let ctx' = B.get h (CB.as_mbuf ctx) 0 in
+    do_fill_window_disjoint_cond h ss ctx ls /\
+    
+    window_valid h ctx ls block_data /\
+    SS.istream_valid h ss next_in wrap block_data /\
+    hash_chain_valid h ctx (U32.uint_to_t (hash_end ls')) false /\
+    lookahead ls' < min_lookahead ctx' /\ strstart ls' < U32.v ctx'.w_size /\
+    U32.v ctx'.window_size > window_end ls' /\
+    avail_in == SS.avail_in ss' /\ avail_in > 0
+
+unfold let do_fill_window_post'
+  (h0: HS.mem)
+  (block_data': Seq.seq U8.t)
+  (h1: HS.mem)
+  (ss: stream_state_t)
+  (ctx: lz77_context_p)
+  (ls: lz77_state_t)
+  (next_in: io_buffer)
+  (wrap: wrap_t)
+  (avail_in: UInt.uint_t 32)
+  (block_data: Seq.seq U8.t) =
+    let ctx' = B.get h1 (CB.as_mbuf ctx) 0 in
+    let ss0 = B.as_seq h0 ss in
+    let ss1 = B.as_seq h1 ss in
+    let ls1 = B.as_seq h1 ls in
+    let len0 = Seq.length (Ghost.reveal block_data) in
+    let len1 = Seq.length (Ghost.reveal block_data') in
+    let next_in0 = B.as_seq h0 (B.get h0 next_in 0) in
+    let avail_in0 = SS.avail_in ss0 in
+    let avail_in1 = SS.avail_in ss1 in
+    window_valid h1 ctx ls block_data' /\
+    SS.next_in_valid h0 ss next_in /\
+    SS.istream_valid h1 ss next_in wrap block_data' /\
+    len0 <= len1 /\ avail_in0 - avail_in1 == len1 - len0 /\
+    (forall (i: nat{i < len0}). block_data'.[i] == block_data.[i]) /\
+    (forall (i: nat{len0 <= i /\ i < len1}). block_data'.[i] == next_in0.[i - len0]) /\
+    (lookahead ls1 >= min_lookahead ctx' \/ SS.avail_in ss1 == 0) /\
+    hash_chain_valid h1 ctx (U32.uint_to_t (hash_end ls1)) false /\
+    SS.avail_out_unchange ss0 ss1 /\ SS.total_out_unchange ss0 ss1
+
+unfold let do_fill_window_post
+  (h0: HS.mem)
+  (block_data': Seq.seq U8.t)
+  (h1: HS.mem)
+  (ss: stream_state_t)
+  (ctx: lz77_context_p)
+  (ls: lz77_state_t)
+  (next_in: io_buffer)
+  (wrap: wrap_t)
+  (avail_in: UInt.uint_t 32)
+  (block_data: Seq.seq U8.t) =
+    let ls0 = B.as_seq h0 ls in
+    let ls1 = B.as_seq h1 ls in
+    context_valid h0 ctx /\
+    B.modifies (
+      B.loc_buffer ss `B.loc_union`
+      B.loc_buffer ls `B.loc_union`
+      B.loc_buffer (B.get h0 (CB.as_mbuf ctx) 0).window `B.loc_union`
+      B.loc_buffer next_in `B.loc_union`
+      hash_loc_buffer h0 ctx
+    ) h0 h1 /\
+    do_fill_window_post' h0 block_data' h1 ss ctx ls next_in wrap avail_in block_data /\
+    strstart_unchange ls0 ls1 /\
+    match_start_unchange ls0 ls1 /\
+    match_length_unchange ls0 ls1 /\
+    prev_match_unchange ls0 ls1 /\
+    prev_length_unchange ls0 ls1
+
+let fill_window_pre
+  (h: HS.mem)
+  (ss: stream_state_t)
+  (ctx: lz77_context_p)
+  (ls: lz77_state_t)
+  (next_in: io_buffer)
+  (wrap: wrap_t)
+  (block_start: B.pointer I32.t)
+  (block_data: Seq.seq U8.t) =
+    let ss' = B.as_seq h ss in
+    let ls' = B.as_seq h ls in
+    let ctx' = B.get h (CB.as_mbuf ctx) 0 in
+    do_fill_window_disjoint_cond h ss ctx ls /\
+    HS.disjoint (B.frameOf block_start) (B.frameOf ss) /\
+    HS.disjoint (B.frameOf block_start) (B.frameOf (B.get h (CB.as_mbuf ctx) 0).window) /\
+    B.disjoint block_start (CB.as_mbuf ctx) /\
+    B.disjoint block_start ls /\
+    
+    window_valid h ctx ls block_data /\
+    slide_window_pre h ctx ls block_start /\
+    SS.istream_valid h ss next_in wrap block_data /\
+    hash_chain_valid h ctx (U32.uint_to_t (hash_end ls')) false /\
+    lookahead ls' < min_lookahead ctx' /\
+    I32.v (B.get h block_start 0) >= -8454144 + 32768
+
+unfold let fill_window_post
+  (h0: HS.mem)
+  (block_data': Seq.seq U8.t)
+  (h1: HS.mem)
+  (ss: stream_state_t)
+  (ctx: lz77_context_p)
+  (ls: lz77_state_t)
+  (next_in: io_buffer)
+  (wrap: wrap_t)
+  (block_start: B.pointer I32.t)
+  (block_data: Seq.seq U8.t) =
+    let ss0 = B.as_seq h0 ss in
+    let ls0 = B.as_seq h0 ls in
+    let ls1 = B.as_seq h1 ls in
+    let block_start0 = I32.v (B.get h0 block_start 0) in
+    let block_start1 = I32.v (B.get h1 block_start 0) in
+    let ctx' = B.get h0 (CB.as_mbuf ctx) 0 in
+    let avail_in = SS.avail_in ss0 in
+    let has_slided = strstart ls0 >= U32.v ctx'.w_size in
+    let has_filled = avail_in > 0 in
+    context_valid h0 ctx /\
+    
+    (has_filled ==>
+      do_fill_window_post' h0 block_data' h1 ss ctx ls next_in wrap avail_in block_data) /\
+    (~has_slided ==>
+      strstart_unchange ls0 ls1 /\
+      match_start_unchange ls0 ls1 /\
+      (has_filled ==> B.modifies (
+        B.loc_buffer ss `B.loc_union`
+        B.loc_buffer ls `B.loc_union`
+        B.loc_buffer ctx'.window `B.loc_union`
+        B.loc_buffer next_in `B.loc_union`
+        hash_loc_buffer h0 ctx
+      ) h0 h1) /\
+      (~has_filled ==> B.modifies B.loc_none h0 h1)) /\
+    (has_slided ==>
+      (has_filled ==> B.modifies (
+        B.loc_buffer ss `B.loc_union`
+        B.loc_buffer ls `B.loc_union`
+        B.loc_buffer ctx'.window `B.loc_union`
+        B.loc_buffer next_in `B.loc_union`
+        B.loc_buffer block_start `B.loc_union`
+        hash_loc_buffer h0 ctx
+      ) h0 h1) /\
+      (~has_filled ==> B.modifies (
+        B.loc_buffer block_start `B.loc_union`
+        B.loc_buffer ls `B.loc_union`
+        B.loc_buffer ctx'.window `B.loc_union`
+        hash_loc_buffer h0 ctx) h0 h1) /\
+      strstart ls0 - U32.v ctx'.w_size == strstart ls1 /\
+      match_start ls0 - U32.v ctx'.w_size == match_start ls1 /\
+      block_start0 - U32.v ctx'.w_size == block_start1) /\
+
+    match_length_unchange ls0 ls1 /\
+    prev_match_unchange ls0 ls1 /\
+    prev_length_unchange ls0 ls1 /\
+    strstart ls1 < U32.v ctx'.w_size /\
+    window_valid h1 ctx ls block_data'

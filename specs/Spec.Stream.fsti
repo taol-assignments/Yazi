@@ -39,7 +39,7 @@ private let adler_valid
   (I32.v wrap == 2 ==>
     CRC32.crc32_matched len block_data (adler s') true)
 
-private unfold let next_in_valid
+unfold let next_in_valid
   (h: HS.mem)
   (s: stream_state_t)
   (next_in: io_buffer) =
@@ -50,7 +50,7 @@ private unfold let next_in_valid
   B.disjoint next_in s /\ B.disjoint next_in' s /\ B.disjoint next_in next_in' /\
   B.length next_in' == avail_in (B.as_seq h s)
 
-private unfold let next_out_valid
+unfold let next_out_valid
   (h: HS.mem)
   (s: stream_state_t)
   (next_out: io_buffer) =
