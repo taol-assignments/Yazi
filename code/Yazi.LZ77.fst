@@ -424,6 +424,10 @@ let rec do_fill_window
 
 #set-options "--z3rlimit 8192 --fuel 0 --ifuel 0"
 let fill_window ss ctx ls next_in wrap block_start block_data =
+  let h0 = Ghost.hide (ST.get ()) in
+  let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
+  S.window_size_upper_bound (U16.v ctx'.w_bits) (U32.v ctx'.w_size);
+  
   ST.push_frame ();
   let open U32 in
   let more = slide_window ctx ls block_start in

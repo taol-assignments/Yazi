@@ -275,7 +275,8 @@ unfold let window_valid
   state_valid h ctx s /\
   total_in >= w_end /\
   (forall (i: nat{i < w_end}).
-    (B.as_seq h ctx'.window).[i] == block_data.[total_in - w_end + i])
+    (B.as_seq h ctx'.window).[i] == block_data.[total_in - w_end + i]) /\
+  hash_chain_valid h ctx (U32.uint_to_t (hash_end s')) false
 
 let do_init_input_hash_pre
   (h: HS.mem)
@@ -463,7 +464,6 @@ unfold let do_fill_window_pre
     
     window_valid h ctx ls block_data /\
     SS.istream_valid h ss next_in wrap block_data /\
-    hash_chain_valid h ctx (U32.uint_to_t (hash_end ls')) false /\
     lookahead ls' < min_lookahead ctx' /\ strstart ls' < U32.v ctx'.w_size /\
     U32.v ctx'.window_size > window_end ls' /\
     avail_in == SS.avail_in ss' /\ avail_in > 0
@@ -495,7 +495,6 @@ unfold let do_fill_window_post'
     (forall (i: nat{i < len0}). block_data'.[i] == block_data.[i]) /\
     (forall (i: nat{len0 <= i /\ i < len1}). block_data'.[i] == next_in0.[i - len0]) /\
     (lookahead ls1 >= min_lookahead ctx' \/ SS.avail_in ss1 == 0) /\
-    hash_chain_valid h1 ctx (U32.uint_to_t (hash_end ls1)) false /\
     SS.avail_out_unchange ss0 ss1 /\ SS.total_out_unchange ss0 ss1
 
 unfold let do_fill_window_post
@@ -540,14 +539,13 @@ let fill_window_pre
     let ctx' = B.get h (CB.as_mbuf ctx) 0 in
     do_fill_window_disjoint_cond h ss ctx ls /\
     HS.disjoint (B.frameOf block_start) (B.frameOf ss) /\
-    HS.disjoint (B.frameOf block_start) (B.frameOf (B.get h (CB.as_mbuf ctx) 0).window) /\
+    HS.disjoint (B.frameOf block_start) (B.frameOf ctx'.window) /\
     B.disjoint block_start (CB.as_mbuf ctx) /\
     B.disjoint block_start ls /\
     
     window_valid h ctx ls block_data /\
     slide_window_pre h ctx ls block_start /\
     SS.istream_valid h ss next_in wrap block_data /\
-    hash_chain_valid h ctx (U32.uint_to_t (hash_end ls')) false /\
     lookahead ls' < min_lookahead ctx' /\
     I32.v (B.get h block_start 0) >= -8454144 + 32768
 
@@ -563,6 +561,7 @@ unfold let fill_window_post
   (block_start: B.pointer I32.t)
   (block_data: Seq.seq U8.t) =
     let ss0 = B.as_seq h0 ss in
+    let ss1 = B.as_seq h1 ss in
     let ls0 = B.as_seq h0 ls in
     let ls1 = B.as_seq h1 ls in
     let block_start0 = I32.v (B.get h0 block_start 0) in
@@ -608,4 +607,6 @@ unfold let fill_window_post
     prev_match_unchange ls0 ls1 /\
     prev_length_unchange ls0 ls1 /\
     strstart ls1 < U32.v ctx'.w_size /\
-    window_valid h1 ctx ls block_data'
+    window_valid h1 ctx ls block_data' /\
+    SS.avail_out_unchange ss0 ss1 /\ SS.total_out_unchange ss0 ss1 /\
+    block_start1 >= -8454144
