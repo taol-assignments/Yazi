@@ -172,6 +172,7 @@ let do1
     b = b';
   }
 
+[@ CInline ]
 inline_for_extraction
 let rec iteration_1 (d: Ghost.erased do_init_state) (s: do_state): ST.Stack do_state
   (requires fun h -> do_pre_cond h d s (U32.v s.slen) /\ d.blen <= nmax)
@@ -185,6 +186,7 @@ let rec iteration_1 (d: Ghost.erased do_init_state) (s: do_state): ST.Stack do_s
   else
     s
 
+[@ CInline ]
 inline_for_extraction
 let rec iteration_1_remaining (d: Ghost.erased do_init_state) (s: do_state): ST.Stack do_state
   (requires fun h -> do_pre_cond h d s (U32.v s.slen % 16) /\ d.blen <= nmax)
@@ -236,6 +238,7 @@ let do16
   let s' = do8 d s in
   do8 d s'
 
+[@ CInline ]
 inline_for_extraction
 let rec iteration_16 (d: Ghost.erased do_init_state) (s: do_state): ST.Stack do_state
   (requires fun h ->
@@ -319,6 +322,7 @@ inline_for_extraction unfold let init_state
   let (a', b') = extract_sums data adler in
   init_state' data a' b' len buf
 
+[@ CInline ]
 inline_for_extraction
 let rec do_iteration_nmax
   (#m1 #m2: Ghost.erased nat)
@@ -391,6 +395,7 @@ let rec do_iteration_nmax
       right r'
       a' b'
 
+[@ CInline ]
 inline_for_extraction
 let iteration_nmax
   (#m: Ghost.erased nat)

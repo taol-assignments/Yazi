@@ -20,6 +20,7 @@ open Yazi.Stream.Types
 open Yazi.LZ77.Types
 
 let min_match = 4
+let max_match = 258
 let min_lookahead (ctx: lz77_context) = if ctx.w_bits = 8us then 256 else 258
 
 unfold let is_hash_bits (b: nat) = b >= 8 /\ b <= 16
@@ -191,17 +192,17 @@ let sub_prev_valid
   let hash = hash (U16.v ctx'.h_bits) in
   (h_range' > 0 ==> (forall (i: nat{range i}).
     let b = U16.v prev'.[i] in
-    let b' = i + v ctx'.w_size in
+    let i' = i + v ctx'.w_size in
     b < h_range' /\
     (b <> 0 ==>
-      ((b' < h_range' ==>
-        (b < i + v ctx'.w_size /\
+      (i' < h_range' ==>
+        b < i' /\
         hash w.[b] w.[b + 1] w.[b + 2] w.[b + 3] ==
-        hash w.[b'] w.[b' + 1] w.[b' + 2] w.[b' + 3]))) /\
-      (h_range' <= b' /\ i < h_range' ==>
-        (b < i /\
+        hash w.[i'] w.[i' + 1] w.[i' + 2] w.[i' + 3]) /\
+      (h_range' <= i' /\ i < h_range' ==>
+        b < i /\
         hash w.[b] w.[b + 1] w.[b + 2] w.[b + 3] ==
-        hash w.[i] w.[i + 1] w.[i + 2] w.[i + 3])))))
+        hash w.[i] w.[i + 1] w.[i + 2] w.[i + 3]))))
 
 let prev_valid
   (h: HS.mem)
@@ -610,3 +611,49 @@ unfold let fill_window_post
     window_valid h1 ctx ls block_data' /\
     SS.avail_out_unchange ss0 ss1 /\ SS.total_out_unchange ss0 ss1 /\
     block_start1 >= -8454144
+
+unfold let ctz_compare_pre (h: HS.mem) (len: nat) (s m: B.buffer U8.t) (i: U32.t) =
+  (len == 4 \/ len == 8) /\
+  B.live h s /\ B.live h m /\
+  B.length m >= B.length s /\
+  U32.v i + len <= B.length s /\
+  (forall (j: nat{j < U32.v i}). (B.as_seq h s).[j] == (B.as_seq h m).[j])
+
+let ctz_compare_post
+  (h0: HS.mem) (res: U32.t) (h1: HS.mem) (len: nat) (s m: B.buffer U8.t) (i: U32.t) =
+    let s' = B.as_seq h0 s in
+    let m' = B.as_seq h0 m in
+    let res' = U32.v res in
+    let i' = U32.v i in
+    ctz_compare_pre h0 len s m i /\
+    B.modifies B.loc_none h0 h1 /\
+    res' <= len /\ (res' == len \/ s'.[i' + res'] <> m'.[i' + res']) /\
+    (forall (j: nat{j < i' + res'}). s'.[j] == m'.[j])
+
+unfold let string_compare_ite_pre (h: HS.mem) (s m: B.buffer U8.t) (i tail: U32.t) =
+  let s' = B.as_seq h s in
+  let m' = B.as_seq h m in
+  let tail' = U32.v tail in 
+  let i' = U32.v i in
+  B.live h s /\ B.live h m /\ B.length s <= B.length m /\
+  tail' <= max_match /\
+  tail' <= B.length s /\ i' <= tail' /\
+  i' <= tail' /\ (forall (j: nat{j < U32.v i}). s'.[j] == m'.[j])
+
+unfold let string_compare_ite_post
+  (h0: HS.mem) (len: U32.t) (h1: HS.mem) (s m: B.buffer U8.t) (i tail: U32.t) =
+    let s' = B.as_seq h0 s in
+    let m' = B.as_seq h0 m in
+    let len' = U32.v len in
+    let tail' = U32.v tail in
+    B.modifies B.loc_none h0 h1 /\
+    U32.v tail <= B.length s /\ B.length s <= B.length m /\
+    len' <= tail' /\ (len' == tail' \/ s'.[len'] <> m'.[len']) /\
+    (forall (j: nat{j < len'}). s'.[j] == m'.[j])
+
+unfold let match_ready (h: HS.mem) (ctx: lz77_context_p) (s: lz77_state_t) =
+  let s' = B.as_seq h s in
+  state_valid h ctx s /\
+  insert s' == 0 /\
+  lookahead s' >= min_lookahead (B.get h (CB.as_mbuf ctx) 0) /\
+  hash_chain_valid h ctx (U32.uint_to_t (hash_end s')) false
