@@ -224,8 +224,10 @@ let rec slide_head (ctx: lz77_context_p) (h_size h_range: Ghost.erased U32.t) (i
   end else
     ()
 
-[@@ CInline ]
 #set-options "--z3rlimit 2048 --fuel 0 --ifuel 0 --z3seed 25"
+[@ (CPrologue "#ifndef FASTEST")
+   (CEpilogue "#endif")
+   CInline]
 let rec slide_prev (ctx: lz77_context_p) (w_size h_range: Ghost.erased U32.t) (i: U32.t):
   ST.Stack unit
   (requires fun h ->
@@ -552,8 +554,10 @@ unfold let slow_match_pre_cond
   (S.strstart s' < v ctx'.w_size ==> v limit == 0) /\
   v chain_length >= 1
 
-[@ CInline ]
 #set-options "--z3rlimit 4096 --fuel 0 --ifuel 0 --z3seed 13"
+[@ (CPrologue "#ifndef FASTEST")
+   (CEpilogue "#endif")
+   CInline]
 let rec search_hash_chain
   (ctx: lz77_context_p)
   (s: lz77_state_t)
@@ -609,7 +613,9 @@ let rec search_hash_chain
   end else
     (0ul, 0ul, false)
 
-[@ CInline ]
+[@ (CPrologue "#ifndef FASTEST")
+   (CEpilogue "#endif")
+   CInline]
 let rec do_longest_match_slow
   (ctx: lz77_context_p)
   (s: lz77_state_t)
@@ -621,13 +627,16 @@ let rec do_longest_match_slow
     let s' = B.as_seq h s in
     let w = B.as_seq h ctx'.window in
     slow_match_pre_cond h ctx s scan_end limit chain_length cur_match /\
+    v best_len < v nice_match /\
+    (S.prev_length s' >= S.good_match s' ==>
+      v chain_length <= UInt.shift_right (S.max_chain_length s') 2) /\
     (S.nice_match s' < S.lookahead s' ==> v nice_match == S.nice_match s') /\
     (S.nice_match s' >= S.lookahead s' ==> v nice_match == S.lookahead s') /\
     (v best_len > 0 ==>
-      (v best_len >= S.min_match /\
+      v best_len >= S.min_match /\
       v cur_match < S.strstart s' /\
       S.strstart s' + v best_len <= S.window_end s' /\
-      (forall (i: nat{i < v best_len}). w.[v cur_match + i] == w.[S.strstart s' + i]))))
+      (forall (i: nat{i < v best_len}). w.[v cur_match + i] == w.[S.strstart s' + i])))
   (ensures fun h0 res h1 ->
     let open U32 in
     let ctx' = B.get h1 (CB.as_mbuf ctx) 0 in
@@ -642,52 +651,53 @@ let rec do_longest_match_slow
       (forall (i: nat{i < v bl}). w.[v cm + i] == w.[S.strstart s' + i])))
   (decreases U32.v chain_length) =
   let open U32 in
-  if nice_match <^ best_len then
-    let (cm, cl, cont) = search_hash_chain ctx s scan_end limit chain_length cur_match in
-    if cont then begin
-      let w_bits = (CB.index ctx 0ul).w_bits in
-      let window = (CB.index ctx 0ul).window in
-      let strstart = get_strstart s in
-      let lookahead = get_lookahead s in
-      let max_lookahead = if w_bits = 8us then 256ul else 258ul in
-      let max_offset = 
-        (if lookahead <^ max_lookahead then lookahead else max_lookahead) -^ min_match in
-      let sbuf = B.sub window (strstart +^ min_match) (Ghost.hide max_offset) in
-      let mbuf = B.sub window (cm +^ min_match) (Ghost.hide max_offset) in
-      let l' = match_iteration sbuf mbuf max_offset in
-      let l = min_match +^ l' in
+  let (cm, cl, cont) = search_hash_chain ctx s scan_end limit chain_length cur_match in
+  if cont then begin
+    let w_bits = (CB.index ctx 0ul).w_bits in
+    let window = (CB.index ctx 0ul).window in
+    let strstart = get_strstart s in
+    let lookahead = get_lookahead s in
+    let max_lookahead = if w_bits = 8us then 256ul else 258ul in
+    let max_offset = 
+      (if lookahead <^ max_lookahead then lookahead else max_lookahead) -^ min_match in
+    let sbuf = B.sub window (strstart +^ min_match) (Ghost.hide max_offset) in
+    let mbuf = B.sub window (cm +^ min_match) (Ghost.hide max_offset) in
+    let l' = match_iteration sbuf mbuf max_offset in
+    let l = min_match +^ l' in
 
-      let h = Ghost.hide (ST.get ()) in
-      let w = Ghost.hide (B.as_seq h window) in
-      assert(forall (i: nat{S.min_match <= i /\ i < S.min_match + v l'}).
-        (B.as_seq h sbuf).[i - S.min_match] == (B.as_seq h mbuf).[i - S.min_match] /\
-        (B.as_seq h sbuf).[i - S.min_match] == w.[v strstart + i] /\
-        (B.as_seq h mbuf).[i - S.min_match] == w.[v cm + i]);
-      assert(forall (i:nat{i < v l}).
-        {:pattern (w.[v cm + i]); (w.[v strstart + i])}
-        w.[v cm + i] == w.[v strstart + i]);
+    let h = Ghost.hide (ST.get ()) in
+    let w = Ghost.hide (B.as_seq h window) in
+    assert(forall (i: nat{S.min_match <= i /\ i < S.min_match + v l'}).
+      (B.as_seq h sbuf).[i - S.min_match] == (B.as_seq h mbuf).[i - S.min_match] /\
+      (B.as_seq h sbuf).[i - S.min_match] == w.[v strstart + i] /\
+      (B.as_seq h mbuf).[i - S.min_match] == w.[v cm + i]);
+    assert(forall (i:nat{i < v l}).
+      {:pattern (w.[v cm + i]); (w.[v strstart + i])}
+      w.[v cm + i] == w.[v strstart + i]);
 
-      if l >^ best_len then
-        if cl >^ 1ul && cm >^ 0ul then
-          do_longest_match_slow
-            ctx s nice_match (strstart +^ l -^ 4ul) limit (cl -^ 1ul) cm l
-        else
-          (l, cm)
+    if l >^ best_len then
+      if nice_match >^ l && cl >^ 1ul && cm >^ 0ul then
+        do_longest_match_slow
+          ctx s nice_match (strstart +^ l -^ 4ul) limit (cl -^ 1ul) cm l
       else
-        if cl >^ 1ul then
-          do_longest_match_slow
-            ctx s nice_match scan_end limit (cl -^ 1ul) cur_match best_len
-        else
-          (best_len, cur_match)
-    end else
-      (best_len, cur_match)
-  else
+        (l, cm)
+    else
+      if cl >^ 1ul then
+        do_longest_match_slow
+          ctx s nice_match scan_end limit (cl -^ 1ul) cur_match best_len
+      else
+        (best_len, cur_match)
+  end else
     (best_len, cur_match)
 
-[@ CInline ]
+[@ (CPrologue "#ifdef FASTEST")
+   (CEpilogue "#endif")
+   CInline]
 let do_longest_match_fast (ctx: lz77_context_p) (s: lz77_state_t) (cur_match: U32.t):
   ST.Stack U32.t
-  (requires fun h -> S.longest_match_pre h ctx s cur_match)
+  (requires fun h ->
+    S.longest_match_pre h ctx s cur_match /\
+    CFlags.fastest == true)
   (ensures fun h0 res h1 ->
     let open U32 in
     let ctx' = B.get h1 (CB.as_mbuf ctx) 0 in
@@ -747,7 +757,7 @@ let longest_match ctx s cur_match =
     let limit = if strstart >^ w_size then strstart -^ w_size else 0ul in
     let good_match = get_good_match s in
     let mcl = get_max_chain_length s in
-    let chain_length = if prev_length >=^ good_match then mcl <<^ 2ul else mcl in
+    let chain_length = if prev_length >=^ good_match then mcl >>^ 2ul else mcl in
     let se1 = strstart +^ prev_length -^ (min_match -^ 1ul) in
     let se2 = strstart +^ lookahead -^ min_match in
     let scan_end = if se1 >^ se2 then se2 else se1 in

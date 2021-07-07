@@ -291,10 +291,8 @@ unfold let state_valid (h: HS.mem) (ctx: lz77_context_p) (s: lz77_state_t) =
   prev_length s' <= max_match /\
   match_start s' <= 2 * U32.v ctx'.w_size - min_match /\
   prev_match s' < 2 * U32.v ctx'.w_size - min_match /\
-  level s' <= 9 /\ strategy s' <= 4 /\ max_chain_length s' <= U32.v ctx'.w_size /\
-  max_lazy_match s' <= max_match /\ good_match s' <= max_match /\ nice_match s' <= max_match /\
-  
-  max_chain_length s' <= 4096 /\
+  level s' <= 9 /\ strategy s' <= 4 /\
+  max_chain_length s' <= U32.v ctx'.w_size /\
   max_lazy_match s' <= max_match /\
   good_match s' <= max_match /\
   nice_match s' <= max_match)
@@ -697,6 +695,7 @@ unfold let match_ready (h: HS.mem) (ctx: lz77_context_p) (s: lz77_state_t) =
   lookahead s' >= min_match /\
   strstart s' > 0 /\
   strstart s' <= U32.v ctx'.window_size - max_match /\
+  nice_match s' > 0 /\
   prev_length s' >= min_match - 1 /\
   hash_chain_valid h ctx (U32.uint_to_t (hash_end s')) false
 
