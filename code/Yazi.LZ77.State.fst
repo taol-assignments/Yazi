@@ -13,6 +13,15 @@ open LowStar.BufferOps
 open Yazi.LZ77.Types
 
 inline_for_extraction
+let get_match_length (state: lz77_state_t):
+  ST.Stack U32.t
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
+    B.modifies B.loc_none h0 h1 /\
+    S.match_length (B.as_seq h0 state) == U32.v res) =
+  state.(0ul)
+
+inline_for_extraction
 let set_match_start
   (bits: Ghost.erased S.window_bits)
   (w_size: Ghost.erased (S.window_size bits))
@@ -34,6 +43,24 @@ let get_match_start (state: lz77_state_t):
     B.modifies B.loc_none h0 h1 /\
     S.match_start (B.as_seq h0 state) == U32.v res) =
   state.(1ul)
+
+inline_for_extraction
+let get_prev_match (state: lz77_state_t):
+  ST.Stack U32.t
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
+    B.modifies B.loc_none h0 h1 /\
+    S.prev_match (B.as_seq h0 state) == U32.v res) =
+  state.(2ul)
+
+inline_for_extraction
+let get_prev_length (state: lz77_state_t):
+  ST.Stack U32.t
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
+    B.modifies B.loc_none h0 h1 /\
+    S.prev_length (B.as_seq h0 state) == U32.v res) =
+  state.(3ul)
 
 inline_for_extraction
 let set_strstart
@@ -102,3 +129,57 @@ let decr_insert (state: lz77_state_t):
     LB.unchange_except h0 h1 state 6) =
   let open U32 in
   state.(6ul) <- state.(6ul) -^ 1ul
+
+inline_for_extraction
+let get_level (state: lz77_state_t):
+  ST.Stack U32.t
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
+    B.modifies B.loc_none h0 h1 /\
+    S.level (B.as_seq h0 state) == U32.v res) =
+  state.(7ul)
+
+inline_for_extraction
+let get_strategy (state: lz77_state_t):
+  ST.Stack U32.t
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
+    B.modifies B.loc_none h0 h1 /\
+    S.strategy (B.as_seq h0 state) == U32.v res) =
+  state.(8ul)
+
+inline_for_extraction
+let get_max_chain_length (state: lz77_state_t):
+  ST.Stack U32.t
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
+    B.modifies B.loc_none h0 h1 /\
+    S.max_chain_length (B.as_seq h0 state) == U32.v res) =
+  state.(9ul)
+
+inline_for_extraction
+let get_max_lazy_macth (state: lz77_state_t):
+  ST.Stack U32.t
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
+    B.modifies B.loc_none h0 h1 /\
+    S.max_lazy_match (B.as_seq h0 state) == U32.v res) =
+  state.(10ul)
+
+inline_for_extraction
+let get_good_match (state: lz77_state_t):
+  ST.Stack U32.t
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
+    B.modifies B.loc_none h0 h1 /\
+    S.good_match (B.as_seq h0 state) == U32.v res) =
+  state.(11ul)
+
+inline_for_extraction
+let get_nice_match (state: lz77_state_t):
+  ST.Stack U32.t
+  (requires fun h -> B.live h state)
+  (ensures fun h0 res h1 ->
+    B.modifies B.loc_none h0 h1 /\
+    S.nice_match (B.as_seq h0 state) == U32.v res) =
+  state.(12ul)

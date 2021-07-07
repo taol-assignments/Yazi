@@ -1,6 +1,29 @@
 [
-  "¿ñÎ\r\u0007²!Ÿ[zo\u001c³\u0005÷",
+  "ö^*\tÏtqþ<™'¢jAùØ",
   [
+    [
+      "Yazi.LZ77.State.get_match_length",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "lemma_LowStar.Monotonic.Buffer.modifies_refl",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
+        "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.len",
+        "typing_LowStar.Monotonic.Buffer.loc_none"
+      ],
+      0,
+      "c64acfc207855ac8a20c7465e94a8bdf"
+    ],
     [
       "Yazi.LZ77.State.set_match_start",
       1,
@@ -19,12 +42,12 @@
         "lemma_FStar.Seq.Base.lemma_index_upd2",
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
         "refinement_interpretation_Tm_refine_1a6c48a2942396a8ef59cab659830d00",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
         "refinement_interpretation_Tm_refine_cd7422a4ea45da887b4e90a067b7f6be",
-        "refinement_interpretation_Tm_refine_d0eb739860b012b2a610a027222945ad",
         "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
         "refinement_interpretation_Tm_refine_d8708792ad1f7de712d42b9162a6a8e0",
         "refinement_interpretation_Tm_refine_df81b3f17797c6f405c1dbb191651292",
@@ -33,7 +56,7 @@
         "typing_LowStar.Monotonic.Buffer.as_seq"
       ],
       0,
-      "c979a3c66746f898471dae2f46271a2c"
+      "1a8177b5414934960319a5258ea0c5f2"
     ],
     [
       "Yazi.LZ77.State.get_match_start",
@@ -48,15 +71,61 @@
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "lemma_LowStar.Monotonic.Buffer.modifies_refl",
         "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
-        "refinement_interpretation_Tm_refine_d0eb739860b012b2a610a027222945ad",
         "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
         "typing_LowStar.Monotonic.Buffer.len",
         "typing_LowStar.Monotonic.Buffer.loc_none"
       ],
       0,
-      "0edfb7134f797f5591ea03663298a9af"
+      "c86ff4d4fa31439f872a5761da81e056"
+    ],
+    [
+      "Yazi.LZ77.State.get_prev_match",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "lemma_LowStar.Monotonic.Buffer.modifies_refl",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
+        "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.len",
+        "typing_LowStar.Monotonic.Buffer.loc_none"
+      ],
+      0,
+      "c75cad8f896adfc28ec37c62ef0d42fd"
+    ],
+    [
+      "Yazi.LZ77.State.get_prev_length",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "lemma_LowStar.Monotonic.Buffer.modifies_refl",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
+        "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.len",
+        "typing_LowStar.Monotonic.Buffer.loc_none"
+      ],
+      0,
+      "96dc623a7a5094d827e3b16388504156"
     ],
     [
       "Yazi.LZ77.State.set_strstart",
@@ -76,11 +145,11 @@
         "lemma_FStar.Seq.Base.lemma_index_upd2",
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
         "refinement_interpretation_Tm_refine_cd7422a4ea45da887b4e90a067b7f6be",
-        "refinement_interpretation_Tm_refine_d0eb739860b012b2a610a027222945ad",
         "refinement_interpretation_Tm_refine_d776624398d3678ff0ed2e2f1aefc856",
         "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
         "refinement_interpretation_Tm_refine_d8708792ad1f7de712d42b9162a6a8e0",
@@ -90,7 +159,7 @@
         "typing_LowStar.Monotonic.Buffer.as_seq"
       ],
       0,
-      "f1fab03e75df677f449d182a13fd1a4b"
+      "6fd67dd738a89a8ba1d0bb7a8a5b309e"
     ],
     [
       "Yazi.LZ77.State.get_strstart",
@@ -105,15 +174,15 @@
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "lemma_LowStar.Monotonic.Buffer.modifies_refl",
         "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
-        "refinement_interpretation_Tm_refine_d0eb739860b012b2a610a027222945ad",
         "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
         "typing_LowStar.Monotonic.Buffer.len",
         "typing_LowStar.Monotonic.Buffer.loc_none"
       ],
       0,
-      "4f04b4bb044b5599859044354677c9f5"
+      "f817681218f879eff2ec3e41c0fccb26"
     ],
     [
       "Yazi.LZ77.State.set_lookahead",
@@ -133,12 +202,12 @@
         "lemma_FStar.Seq.Base.lemma_index_upd2",
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
         "refinement_interpretation_Tm_refine_0bd01aff7a68cb032bd75c8f1411ec5d",
         "refinement_interpretation_Tm_refine_1ad826333ef118c6816729c68a99c212",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
-        "refinement_interpretation_Tm_refine_d0eb739860b012b2a610a027222945ad",
         "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
         "refinement_interpretation_Tm_refine_d8708792ad1f7de712d42b9162a6a8e0",
         "refinement_interpretation_Tm_refine_df81b3f17797c6f405c1dbb191651292",
@@ -147,7 +216,7 @@
         "typing_LowStar.Monotonic.Buffer.as_seq"
       ],
       0,
-      "8b18ffa69baaa006edc07548a2fa1796"
+      "8299a7c78c053b5b5e21314b6b400e8e"
     ],
     [
       "Yazi.LZ77.State.get_lookahead",
@@ -162,15 +231,15 @@
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "lemma_LowStar.Monotonic.Buffer.modifies_refl",
         "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
-        "refinement_interpretation_Tm_refine_d0eb739860b012b2a610a027222945ad",
         "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
         "typing_LowStar.Monotonic.Buffer.len",
         "typing_LowStar.Monotonic.Buffer.loc_none"
       ],
       0,
-      "8d029edef5b809977ee0fe3fddd88670"
+      "2c2852dc424df8f11834401bb45d91ed"
     ],
     [
       "Yazi.LZ77.State.get_insert",
@@ -185,15 +254,15 @@
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "lemma_LowStar.Monotonic.Buffer.modifies_refl",
         "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
-        "refinement_interpretation_Tm_refine_d0eb739860b012b2a610a027222945ad",
         "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
         "typing_LowStar.Monotonic.Buffer.len",
         "typing_LowStar.Monotonic.Buffer.loc_none"
       ],
       0,
-      "e7a0b300deb586395a0e4e6e64eac655"
+      "b0ca18c7886d94da83c88d0098a40638"
     ],
     [
       "Yazi.LZ77.State.decr_insert",
@@ -219,10 +288,10 @@
         "primitive_Prims.op_Subtraction",
         "projection_inverse_BoxBool_proj_0",
         "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_591d8b5f9a123f86871a59da1fc6b93e",
-        "refinement_interpretation_Tm_refine_d0eb739860b012b2a610a027222945ad",
         "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
         "refinement_interpretation_Tm_refine_d8708792ad1f7de712d42b9162a6a8e0",
         "refinement_interpretation_Tm_refine_df81b3f17797c6f405c1dbb191651292",
@@ -234,7 +303,145 @@
         "typing_LowStar.Monotonic.Buffer.len"
       ],
       0,
-      "78d4f708b75bc260975653bf0c56a612"
+      "e524a48fdd633db4d5ed940692f1871a"
+    ],
+    [
+      "Yazi.LZ77.State.get_level",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "lemma_LowStar.Monotonic.Buffer.modifies_refl",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
+        "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.len",
+        "typing_LowStar.Monotonic.Buffer.loc_none"
+      ],
+      0,
+      "b4243a1b90a3af6281fb7c53a9fb969d"
+    ],
+    [
+      "Yazi.LZ77.State.get_strategy",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "lemma_LowStar.Monotonic.Buffer.modifies_refl",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
+        "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.len",
+        "typing_LowStar.Monotonic.Buffer.loc_none"
+      ],
+      0,
+      "cb875b03407739305e4d0721771e42d0"
+    ],
+    [
+      "Yazi.LZ77.State.get_max_chain_length",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "lemma_LowStar.Monotonic.Buffer.modifies_refl",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
+        "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.len",
+        "typing_LowStar.Monotonic.Buffer.loc_none"
+      ],
+      0,
+      "f9816bf550f5597a4d742503f1690172"
+    ],
+    [
+      "Yazi.LZ77.State.get_max_lazy_macth",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "lemma_LowStar.Monotonic.Buffer.modifies_refl",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
+        "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.len",
+        "typing_LowStar.Monotonic.Buffer.loc_none"
+      ],
+      0,
+      "c6f512fdf36757fdc929eca567dbf492"
+    ],
+    [
+      "Yazi.LZ77.State.get_good_match",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "lemma_LowStar.Monotonic.Buffer.modifies_refl",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
+        "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.len",
+        "typing_LowStar.Monotonic.Buffer.loc_none"
+      ],
+      0,
+      "08e06f6f1aab6403a82cd9ea8134ed49"
+    ],
+    [
+      "Yazi.LZ77.State.get_nice_match",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
+        "equation_Yazi.LZ77.Types.lz77_state_t",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "lemma_LowStar.Monotonic.Buffer.modifies_refl",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_021b5fa5c4c6a0dcb7ce71a80e878ede",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_7c7ef2287329e92378a0a1ab6fc66e39",
+        "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.Monotonic.Buffer.len",
+        "typing_LowStar.Monotonic.Buffer.loc_none"
+      ],
+      0,
+      "61308162b7d544755af5a1420de0f8bd"
     ]
   ]
 ]

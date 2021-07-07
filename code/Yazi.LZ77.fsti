@@ -44,3 +44,8 @@ val fill_window:
   (requires fun h -> S.fill_window_pre h ss ctx ls next_in wrap block_start block_data)
   (ensures fun h0 res h1 ->
     S.fill_window_post h0 res h1 ss ctx ls next_in wrap block_start block_data)
+
+val longest_match: ctx: lz77_context_p -> s: lz77_state_t -> cur_match: U32.t ->
+  ST.Stack U32.t
+  (requires fun h -> S.longest_match_pre h ctx s cur_match)
+  (ensures fun h0 len h1 -> S.longest_match_post h0 len h1 ctx s cur_match)

@@ -38,13 +38,20 @@ noeq type lz77_context = {
   h_bits: U16.t;        (* log2 h_size *)
   h_mask: U16.t;        (* h_size - 1 *)
 
-  (* Number of bits by which ins_h must be shifted at each input
-   * step. It must be such that after MIN_MATCH steps, the oldest
-   * byte no longer takes part in the hash key, that is:
-   *   shift * MIN_MATCH >=h_bits *)
-  shift: U16.t;
+  (* To speed up deflation, hash chains are never searched beyond this
+   * length.  A higher limit improves compression ratio but degrades the
+   * speed. *)
+  max_chain_length: U32.t;
+
+  (* Attempt to find a better match only when the current match is strictly
+   * smaller than this value. This mechanism is used only for compression
+   * levels >= 4. *)
+  max_lazy_match: U32.t;
+  (* Use a faster search when the previous match is longer than this *)
+  good_match: U32.t;
+  nice_match: U32.t; (* Stop searching when current match exceeds this *)
 }
 
 type lz77_context_p = ctx: CB.const_buffer lz77_context {CB.length ctx == 1}
 
-type lz77_state_t = B.lbuffer U32.t 7
+type lz77_state_t = B.lbuffer U32.t 13
