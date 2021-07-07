@@ -488,7 +488,7 @@ unfold let do_fill_window_pre
   (ss: stream_state_t)
   (ctx: lz77_context_p)
   (ls: lz77_state_t)
-  (next_in: io_buffer)
+  (next_in: input_buffer)
   (wrap: wrap_t)
   (avail_in: UInt.uint_t 32)
   (block_data: Seq.seq U8.t) =
@@ -510,7 +510,7 @@ unfold let do_fill_window_post'
   (ss: stream_state_t)
   (ctx: lz77_context_p)
   (ls: lz77_state_t)
-  (next_in: io_buffer)
+  (next_in: input_buffer)
   (wrap: wrap_t)
   (avail_in: UInt.uint_t 32)
   (block_data: Seq.seq U8.t) =
@@ -520,7 +520,7 @@ unfold let do_fill_window_post'
     let ls1 = B.as_seq h1 ls in
     let len0 = Seq.length (Ghost.reveal block_data) in
     let len1 = Seq.length (Ghost.reveal block_data') in
-    let next_in0 = B.as_seq h0 (B.get h0 next_in 0) in
+    let next_in0 = CB.as_seq h0 (B.get h0 next_in 0) in
     let avail_in0 = SS.avail_in ss0 in
     let avail_in1 = SS.avail_in ss1 in
     window_valid h1 ctx ls block_data' /\
@@ -539,7 +539,7 @@ unfold let do_fill_window_post
   (ss: stream_state_t)
   (ctx: lz77_context_p)
   (ls: lz77_state_t)
-  (next_in: io_buffer)
+  (next_in: input_buffer)
   (wrap: wrap_t)
   (avail_in: UInt.uint_t 32)
   (block_data: Seq.seq U8.t) =
@@ -566,7 +566,7 @@ let fill_window_pre
   (ss: stream_state_t)
   (ctx: lz77_context_p)
   (ls: lz77_state_t)
-  (next_in: io_buffer)
+  (next_in: input_buffer)
   (wrap: wrap_t)
   (block_start: B.pointer I32.t)
   (block_data: Seq.seq U8.t) =
@@ -592,7 +592,7 @@ unfold let fill_window_post
   (ss: stream_state_t)
   (ctx: lz77_context_p)
   (ls: lz77_state_t)
-  (next_in: io_buffer)
+  (next_in: input_buffer)
   (wrap: wrap_t)
   (block_start: B.pointer I32.t)
   (block_data: Seq.seq U8.t) =

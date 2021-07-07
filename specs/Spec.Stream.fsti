@@ -2,6 +2,7 @@ module Spec.Stream
 
 module Adler32 = Spec.Adler32
 module B = LowStar.Buffer
+module CB = LowStar.ConstBuffer
 module CFlags = Yazi.CFlags
 module CRC32 = Spec.CRC32
 module HS = FStar.HyperStack
@@ -42,8 +43,8 @@ private let adler_valid
 unfold let next_in_valid
   (h: HS.mem)
   (s: stream_state_t)
-  (next_in: io_buffer) =
-  let next_in' = B.get h next_in 0 in
+  (next_in: input_buffer) =
+  let next_in' = CB.as_mbuf (B.get h next_in 0) in
   B.frameOf next_in == B.frameOf s /\
   B.frameOf next_in' == B.frameOf s /\
   B.live h next_in /\ B.live h next_in' /\
@@ -53,7 +54,7 @@ unfold let next_in_valid
 unfold let next_out_valid
   (h: HS.mem)
   (s: stream_state_t)
-  (next_out: io_buffer) =
+  (next_out: output_buffer) =
   let next_out' = B.get h next_out 0 in
   B.frameOf next_out == B.frameOf s /\
   B.frameOf next_out' == B.frameOf s /\
@@ -64,7 +65,7 @@ unfold let next_out_valid
 let istream_valid
   (h: HS.mem)
   (s: stream_state_t)
-  (next_in: io_buffer)
+  (next_in: input_buffer)
   (wrap: wrap_t)
   (block_data: Seq.seq U8.t) =
   B.live h s /\ next_in_valid h s next_in /\ adler_valid h s wrap block_data
@@ -72,7 +73,7 @@ let istream_valid
 let ostream_valid
   (h: HS.mem)
   (s: stream_state_t)
-  (next_out: B.pointer (B.buffer U8.t))
+  (next_out: output_buffer)
   (wrap: wrap_t)
   (block_data: Seq.seq U8.t) =
   B.live h s /\ next_out_valid h s next_out /\ adler_valid h s wrap block_data
@@ -80,12 +81,12 @@ let ostream_valid
 let stream_valid
   (h: HS.mem)
   (s: stream_state_t)
-  (next_in: B.pointer (B.buffer U8.t))
-  (next_out: B.pointer (B.buffer U8.t))
+  (next_in: input_buffer)
+  (next_out: output_buffer)
   (wrap: wrap_t)
   (block_data: Seq.seq U8.t) =
   let next_out' = B.get h next_out 0 in
-  let next_in' = B.get h next_in 0 in
+  let next_in' = CB.as_mbuf (B.get h next_in 0) in
   B.live h s /\
   B.disjoint next_in next_out /\
   B.disjoint next_in next_out' /\
@@ -103,7 +104,7 @@ unfold let read_buf_pre
   (h: HS.mem)
   (s: stream_state_t)
   (block_data: Seq.seq U8.t)
-  (next_in: B.pointer (B.buffer U8.t))
+  (next_in: input_buffer)
   (buf: B.buffer U8.t)
   (size: U32.t)
   (wrap: wrap_t) =
@@ -118,11 +119,11 @@ unfold let read_buf_pre
 
 let read_buf_post
   (h0: HS.mem)
-  (res: (U32.t & Ghost.erased (B.buffer U8.t)))
+  (res: (U32.t & Ghost.erased (CB.const_buffer U8.t)))
   (h1: HS.mem)
   (s: stream_state_t)
   (block_data: Seq.seq U8.t)
-  (next_in: B.pointer (B.buffer U8.t))
+  (next_in: input_buffer)
   (buf: B.buffer U8.t)
   (size: U32.t)
   (wrap: wrap_t) =
@@ -139,12 +140,12 @@ let read_buf_post
     B.loc_buffer s `B.loc_union`
     B.loc_buffer next_in `B.loc_union`
     B.loc_buffer buf) h0 h1 /\
-  U32.v len' <= B.length next_in0 /\
-  Ghost.reveal read == B.gsub next_in0 0ul len' /\
-  Seq.equal (B.as_seq h1 read) (B.as_seq h0 (B.gsub next_in0 0ul len')) /\
-  Seq.equal (B.as_seq h1 read) (B.as_seq h1 (B.gsub buf 0ul len')) /\
-  next_in1 == B.gsub next_in0 len' (U32.uint_to_t ((avail_in s0) - len)) /\
+  U32.v len' <= CB.length next_in0 /\
+  Ghost.reveal read == CB.gsub next_in0 0ul len' /\
+  Seq.equal (CB.as_seq h1 read) (CB.as_seq h0 (CB.gsub next_in0 0ul len')) /\
+  Seq.equal (CB.as_seq h1 read) (B.as_seq h1 (B.gsub buf 0ul len')) /\
+  next_in1 == CB.gsub next_in0 len' (U32.uint_to_t ((avail_in s0) - len)) /\
   avail_in s0 - len == avail_in s1 /\
   next_in_valid h1 s next_in /\
-  adler_valid h1 s wrap (Seq.append block_data (B.as_seq h1 read)) /\
+  adler_valid h1 s wrap (Seq.append block_data (CB.as_seq h1 read)) /\
   avail_out_unchange s0 s1 /\ total_out_unchange s0 s1

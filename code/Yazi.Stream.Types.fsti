@@ -1,6 +1,7 @@
 module Yazi.Stream.Types
 
 module B = LowStar.Buffer
+module CB = LowStar.ConstBuffer
 module CFlags = Yazi.CFlags
 module I32 = FStar.Int32
 module U32 = FStar.UInt32
@@ -13,4 +14,5 @@ type wrap_t = w: I32.t{
   w' == 0 \/ w' == 1 \/ (CFlags.gzip == true /\ w' == 2)
 }
 
-type io_buffer = B.pointer (B.buffer U8.t)
+type input_buffer = B.pointer (CB.const_buffer U8.t)
+type output_buffer = B.pointer (B.buffer U8.t)

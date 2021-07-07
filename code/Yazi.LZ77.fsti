@@ -36,7 +36,7 @@ val fill_window:
     ss: SST.stream_state_t
   -> ctx: lz77_context_p
   -> ls: lz77_state_t
-  -> next_in: SST.io_buffer
+  -> next_in: SST.input_buffer
   -> wrap: SST.wrap_t
   -> block_start: B.pointer I32.t
   -> block_data: Ghost.erased (Seq.seq U8.t)

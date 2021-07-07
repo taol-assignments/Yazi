@@ -1,5 +1,6 @@
 module Yazi.Adler32
 module B = LowStar.Buffer
+module CB = LowStar.ConstBuffer
 module Cast = FStar.Int.Cast
 module HS = FStar.HyperStack
 module Math = FStar.Math.Lemmas
@@ -29,14 +30,14 @@ private noeq type do_init_state = {
   dlen: nat;
   data: input dlen;
   blen: nat;
-  base: B.buffer U8.t;
+  base: CB.const_buffer U8.t;
 }
 
 private noeq type do_state = {
   clen: Ghost.erased nat;
   consumed: Ghost.erased (input clen);
   slen: U32.t;
-  stream: B.buffer U8.t;
+  stream: CB.const_buffer U8.t;
   a: U64.t;
   b: U64.t;
 }
@@ -48,11 +49,11 @@ let sum_b_state (#n #m: nat) (data: input n) (consumed: input m) (b: U64.t) =
  U64.v b == (sum_b data % base) + m * (sum_a data % base) + sum_b' consumed
 
 unfold let do_pre_cond (h: HS.mem) (d: do_init_state) (s: do_state) (steps: nat) =
-  B.live h d.base /\ B.length d.base == d.blen /\
+  CB.live h d.base /\ CB.length d.base == d.blen /\
 
   s.clen + U32.v s.slen == d.blen /\ s.clen + steps <= nmax /\
-  Seq.equal (B.as_seq h d.base) (s.consumed @| (B.as_seq h s.stream)) /\
-  U32.v s.slen >= steps /\ B.live h s.stream /\ B.length s.stream == U32.v s.slen /\
+  Seq.equal (CB.as_seq h d.base) (s.consumed @| (CB.as_seq h s.stream)) /\
+  U32.v s.slen >= steps /\ CB.live h s.stream /\ CB.length s.stream == U32.v s.slen /\
   sum_a_state d.data s.consumed s.a /\
   sum_b_state d.data s.consumed s.b
 
@@ -67,12 +68,12 @@ unfold let do_post_cond
   B.(modifies loc_none h0 h1) /\
   Ghost.reveal res.clen == Seq.length res.consumed /\
   res.clen + U32.v res.slen == d.blen /\
-  Seq.equal res.consumed (s.consumed @| (slice (B.as_seq h1 s.stream) 0 steps)) /\
-  Seq.equal (B.as_seq h1 d.base) (res.consumed @| (B.as_seq h1 res.stream)) /\
-  (U32.v res.slen == 0 ==> Seq.equal res.consumed (B.as_seq h1 d.base)) /\
+  Seq.equal res.consumed (s.consumed @| (slice (CB.as_seq h1 s.stream) 0 steps)) /\
+  Seq.equal (CB.as_seq h1 d.base) (res.consumed @| (CB.as_seq h1 res.stream)) /\
+  (U32.v res.slen == 0 ==> Seq.equal res.consumed (CB.as_seq h1 d.base)) /\
   
-  B.live h1 res.stream /\ B.length res.stream == U32.v res.slen /\
-  Seq.equal (slice (B.as_seq h1 s.stream) steps (U32.v s.slen)) (B.as_seq h1 res.stream) /\
+  CB.live h1 res.stream /\ CB.length res.stream == U32.v res.slen /\
+  Seq.equal (slice (CB.as_seq h1 s.stream) steps (U32.v s.slen)) (CB.as_seq h1 res.stream) /\
   sum_a_state d.data res.consumed res.a /\
   sum_b_state d.data res.consumed res.b
 
@@ -127,7 +128,7 @@ let do1
   (ensures fun h0 res h1 -> do_post_cond h0 h1 d s res 1) =
   let open U64 in
   let sa = Ghost.hide (sum_a d.data % base) in
-  let byte = s.stream.(0ul) in
+  let byte = CB.index s.stream 0ul in
   let byte' = Cast.uint8_to_uint64 byte in
   let consumed' = Ghost.hide (snoc s.consumed byte) in
 
@@ -167,7 +168,7 @@ let do1
     clen = s.clen + 1;
     consumed = consumed';
     slen = U32.sub s.slen 1ul;
-    stream = B.sub s.stream 1ul (U32.sub s.slen 1ul);
+    stream = CB.sub s.stream 1ul (U32.sub s.slen 1ul);
     a = a';
     b = b';
   }
@@ -296,7 +297,7 @@ inline_for_extraction unfold let init_state'
   (a': U64.t{sum_a_state #_ #0 data (Seq.empty #U8.t) a'})
   (b': U64.t{sum_b_state #_ #0 data (Seq.empty #U8.t) b'})
   (len: U32.t)
-  (buf: B.buffer U8.t{B.length buf == U32.v len}):
+  (buf: CB.const_buffer U8.t{CB.length buf == U32.v len}):
   Tot ((Ghost.erased do_init_state) & do_state) =
   (Ghost.hide ({
     dlen = m;
@@ -317,7 +318,7 @@ inline_for_extraction unfold let init_state
   (data: Ghost.erased (input m))
   (adler: U32.t{adler32_matched data adler})
   (len: U32.t)
-  (buf: B.buffer U8.t{B.length buf == U32.v len}):
+  (buf: CB.const_buffer U8.t{CB.length buf == U32.v len}):
   Tot ((Ghost.erased do_init_state) & do_state) =
   let (a', b') = extract_sums data adler in
   init_state' data a' b' len buf
@@ -329,17 +330,17 @@ let rec do_iteration_nmax
   (data: Ghost.erased (input m1))
   (consumed: Ghost.erased (input m2))
   (base_len: Ghost.erased nat{base_len >= nmax})
-  (base_buf: Ghost.erased (B.buffer U8.t){B.length base_buf == Ghost.reveal base_len})
-  (buf: B.buffer U8.t)
+  (base_buf: Ghost.erased (CB.const_buffer U8.t){CB.length base_buf == Ghost.reveal base_len})
+  (buf: CB.const_buffer U8.t)
   (r: U32.t)
   (a b: U64.t):
-  ST.Stack (U64.t & U64.t & (B.buffer U8.t) & U32.t & (Ghost.erased (Seq.seq U8.t)))
+  ST.Stack (U64.t & U64.t & (CB.const_buffer U8.t) & U32.t & (Ghost.erased (Seq.seq U8.t)))
   (requires fun h ->
     let r' = U32.v r in
-    let base_buf' = B.as_seq h base_buf in
-    let remaining = B.as_seq h buf in
-    B.live h base_buf /\ B.live h buf /\
-    B.length buf == r' /\ r' <= base_len /\ r' >= nmax /\
+    let base_buf' = CB.as_seq h base_buf in
+    let remaining = CB.as_seq h buf in
+    CB.live h base_buf /\ CB.live h buf /\
+    CB.length buf == r' /\ r' <= base_len /\ r' >= nmax /\
     Seq.equal consumed (slice base_buf' 0 (base_len - r')) /\
     Seq.equal (consumed @| remaining) base_buf' /\
     (sum_a #(m1 + base_len - r') (data @| consumed)) % base == U64.v a /\
@@ -347,18 +348,18 @@ let rec do_iteration_nmax
   (ensures fun h0 res h1 ->
     let (a', b', buf', r', consumed') = res in
     let r'' = U32.v r' in
-    let base_buf' = B.as_seq h1 base_buf in
-    let remaining = B.as_seq h1 buf' in
+    let base_buf' = CB.as_seq h1 base_buf in
+    let remaining = CB.as_seq h1 buf' in
     B.(modifies loc_none h0 h1) /\
-    r'' < nmax /\ r'' == B.length buf' /\ B.live h1 buf' /\
+    r'' < nmax /\ r'' == CB.length buf' /\ CB.live h1 buf' /\
     Seq.equal consumed' (slice base_buf' 0 (base_len - r'')) /\
     Seq.equal (consumed' @| remaining) base_buf' /\
     (sum_a #(m1 + base_len - r'') (data @| consumed')) % base == U64.v a' /\
     (sum_b #(m1 + base_len - r'') (data @| consumed')) % base == U64.v b') =
   let open U32 in
-  let left = B.sub buf 0ul nmax32 in
+  let left = CB.sub buf 0ul nmax32 in
   let r' = r -^ nmax32 in
-  let right = B.sub buf nmax32 r' in
+  let right = CB.sub buf nmax32 r' in
   let (d, s) = init_state' #(m1 + m2) (data @| consumed) a b nmax32 left in
   let s0 = iteration_1_remaining d s in
   let s1 = iteration_16 d s0 in
@@ -400,18 +401,19 @@ inline_for_extraction
 let iteration_nmax
   (#m: Ghost.erased nat)
   (data: Ghost.erased (input m))
-  (base: Ghost.erased (B.buffer U8.t))
+  (base: Ghost.erased (CB.const_buffer U8.t))
   (adler: U32.t{adler32_matched data adler})
-  (buf: B.buffer U8.t)
+  (buf: CB.const_buffer U8.t)
   (len: U32.t):
   ST.Stack (U32.t & (Ghost.erased (Seq.seq U8.t)))
   (requires fun h ->
-    B.live h buf /\ B.length buf == U32.v len /\ U32.v len >= nmax)
+    CB.live h buf /\ CB.length buf == U32.v len /\ U32.v len >= nmax)
   (ensures fun h0 res h1 ->
     let (adler', consumed) = res in
     B.(modifies loc_none h0 h1) /\
-    Seq.equal consumed (data @| (B.as_seq h1 buf)) /\
-    adler32_matched #(m + U32.v len) (data @| (B.as_seq h1 buf)) adler') =
+    Seq.equal consumed (data @| (CB.as_seq h1 buf)) /\
+    Seq.length (CB.as_seq h1 buf) == U32.v len /\
+    adler32_matched #(m + U32.v len) (data @| (CB.as_seq h1 buf)) adler') =
   let open U32 in
   append_empty_r data;
   let (a, b) = extract_sums data adler in

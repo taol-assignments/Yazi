@@ -158,11 +158,11 @@ let init_dict_hash ctx state =
 inline_for_extraction let read_buf 
   (ss: stream_state_t)
   (block_data: Ghost.erased (Seq.seq U8.t))
-  (next_in: io_buffer)
+  (next_in: input_buffer)
   (buf: B.buffer U8.t)
   (size: U32.t)
   (wrap: wrap_t):
-  ST.Stack (U32.t & Ghost.erased (B.buffer U8.t))
+  ST.Stack (U32.t & Ghost.erased (CB.const_buffer U8.t))
   (requires fun h -> SS.read_buf_pre h ss block_data next_in buf size wrap)
   (ensures fun h0 res h1 -> SS.read_buf_post h0 res h1 ss block_data next_in buf size wrap) =
   let open U32 in
@@ -176,8 +176,8 @@ inline_for_extraction let read_buf
   let next_in' = !*next_in in
   let ulen = Ghost.hide (Seq.length block_data) in
     
-  B.blit next_in' 0ul buf 0ul len;
-  let buf' = B.sub next_in' 0ul (Ghost.hide len) in
+  B.blit (CB.cast next_in') 0ul buf 0ul len;
+  let buf' = CB.sub next_in' 0ul (Ghost.hide len) in
   if wrap = 1l then
     set_adler ss (Adler32.adler32 #ulen (Ghost.reveal block_data) (get_adler ss) buf' len)
   else if CFlags.gzip then
@@ -187,7 +187,7 @@ inline_for_extraction let read_buf
       ()
   else
     ();
-  next_in *= (B.sub next_in' len (avail_in -^ len));
+  next_in *= (CB.sub next_in' len (avail_in -^ len));
   set_avail_in ss (avail_in -^ len);
   set_total_in ss (U32.add_underspec (get_total_in ss) len);
   (len, Ghost.hide buf')
@@ -368,7 +368,7 @@ let rec do_fill_window
   (ss:stream_state_t)
   (ctx: lz77_context_p)
   (ls: lz77_state_t)
-  (next_in: io_buffer)
+  (next_in: input_buffer)
   (wrap: wrap_t)
   (avail_in: Ghost.erased (UInt.uint_t 32))
   (block_data: Ghost.erased (Seq.seq U8.t)):
@@ -399,21 +399,22 @@ let rec do_fill_window
 
     let (len, rbuf) = read_buf ss block_data next_in w_right more wrap in
     let h1 = Ghost.hide (ST.get ()) in
-    let rbuf' = Ghost.hide (B.as_seq h0 rbuf) in
+    let rbuf' = Ghost.hide (CB.as_seq h0 rbuf) in
     assert(forall (i: nat{i < S.hash_end (B.as_seq h0 ls) + S.min_match - 1}).
       (B.as_seq h0 window).[i] == (B.as_seq h1 w_left).[i] /\
       (B.as_seq h1 window).[i] == (B.as_seq h1 w_left).[i]);
 
     let total_in = Ghost.hide (Seq.length block_data) in
+    let block_data' = Ghost.hide (block_data @| rbuf') in
     assert(forall (i: nat{i < U32.v len}). 
-       (B.as_seq h1 rbuf).[i] == (B.as_seq h1 window).[i + w_end']);
+       (CB.as_seq h1 rbuf).[i] == (B.as_seq h1 window).[i + w_end']);
     assert(forall (i: nat{i < w_end'}).
       block_data.[total_in - w_end' + i] == (B.as_seq h1 w_left).[i] /\
       (B.as_seq h1 w_left).[i] == (B.as_seq h1 window).[i]);
     assert(forall (i: nat{i < w_end'}).
       block_data.[total_in - w_end' + i] == (B.as_seq h1 window).[i]);
-    assert((forall (i: nat{i < Seq.length block_data}).
-      (block_data @| rbuf').[i] == block_data.[i]));
+    assert((forall (i: nat{i < Seq.length block_data}). {:pattern (block_data'.[i])}
+      block_data'.[i] == block_data.[i]));
     
     set_lookahead w_bits w_size ls (lookahead +^ len);
     let lookahead' = get_lookahead ls in
