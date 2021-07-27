@@ -36,9 +36,15 @@ let as_seq_gsub_eq
   (ensures
     B.as_seq h0 (B.gsub b0 s0 l') == B.as_seq h1 (B.gsub b1 s1 l') /\
     Seq.equal (B.as_seq h0 (B.gsub b0 s0 l')) (B.as_seq h1 (B.gsub b1 s1 l')) /\
-    (forall (i: nat{i < U32.v l'}).
-      (B.as_seq h0 (B.gsub b0 s0 l')).[i] == (B.as_seq h0 b0).[i + U32.v s0] /\
-      (B.as_seq h1 (B.gsub b1 s1 l')).[i] == (B.as_seq h1 b1).[i + U32.v s1])) =
+    (forall i.
+      {:pattern
+        ((B.as_seq h0 (B.gsub b0 s0 l')).[i]);
+        ((B.as_seq h1 (B.gsub b1 s1 l')).[i]);
+        ((B.as_seq h0 b0).[i + U32.v s0]);
+        ((B.as_seq h1 b1).[i + U32.v s1])}
+      (i < U32.v l') ==> 
+        (B.as_seq h0 (B.gsub b0 s0 l')).[i] == (B.as_seq h0 b0).[i + U32.v s0] /\
+        (B.as_seq h1 (B.gsub b1 s1 l')).[i] == (B.as_seq h1 b1).[i + U32.v s1])) =
   let sq0 = B.as_seq h0 (B.gsub b0 s0 l) in
   let sq1 = B.as_seq h1 (B.gsub b1 s1 l) in
   let sq0' = Seq.slice (B.as_seq h0 b0) (U32.v s0) (U32.v l' + U32.v s0) in

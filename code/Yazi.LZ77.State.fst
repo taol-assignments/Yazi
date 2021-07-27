@@ -118,11 +118,21 @@ let get_insert (state: lz77_state_t):
   state.(6ul)
 
 inline_for_extraction
-let decr_insert (state: lz77_state_t):
+let set_insert (state: lz77_state_t) (insert: U32.t):
   ST.Stack unit
   (requires fun h ->
     B.live h state /\
-    S.insert (B.as_seq h state) > 0)
+    U32.v insert <= S.strstart (B.as_seq h state))
+  (ensures fun h0 _ h1 ->
+    B.modifies (B.loc_buffer state) h0 h1 /\
+    S.insert (B.as_seq h1 state) == U32.v insert /\
+    LB.unchange_except h0 h1 state 6) =
+  state.(6ul) <- insert
+
+inline_for_extraction
+let decr_insert (state: lz77_state_t):
+  ST.Stack unit
+  (requires fun h -> B.live h state /\ S.insert (B.as_seq h state) > 0)
   (ensures fun h0 res h1 ->
     B.modifies (B.loc_buffer state) h0 h1 /\
     S.insert (B.as_seq h0 state) == S.insert (B.as_seq h1 state) + 1 /\

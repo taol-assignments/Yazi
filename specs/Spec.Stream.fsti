@@ -100,52 +100,67 @@ private unfold let read_buf_size(h: HS.mem) (s: stream_state_t) (size: U32.t) =
   let s' = B.as_seq h s in
   if U32.v size > avail_in s' then avail_in s' else U32.v size
 
-unfold let read_buf_pre
+let read_buf_pre
   (h: HS.mem)
   (s: stream_state_t)
   (block_data: Seq.seq U8.t)
+  (window: B.buffer U8.t)
   (next_in: input_buffer)
-  (buf: B.buffer U8.t)
-  (size: U32.t)
+  (window_size from size: U32.t)
   (wrap: wrap_t) =
+  let open U32 in
   let len = read_buf_size h s size in
+  let total_in = Seq.length block_data in
   len > 0 /\
   B.live h s /\ ~(B.g_is_null s) /\
-  B.live h buf /\ ~(B.g_is_null buf) /\
-  HS.disjoint (B.frameOf s) (B.frameOf buf) /\
-  B.length buf == U32.v size /\
+  B.live h window /\ ~(B.g_is_null window) /\
+  B.length window == U32.v window_size /\
+  v from + v size <= v window_size /\
+  HS.disjoint (B.frameOf s) (B.frameOf window) /\
   next_in_valid h s next_in /\
-  adler_valid h s wrap block_data
+  adler_valid h s wrap block_data /\
+  total_in >= v from /\
+  (forall (i: nat). i < v from ==>
+    block_data.[total_in - U32.v from + i] == (B.as_seq h window).[i])
 
-let read_buf_post
+unfold let read_buf_post
   (h0: HS.mem)
-  (res: (U32.t & Ghost.erased (CB.const_buffer U8.t)))
+  (res: (U32.t & Ghost.erased (Seq.seq U8.t)))
   (h1: HS.mem)
   (s: stream_state_t)
   (block_data: Seq.seq U8.t)
+  (window: B.buffer U8.t)
   (next_in: input_buffer)
-  (buf: B.buffer U8.t)
-  (size: U32.t)
+  (window_size from size: U32.t)
   (wrap: wrap_t) =
-  let (len', read) = res in
+  let (len', block_data') = res in
   let next_in0 = B.get h0 next_in 0 in
   let next_in1 = B.get h1 next_in 0 in
-  let b1 = B.as_seq h1 buf in
   let s0 = B.as_seq h0 s in
   let s1 = B.as_seq h1 s in
   let len = read_buf_size h0 s size in
-  read_buf_pre h0 s block_data next_in buf size wrap /\
-  len == U32.v len' /\
+  let w_len = U32.v from + len in
+  let total_in = Seq.length block_data' in
+  let open U32 in
+  read_buf_pre h0 s block_data window next_in window_size from size wrap /\
   B.modifies (
     B.loc_buffer s `B.loc_union`
     B.loc_buffer next_in `B.loc_union`
-    B.loc_buffer buf) h0 h1 /\
-  U32.v len' <= CB.length next_in0 /\
-  Ghost.reveal read == CB.gsub next_in0 0ul len' /\
-  Seq.equal (CB.as_seq h1 read) (CB.as_seq h0 (CB.gsub next_in0 0ul len')) /\
-  Seq.equal (CB.as_seq h1 read) (B.as_seq h1 (B.gsub buf 0ul len')) /\
-  next_in1 == CB.gsub next_in0 len' (U32.uint_to_t ((avail_in s0) - len)) /\
+    B.loc_buffer window) h0 h1 /\
+  len == v len' /\
+  v len' <= CB.length next_in0 /\
+  total_in == Seq.length block_data + len /\
+  (forall (i: nat). {:pattern ((B.as_seq h1 window).[i])} i < w_len ==>
+    block_data'.[total_in - w_len + i] == (B.as_seq h1 window).[i]) /\
+  (forall (i: nat). {:pattern ((B.as_seq h1 window).[i])} i < v from ==>
+    (B.as_seq h0 window).[i] == (B.as_seq h1 window).[i]) /\
+  (forall (i: nat). {:pattern (block_data'.[i])} i < Seq.length block_data ==>
+    block_data'.[i] == block_data.[i]) /\
+  (forall (i: nat). {:pattern block_data'.[Seq.length block_data + i]} i < len ==>
+    block_data'.[Seq.length block_data + i] == (CB.as_seq h0 next_in0).[i]) /\
   avail_in s0 - len == avail_in s1 /\
+  next_in1 == CB.gsub next_in0 len' (uint_to_t (avail_in s1)) /\
   next_in_valid h1 s next_in /\
-  adler_valid h1 s wrap (Seq.append block_data (CB.as_seq h1 read)) /\
-  avail_out_unchange s0 s1 /\ total_out_unchange s0 s1
+  adler_valid h1 s wrap block_data' /\
+  avail_out_unchange s0 s1 /\
+  total_out_unchange s0 s1
