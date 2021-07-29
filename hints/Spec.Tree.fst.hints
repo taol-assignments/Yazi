@@ -1,5 +1,5 @@
 [
-  "œ!£_˜ySN\u0010?Àü\tpÒé",
+  "ùjš\u0001!Ó]d‹ö\u0015Q3VùÔ",
   [
     [
       "Spec.Tree.tree",
@@ -15,7 +15,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "018e47d996741471a12c7e5ac7d529e9"
+      "a8a54f7a56f2e12dee7ae0045c911e28"
     ],
     [
       "Spec.Tree.__proj__Root__item__freq",
@@ -27,7 +27,7 @@
         "refinement_interpretation_Tm_refine_ccd3da6a2c4ad0f2699c6ead48ea11da"
       ],
       0,
-      "747d4cbda669d3a2d749587ae86f39cc"
+      "a21c987f1f4dc222aa7a3083c9776f9d"
     ],
     [
       "Spec.Tree.__proj__Root__item__left",
@@ -39,7 +39,7 @@
         "refinement_interpretation_Tm_refine_ccd3da6a2c4ad0f2699c6ead48ea11da"
       ],
       0,
-      "5537e47660fece07b5e02185e5af6871"
+      "6845e12e4707d6f207d536b677d61836"
     ],
     [
       "Spec.Tree.__proj__Root__item__right",
@@ -51,7 +51,7 @@
         "refinement_interpretation_Tm_refine_ccd3da6a2c4ad0f2699c6ead48ea11da"
       ],
       0,
-      "08a7d03b8406b86465aef24375585689"
+      "31b3f195e027d853c218de4269ee0796"
     ],
     [
       "Spec.Tree.__proj__Internal__item__freq",
@@ -63,7 +63,7 @@
         "refinement_interpretation_Tm_refine_3929bc1788a89ffc8584cb4a277d9fdf"
       ],
       0,
-      "dcb57116ce17484fb8014191cc1a9f31"
+      "2ce1df58a7b7e10174d07d4e2563d2fa"
     ],
     [
       "Spec.Tree.__proj__Internal__item__len",
@@ -75,7 +75,7 @@
         "refinement_interpretation_Tm_refine_3929bc1788a89ffc8584cb4a277d9fdf"
       ],
       0,
-      "6a4599e140c5ad2648a4bc0b20b32bb1"
+      "b2c2d510a6ee172c6d6a8f39081807c7"
     ],
     [
       "Spec.Tree.__proj__Internal__item__left",
@@ -87,7 +87,7 @@
         "refinement_interpretation_Tm_refine_3929bc1788a89ffc8584cb4a277d9fdf"
       ],
       0,
-      "c912d4a9c44d12cefc6d1995ccca5bb1"
+      "7f66e2c682f3c00b2fedaef8896f8e51"
     ],
     [
       "Spec.Tree.__proj__Internal__item__right",
@@ -99,7 +99,7 @@
         "refinement_interpretation_Tm_refine_3929bc1788a89ffc8584cb4a277d9fdf"
       ],
       0,
-      "d2052552f0c4e9b678bb671ee8a52f2e"
+      "1c1542b2561fce094d4fb866e906ddd7"
     ],
     [
       "Spec.Tree.__proj__Leaf__item__freq",
@@ -111,7 +111,7 @@
         "refinement_interpretation_Tm_refine_31abffd169bd34737da9961170cf5167"
       ],
       0,
-      "1313f105b5fac2bfa9ec07a796d18b39"
+      "f7ea4e274a6f9e9ae9b3e1900b244645"
     ],
     [
       "Spec.Tree.__proj__Leaf__item__len",
@@ -123,7 +123,7 @@
         "refinement_interpretation_Tm_refine_31abffd169bd34737da9961170cf5167"
       ],
       0,
-      "aab66cde2d9da41c092486c151a44afc"
+      "e52875adfe186291fbea90a6e3e845a3"
     ],
     [
       "Spec.Tree.__proj__Leaf__item__symbol",
@@ -135,10 +135,10 @@
         "refinement_interpretation_Tm_refine_31abffd169bd34737da9961170cf5167"
       ],
       0,
-      "4de1d962401deef4b092dc5ddabd8dcb"
+      "30b8ece7f562f9a5437c1bed4552c3eb"
     ],
     [
-      "Spec.Tree.get_freq",
+      "Spec.Tree.freq",
       1,
       2,
       1,
@@ -150,10 +150,10 @@
         "refinement_interpretation_Tm_refine_008b9513cb73eb18814c8f81cd5db5ca"
       ],
       0,
-      "fec3ccc539e8e5912f9c189c6d27c694"
+      "b89e0964aad898098e836f90ae86167d"
     ],
     [
-      "Spec.Tree.get_len",
+      "Spec.Tree.length",
       1,
       2,
       1,
@@ -164,7 +164,7 @@
         "projection_inverse_BoxBool_proj_0"
       ],
       0,
-      "2e84bcf0d3d4443e7416bab9f6623789"
+      "720166594c851bab2a310f7b31283964"
     ],
     [
       "Spec.Tree.well_formed",
@@ -179,7 +179,7 @@
         "subterm_ordering_Spec.Tree.Root"
       ],
       0,
-      "0375eac337907ac02d182ff4a2a38a8b"
+      "7f886c35d7ab15c9ef621c57ba635ba4"
     ],
     [
       "Spec.Tree.optimal'",
@@ -211,7 +211,7 @@
         "subterm_ordering_Spec.Tree.Root", "typing_Spec.Tree.uu___is_Root"
       ],
       0,
-      "5aa05c4a0fb03ab2f93c6ae3271ac699"
+      "8bd0f62ca158a6783aa9518e9dcc8fca"
     ],
     [
       "Spec.Tree.optimal",
@@ -220,7 +220,653 @@
       1,
       [ "@query" ],
       0,
-      "d7e583025e30758e2b2833bb5f5b191f"
+      "a7bb866e77a9f54c5f8c1bda9e8ac1f7"
+    ],
+    [
+      "Spec.Tree.left",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "constructor_distinct_Spec.Tree.Internal",
+        "constructor_distinct_Spec.Tree.Root",
+        "disc_equation_Spec.Tree.Internal", "disc_equation_Spec.Tree.Leaf",
+        "disc_equation_Spec.Tree.Root", "equation_Spec.Tree.non_leaf",
+        "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree", "l_and-interp",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_Spec.Tree.Internal_freq",
+        "projection_inverse_Spec.Tree.Internal_left",
+        "projection_inverse_Spec.Tree.Internal_len",
+        "projection_inverse_Spec.Tree.Internal_right",
+        "projection_inverse_Spec.Tree.Root_freq",
+        "projection_inverse_Spec.Tree.Root_left",
+        "projection_inverse_Spec.Tree.Root_right",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "refinement_interpretation_Tm_refine_ff279499dddd68a4982e677278b0625d"
+      ],
+      0,
+      "3ccefa3cc49c466f4a79dd24abcff522"
+    ],
+    [
+      "Spec.Tree.right",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "constructor_distinct_Spec.Tree.Internal",
+        "constructor_distinct_Spec.Tree.Root",
+        "disc_equation_Spec.Tree.Internal", "disc_equation_Spec.Tree.Leaf",
+        "disc_equation_Spec.Tree.Root", "equation_Spec.Tree.non_leaf",
+        "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree", "l_and-interp",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_Spec.Tree.Internal_freq",
+        "projection_inverse_Spec.Tree.Internal_left",
+        "projection_inverse_Spec.Tree.Internal_len",
+        "projection_inverse_Spec.Tree.Internal_right",
+        "projection_inverse_Spec.Tree.Root_freq",
+        "projection_inverse_Spec.Tree.Root_left",
+        "projection_inverse_Spec.Tree.Root_right",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "refinement_interpretation_Tm_refine_ff279499dddd68a4982e677278b0625d"
+      ],
+      0,
+      "74f1eab5e79a9ae6869c2a5c9a328b12"
+    ],
+    [
+      "Spec.Tree.height",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "binder_x_f855c961f3d191692653075c1cb71283_0",
+        "constructor_distinct_Spec.Tree.Internal",
+        "constructor_distinct_Spec.Tree.Root",
+        "disc_equation_Spec.Tree.Internal", "disc_equation_Spec.Tree.Leaf",
+        "disc_equation_Spec.Tree.Root", "eq2-interp", "equation_Prims.nat",
+        "equation_Spec.Tree.length", "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "l_and-interp", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_GreaterThan",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_Spec.Tree.Internal_freq",
+        "projection_inverse_Spec.Tree.Internal_left",
+        "projection_inverse_Spec.Tree.Internal_len",
+        "projection_inverse_Spec.Tree.Internal_right",
+        "projection_inverse_Spec.Tree.Root_freq",
+        "projection_inverse_Spec.Tree.Root_left",
+        "projection_inverse_Spec.Tree.Root_right",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "subterm_ordering_Spec.Tree.Internal",
+        "subterm_ordering_Spec.Tree.Root"
+      ],
+      0,
+      "801fb19ba2271c781102c05c5f7d02f6"
+    ],
+    [
+      "Spec.Tree.leaf_count",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "binder_x_bb4e1c9af0265270f8e7a5f250f730e2_1",
+        "binder_x_f855c961f3d191692653075c1cb71283_0",
+        "constructor_distinct_Spec.Tree.Internal",
+        "constructor_distinct_Spec.Tree.Root",
+        "disc_equation_Spec.Tree.Internal", "disc_equation_Spec.Tree.Leaf",
+        "disc_equation_Spec.Tree.Root", "eq2-interp", "equation_Prims.nat",
+        "equation_Spec.Tree.length", "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "l_and-interp", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_GreaterThan", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_Spec.Tree.Internal_freq",
+        "projection_inverse_Spec.Tree.Internal_left",
+        "projection_inverse_Spec.Tree.Internal_len",
+        "projection_inverse_Spec.Tree.Internal_right",
+        "projection_inverse_Spec.Tree.Root_freq",
+        "projection_inverse_Spec.Tree.Root_left",
+        "projection_inverse_Spec.Tree.Root_right",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "subterm_ordering_Spec.Tree.Internal",
+        "subterm_ordering_Spec.Tree.Root"
+      ],
+      0,
+      "15d887ccb61ac5c14ba20899ab534de7"
+    ],
+    [
+      "Spec.Tree.do_total_leaf_count",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "@query", "binder_x_bb4e1c9af0265270f8e7a5f250f730e2_1",
+        "binder_x_f855c961f3d191692653075c1cb71283_0", "equation_Prims.nat",
+        "int_inversion", "int_typing", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_GreaterThan", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_Spec.Tree.leaf_count", "well-founded-ordering-on-nat"
+      ],
+      0,
+      "444f7f3df540ef895965a24ab62cca63"
+    ],
+    [
+      "Spec.Tree.height_one",
+      1,
+      1,
+      1,
+      [ "@query" ],
+      0,
+      "cade613fd1ca3b40a5806a953e91210a"
+    ],
+    [
+      "Spec.Tree.height_one",
+      2,
+      1,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.height.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.height.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "Prims_pretyping_f537159ed795b314b4e58c260361ae86",
+        "Spec.Tree_pretyping_2e166254acd88f805d0211726cb5be20",
+        "data_elim_Spec.Tree.Internal", "disc_equation_Spec.Tree.Leaf",
+        "disc_equation_Spec.Tree.Root", "eq2-interp", "equation_Prims.nat",
+        "equation_Spec.Tree.left", "equation_Spec.Tree.right",
+        "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.height.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree", "l_and-interp",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_GreaterThanOrEqual",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "typing_Spec.Tree.height", "unit_inversion", "unit_typing"
+      ],
+      0,
+      "23c7e44d18f4ca7fc10161aca363e87e"
+    ],
+    [
+      "Spec.Tree.height_gt_one",
+      1,
+      1,
+      1,
+      [ "@query" ],
+      0,
+      "a6b26f0c6ec298c5fe6021baceb7b838"
+    ],
+    [
+      "Spec.Tree.height_gt_one",
+      2,
+      1,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.height.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.height.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Prims_pretyping_f537159ed795b314b4e58c260361ae86", "bool_inversion",
+        "constructor_distinct_Spec.Tree.Internal",
+        "constructor_distinct_Spec.Tree.Leaf",
+        "constructor_distinct_Spec.Tree.Root",
+        "disc_equation_Spec.Tree.Internal", "disc_equation_Spec.Tree.Leaf",
+        "disc_equation_Spec.Tree.Root", "eq2-interp", "equation_Prims.nat",
+        "equation_Spec.Tree.left", "equation_Spec.Tree.length",
+        "equation_Spec.Tree.right", "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.height.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "l_and-interp", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_GreaterThanOrEqual",
+        "primitive_Prims.op_LessThan", "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_Spec.Tree.Internal_freq",
+        "projection_inverse_Spec.Tree.Internal_left",
+        "projection_inverse_Spec.Tree.Internal_len",
+        "projection_inverse_Spec.Tree.Internal_right",
+        "projection_inverse_Spec.Tree.Root_freq",
+        "projection_inverse_Spec.Tree.Root_left",
+        "projection_inverse_Spec.Tree.Root_right",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "token_correspondence_Spec.Tree.height.fuel_instrumented",
+        "typing_Spec.Tree.uu___is_Root", "unit_inversion", "unit_typing"
+      ],
+      0,
+      "a212ce666c577d53eeb1058d56f90b23"
+    ],
+    [
+      "Spec.Tree.leaf_count_gt_height",
+      1,
+      2,
+      2,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.height.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.height.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Prims_pretyping_f537159ed795b314b4e58c260361ae86",
+        "Spec.Tree_pretyping_2e166254acd88f805d0211726cb5be20",
+        "binder_x_eb71f641fea9c0a06623e2532a7ea489_1",
+        "binder_x_f855c961f3d191692653075c1cb71283_0",
+        "data_elim_Spec.Tree.Internal", "data_elim_Spec.Tree.Root",
+        "disc_equation_Spec.Tree.Leaf", "disc_equation_Spec.Tree.Root",
+        "eq2-interp", "equation_Prims.nat", "equation_Spec.Tree.left",
+        "equation_Spec.Tree.length", "equation_Spec.Tree.non_leaf",
+        "equation_Spec.Tree.right", "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.height.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "int_typing", "l_and-interp",
+        "lemma_Spec.Tree.height_one", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_8313c2b3499779d7f99d1d1850cfa531",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "refinement_interpretation_Tm_refine_ff279499dddd68a4982e677278b0625d",
+        "subterm_ordering_Spec.Tree.Internal",
+        "subterm_ordering_Spec.Tree.Root",
+        "token_correspondence_Spec.Tree.height.fuel_instrumented",
+        "typing_Spec.Tree.height", "typing_Spec.Tree.leaf_count",
+        "typing_Spec.Tree.left", "typing_Spec.Tree.right",
+        "typing_Spec.Tree.uu___is_Leaf"
+      ],
+      0,
+      "a320289a993118b024fa36bf3997692a"
+    ],
+    [
+      "Spec.Tree.do_total_leaf_count_gt_height",
+      1,
+      2,
+      2,
+      [ "@query" ],
+      0,
+      "aff6035067a6049acede591d8c093a8d"
+    ],
+    [
+      "Spec.Tree.do_total_leaf_count_gt_height",
+      2,
+      2,
+      2,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.height.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.height.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Spec.Tree_pretyping_2e166254acd88f805d0211726cb5be20",
+        "binder_x_f26957a7e62b271a8736230b1e9c83c1_1",
+        "binder_x_f855c961f3d191692653075c1cb71283_0",
+        "data_elim_Spec.Tree.Internal", "data_elim_Spec.Tree.Root",
+        "equation_Prims.nat", "equation_Prims.pos",
+        "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.height.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "int_typing", "l_and-interp",
+        "lemma_Spec.Tree.leaf_count_gt_height",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_BarBar",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "refinement_interpretation_Tm_refine_cc45c4a38c0903fd16c1ebdddc9733dc",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "token_correspondence_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "token_correspondence_Spec.Tree.height.fuel_instrumented",
+        "typing_Spec.Tree.height", "typing_Spec.Tree.leaf_count",
+        "well-founded-ordering-on-nat"
+      ],
+      0,
+      "1cc0ad9a4db60ed3aa4c15256c9af531"
+    ],
+    [
+      "Spec.Tree.do_total_leaf_count_lr",
+      1,
+      2,
+      2,
+      [
+        "@MaxIFuel_assumption", "@query", "b2t_def", "eq2-interp",
+        "equation_Prims.l_and", "equation_Prims.pos",
+        "equation_Prims.squash", "l_and-interp",
+        "primitive_Prims.op_LessThan", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "refinement_interpretation_Tm_refine_e1ddd695c46c26d0cf2080e8a62ee848"
+      ],
+      0,
+      "a1a10f61adafa13ed5d57d07d7211339"
+    ],
+    [
+      "Spec.Tree.do_total_leaf_count_lr",
+      2,
+      2,
+      2,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.height.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.height.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Prims_pretyping_f537159ed795b314b4e58c260361ae86",
+        "Spec.Tree_pretyping_2e166254acd88f805d0211726cb5be20", "b2t_def",
+        "binder_x_f26957a7e62b271a8736230b1e9c83c1_1",
+        "binder_x_f855c961f3d191692653075c1cb71283_0", "bool_typing",
+        "constructor_distinct_Spec.Tree.Root",
+        "data_elim_Spec.Tree.Internal", "data_elim_Spec.Tree.Root",
+        "disc_equation_Spec.Tree.Leaf", "disc_equation_Spec.Tree.Root",
+        "eq2-interp", "equation_Prims.nat", "equation_Prims.pos",
+        "equation_Prims.squash", "equation_Spec.Tree.left",
+        "equation_Spec.Tree.length", "equation_Spec.Tree.right",
+        "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.height.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "int_typing", "l_and-interp",
+        "lemma_Spec.Tree.height_gt_one", "lemma_Spec.Tree.height_one",
+        "lemma_Spec.Tree.leaf_count_gt_height",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_Equality",
+        "primitive_Prims.op_GreaterThan", "primitive_Prims.op_LessThan",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_Spec.Tree.Root_freq",
+        "projection_inverse_Spec.Tree.Root_left",
+        "projection_inverse_Spec.Tree.Root_right",
+        "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "refinement_interpretation_Tm_refine_cc45c4a38c0903fd16c1ebdddc9733dc",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "token_correspondence_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "token_correspondence_Spec.Tree.height.fuel_instrumented",
+        "token_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "typing_Spec.Tree.do_total_leaf_count", "typing_Spec.Tree.height",
+        "typing_Spec.Tree.leaf_count", "typing_Spec.Tree.length",
+        "well-founded-ordering-on-nat"
+      ],
+      0,
+      "c16c1d22feec83c074343b04246d6ff8"
+    ],
+    [
+      "Spec.Tree.total_leaf_count_lr",
+      1,
+      2,
+      2,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.height.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.height.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Prims_pretyping_f537159ed795b314b4e58c260361ae86",
+        "Spec.Tree_pretyping_2e166254acd88f805d0211726cb5be20",
+        "bool_typing", "data_elim_Spec.Tree.Internal",
+        "data_elim_Spec.Tree.Root", "disc_equation_Spec.Tree.Leaf",
+        "disc_equation_Spec.Tree.Root", "eq2-interp", "equation_Prims.nat",
+        "equation_Prims.pos", "equation_Spec.Tree.left",
+        "equation_Spec.Tree.length", "equation_Spec.Tree.non_leaf",
+        "equation_Spec.Tree.right", "equation_Spec.Tree.total_leaf_count",
+        "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.height.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "int_typing", "l_and-interp",
+        "lemma_Spec.Tree.height_one", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "refinement_interpretation_Tm_refine_ff279499dddd68a4982e677278b0625d",
+        "token_correspondence_Spec.Tree.height.fuel_instrumented",
+        "typing_Spec.Tree.height", "typing_Spec.Tree.leaf_count",
+        "typing_Spec.Tree.left", "typing_Spec.Tree.right",
+        "typing_Spec.Tree.total_leaf_count"
+      ],
+      0,
+      "0b537e2c3179aa59b1ad10f9cb7c7902"
+    ],
+    [
+      "Spec.Tree.total_leaf_count_lower_bound",
+      1,
+      2,
+      2,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.height.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.height.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Prims_pretyping_f537159ed795b314b4e58c260361ae86",
+        "Spec.Tree_pretyping_2e166254acd88f805d0211726cb5be20",
+        "binder_x_f855c961f3d191692653075c1cb71283_0",
+        "constructor_distinct_Spec.Tree.Root",
+        "data_elim_Spec.Tree.Internal", "data_elim_Spec.Tree.Root",
+        "disc_equation_Spec.Tree.Leaf", "disc_equation_Spec.Tree.Root",
+        "eq2-interp", "equation_Prims.nat", "equation_Spec.Tree.left",
+        "equation_Spec.Tree.length", "equation_Spec.Tree.non_leaf",
+        "equation_Spec.Tree.right", "equation_Spec.Tree.total_leaf_count",
+        "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.height.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "l_and-interp", "lemma_Spec.Tree.height_one",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_Equality",
+        "primitive_Prims.op_GreaterThan", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "refinement_interpretation_Tm_refine_ff279499dddd68a4982e677278b0625d",
+        "subterm_ordering_Spec.Tree.Internal",
+        "subterm_ordering_Spec.Tree.Root",
+        "token_correspondence_Spec.Tree.height.fuel_instrumented",
+        "typing_Spec.Tree.height", "typing_Spec.Tree.left",
+        "typing_Spec.Tree.right", "typing_Spec.Tree.uu___is_Leaf"
+      ],
+      0,
+      "8bbeab1fd92cadfffc57ca9bd0404ea1"
+    ],
+    [
+      "Spec.Tree.total_leaf_count_upper_bound",
+      1,
+      2,
+      2,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Prims.pow2.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.height.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Prims.pow2.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.height.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.leaf_count.fuel_instrumented", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Prims_pretyping_f537159ed795b314b4e58c260361ae86",
+        "binder_x_f855c961f3d191692653075c1cb71283_0", "bool_typing",
+        "constructor_distinct_Spec.Tree.Root", "data_elim_Spec.Tree.Root",
+        "disc_equation_Spec.Tree.Leaf", "disc_equation_Spec.Tree.Root",
+        "eq2-interp", "equation_Prims.nat", "equation_Spec.Tree.left",
+        "equation_Spec.Tree.non_leaf", "equation_Spec.Tree.right",
+        "equation_Spec.Tree.total_leaf_count",
+        "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Prims.pow2.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.do_total_leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.height.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Tree.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "int_typing", "l_and-interp",
+        "lemma_FStar.UInt.pow2_values", "lemma_Spec.Tree.height_gt_one",
+        "lemma_Spec.Tree.height_one", "lemma_Spec.Tree.leaf_count_gt_height",
+        "lemma_Spec.Tree.total_leaf_count_lower_bound",
+        "lemma_Spec.Tree.total_leaf_count_lr", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_LessThan", "primitive_Prims.op_Multiply",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_Spec.Tree.Root_freq",
+        "projection_inverse_Spec.Tree.Root_left",
+        "projection_inverse_Spec.Tree.Root_right",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_cc45c4a38c0903fd16c1ebdddc9733dc",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "refinement_interpretation_Tm_refine_ff279499dddd68a4982e677278b0625d",
+        "subterm_ordering_Spec.Tree.Internal",
+        "subterm_ordering_Spec.Tree.Root",
+        "token_correspondence_Spec.Tree.height.fuel_instrumented",
+        "token_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "typing_Spec.Tree.height", "typing_Spec.Tree.left",
+        "typing_Spec.Tree.right", "unit_inversion", "unit_typing"
+      ],
+      0,
+      "449b1e4b21714a1b202041726fa724e0"
+    ],
+    [
+      "Spec.Tree.do_leaf_count_seq",
+      1,
+      2,
+      2,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.leaf_count.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Spec.Tree_pretyping_2e166254acd88f805d0211726cb5be20",
+        "binder_x_0485935f9205d03c741f376cd5c1efc2_1",
+        "binder_x_41fbc83e640b1c499aa594590b9019cc_0",
+        "data_elim_Spec.Tree.Root", "disc_equation_Spec.Tree.Root",
+        "eq2-interp", "equation_FStar.Seq.Properties.snoc",
+        "equation_Prims.nat", "equation_Spec.Tree.length",
+        "equation_Spec.Tree.root", "equation_Spec.Tree.well_formed_tree",
+        "equation_with_fuel_Spec.Tree.leaf_count.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "int_typing", "l_and-interp",
+        "lemma_FStar.Seq.Base.lemma_create_len",
+        "lemma_FStar.Seq.Base.lemma_index_app1",
+        "lemma_FStar.Seq.Base.lemma_index_app2",
+        "lemma_FStar.Seq.Base.lemma_index_create",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_166d4c3417fd96f9724976aea8b77dc8",
+        "refinement_interpretation_Tm_refine_32d28a1082f44506d3d4a50f4eec4408",
+        "refinement_interpretation_Tm_refine_32ea14da96f802861b76618420b5b1f3",
+        "refinement_interpretation_Tm_refine_3a1dc0fb34f19362597c182fba2d78db",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_88722d5b1e53ec3cfa11c2b78b053549",
+        "refinement_interpretation_Tm_refine_ac201cf927190d39c033967b63cb957b",
+        "refinement_interpretation_Tm_refine_c1424615841f28cac7fc34e92b7ff33c",
+        "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
+        "refinement_interpretation_Tm_refine_d91eb211e1c3421e7f8094a0e218fdca",
+        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
+        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "token_correspondence_Spec.Tree.leaf_count.fuel_instrumented",
+        "typing_FStar.Seq.Base.create", "typing_Spec.Tree.length",
+        "well-founded-ordering-on-nat"
+      ],
+      0,
+      "797b35f05040438f895ce1d1338a0510"
+    ],
+    [
+      "Spec.Tree.leaf_count_seq",
+      1,
+      2,
+      2,
+      [ "@query" ],
+      0,
+      "3159bece26ac582722f104522063432a"
     ],
     [
       "Spec.Tree.kraft_term_plus",
@@ -250,7 +896,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "2672a8c324c3198716595827eab241c4"
+      "8494ebe218dc3189c8dc54d06708ddf8"
     ],
     [
       "Spec.Tree.term_times",
@@ -267,7 +913,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "0b98760f8b55a77f33f7c261b0214291"
+      "31754f12c0d43a710c1afa39f1d64ecf"
     ],
     [
       "Spec.Tree.kraft_sum",
@@ -299,13 +945,13 @@
         "subterm_ordering_Spec.Tree.Root"
       ],
       0,
-      "410a695899eaccdbd286661a1fae3fc1"
+      "44dc9f0230064703f589b31e5df320ef"
     ],
     [
       "Spec.Tree.kraft_sum_non_root",
       1,
       2,
-      1,
+      2,
       [
         "@MaxFuel_assumption", "@MaxIFuel_assumption",
         "@fuel_correspondence_Prims.pow2.fuel_instrumented",
@@ -324,7 +970,7 @@
         "equation_FStar.Pervasives.Native.snd",
         "equation_Lib.Rational.op_Equals_Dollar",
         "equation_Lib.Rational.op_Plus_Dollar", "equation_Prims.pos",
-        "equation_Spec.Tree.get_len", "equation_Spec.Tree.well_formed_tree",
+        "equation_Spec.Tree.length", "equation_Spec.Tree.well_formed_tree",
         "equation_with_fuel_Spec.Tree.kraft_sum.fuel_instrumented",
         "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
         "fuel_guarded_inversion_Spec.Tree.tree",
@@ -350,7 +996,7 @@
         "typing_Lib.Rational.op_Plus_Dollar", "typing_Spec.Tree.kraft_sum"
       ],
       0,
-      "7902e8116868f53a8e4833ac9a4e960b"
+      "d77472cbe8826685cafc378ab441001d"
     ],
     [
       "Spec.Tree.kraft_sum_root",
@@ -399,106 +1045,7 @@
         "typing_Spec.Tree.get_len", "typing_Spec.Tree.kraft_sum"
       ],
       0,
-      "99aecb4c05c78d181492af45ade404c6"
-    ],
-    [
-      "Spec.Tree.get_depth",
-      1,
-      2,
-      1,
-      [
-        "@MaxFuel_assumption", "@MaxIFuel_assumption",
-        "@fuel_correspondence_Spec.Tree.well_formed.fuel_instrumented",
-        "@fuel_irrelevance_Spec.Tree.well_formed.fuel_instrumented",
-        "@query", "binder_x_f855c961f3d191692653075c1cb71283_0",
-        "constructor_distinct_Spec.Tree.Internal",
-        "constructor_distinct_Spec.Tree.Root",
-        "disc_equation_Spec.Tree.Internal", "disc_equation_Spec.Tree.Leaf",
-        "disc_equation_Spec.Tree.Root",
-        "equation_Spec.Tree.well_formed_tree",
-        "equation_with_fuel_Spec.Tree.well_formed.fuel_instrumented",
-        "fuel_guarded_inversion_Spec.Tree.tree", "l_and-interp",
-        "projection_inverse_BoxBool_proj_0",
-        "projection_inverse_Spec.Tree.Internal_freq",
-        "projection_inverse_Spec.Tree.Internal_left",
-        "projection_inverse_Spec.Tree.Internal_len",
-        "projection_inverse_Spec.Tree.Internal_right",
-        "projection_inverse_Spec.Tree.Root_freq",
-        "projection_inverse_Spec.Tree.Root_left",
-        "projection_inverse_Spec.Tree.Root_right",
-        "refinement_interpretation_Tm_refine_e652d7992eb06e6ce628a1ca90b73c50",
-        "subterm_ordering_Spec.Tree.Internal",
-        "subterm_ordering_Spec.Tree.Root"
-      ],
-      0,
-      "842548e8d615efcb79d4261cfed42378"
-    ],
-    [
-      "Spec.Tree.do_merge_count",
-      1,
-      2,
-      1,
-      [
-        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
-        "equation_Prims.nat", "function_token_typing_Prims.int",
-        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
-        "refinement_interpretation_Tm_refine_e75b27b02aef2730015b13ac39b3563e"
-      ],
-      0,
-      "4f960bd59a9c3a0746dc4c5764f103f4"
-    ],
-    [
-      "Spec.Tree.do_merge_count",
-      2,
-      2,
-      1,
-      [
-        "@MaxIFuel_assumption", "@query",
-        "Prims_pretyping_ae567c2fb75be05905677af440075565",
-        "binder_x_38fd66d945a0e445335a18e2118f8a81_3",
-        "binder_x_e2ea2c2f2c996798b3fd13014b328f93_2",
-        "equation_Prims.eqtype", "equation_Prims.nat",
-        "function_token_typing_Prims.__cache_version_number__",
-        "function_token_typing_Prims.int",
-        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_inversion",
-        "int_typing", "l_quant_interp_073bbe60ebdf36865fcb700e03bf5568",
-        "lemma_FStar.Seq.Base.lemma_index_upd1",
-        "lemma_FStar.Seq.Base.lemma_index_upd2",
-        "lemma_FStar.Seq.Base.lemma_len_upd", "primitive_Prims.op_Addition",
-        "primitive_Prims.op_LessThan", "primitive_Prims.op_Subtraction",
-        "projection_inverse_BoxBool_proj_0",
-        "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_0d3a506b88b966c409800f778ef01291",
-        "refinement_interpretation_Tm_refine_2ca062977a42c36634b89c1c4f193f79",
-        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
-        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "refinement_interpretation_Tm_refine_60ab90c76ebf28ffe7f896e9c0c13464",
-        "refinement_interpretation_Tm_refine_93502d4896da1ea5690ae9d1be524348",
-        "refinement_interpretation_Tm_refine_c978160cd6645f1b69001f7d931afe83",
-        "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
-        "refinement_interpretation_Tm_refine_df81b3f17797c6f405c1dbb191651292",
-        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "well-founded-ordering-on-nat"
-      ],
-      0,
-      "b9b4ed490c78e791b5a7377c6749bcc3"
-    ],
-    [
-      "Spec.Tree.merge_count",
-      1,
-      2,
-      1,
-      [
-        "@MaxIFuel_assumption", "@query", "equation_Prims.nat", "int_typing",
-        "lemma_FStar.Seq.Base.lemma_create_len",
-        "refinement_interpretation_Tm_refine_0e935d4d4a7a6580a0f0423341c76088",
-        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "typing_FStar.Seq.Base.length"
-      ],
-      0,
-      "115da398633d50519fe8955f9e6b6e1a"
+      "dd85438dbb9b83b43f36fbcd2a8658b3"
     ],
     [
       "Spec.Tree.kraft_sum_seq",
@@ -519,7 +1066,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "8c2ebd2670ef9b689d4ecbb75d8373cd"
+      "0161ba71bb273e03a92702ba6d5b4e75"
     ],
     [
       "Spec.Tree.tree_context_valid",
@@ -531,7 +1078,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "4d85232a1a64bea82e6cb584069225a2"
+      "482bd31a0d71ee543f8d816bc8a8718b"
     ]
   ]
 ]
