@@ -131,11 +131,36 @@ private let rec do_leaf_count_seq
     Seq.create 1 (leaf_count t h)
 
 type lc_seq (t: root) = s: Seq.seq nat{
-  Seq.length s == height t + 1 /\ (forall i. {:pattern (s.[i])} s.[i] == leaf_count t i)
+  Seq.length s == height t + 1 /\
+  (forall i. {:pattern (s.[i]); (leaf_count t i)} s.[i] == leaf_count t i)
 }
   
 let leaf_count_seq (t: root): lc_seq t =
   do_leaf_count_seq t (height t)
+
+let rec min_leaf_depth (t: well_formed_tree): d: nat{
+  d <= height t /\
+  (forall (i: nat). {:pattern (leaf_count t i)} i < d ==> leaf_count t i == 0)
+} =
+  if Leaf? t then
+    0
+  else
+    let l = min_leaf_depth (left t) in
+    let r = min_leaf_depth (right t) in
+    1 + (if l < r then l else r)
+
+let min_leaf_depth_aux (t: root): Lemma
+  (ensures forall (i: nat). {:pattern (leaf_count_seq t).[i]}
+    i < min_leaf_depth t ==> (leaf_count_seq t).[i] == 0)
+  [SMTPat (min_leaf_depth t)] = ()
+
+val min_leaf_depth_leaf_count: (t: well_formed_tree) -> Lemma
+  (ensures leaf_count t (min_leaf_depth t) > 0)
+  [SMTPat (min_leaf_depth t)]
+
+val min_leaf_depth_lt_pow2: (t: well_formed_tree) -> (h: nat) -> Lemma
+  (requires total_leaf_count t < pow2 h)
+  (ensures min_leaf_depth t < h)
 
 unfold let kraft_term (n: nat): rat = (1, pow2 n)
 
@@ -160,16 +185,15 @@ val kraft_sum_non_root: (t: well_formed_tree) -> Lemma
   (ensures kraft_sum t =$ kraft_term (length t))
   [SMTPat (kraft_sum t)]
 
-val kraft_sum_root: (t: well_formed_tree) -> Lemma
-  (requires Root? t == true)
+val kraft_sum_root: (t: root) -> Lemma
   (ensures kraft_sum t =$ one)
   [SMTPat (kraft_sum t)]
 
-let rec kraft_sum_seq (s: Seq.seq nat) (base i: nat): 
+let rec kraft_sum_lc_seq (#t: root) (s: lc_seq t) (i: nat{i <= height t}):
   Tot rat
-  (decreases (Seq.length s - i)) =
-  if i < Seq.length s then
-    (s.[i], pow2 (i + base)) +$ kraft_sum_seq s base (i + 1)
+  (decreases (height t - i)) =
+  if i < height t then
+    (s.[i], pow2 i) +$ kraft_sum_lc_seq s (i + 1)
   else
     zero
 

@@ -145,6 +145,24 @@ let rec total_leaf_count_upper_bound t =
     else
       Math.pow2_le_compat (height t - 1) (height (right t))
 
+let rec min_leaf_depth_leaf_count t =
+  match height t with
+  | 0 -> ()
+  | 1 -> ()
+  | _ ->
+    min_leaf_depth_leaf_count (left t);
+    min_leaf_depth_leaf_count (right t)
+
+let rec min_leaf_depth_lt_pow2 t h =
+  match height t with
+  | 0 -> ()
+  | 1 -> ()
+  | _ ->
+    if total_leaf_count (left t) < pow2 (h - 1) then
+      min_leaf_depth_lt_pow2 (left t) (h - 1)
+    else
+      min_leaf_depth_lt_pow2 (right t) (h - 1)
+
 #set-options "--z3rlimit 200"
 let rec kraft_sum_non_root t =
   match t with
