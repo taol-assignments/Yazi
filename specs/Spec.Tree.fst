@@ -163,6 +163,69 @@ let rec min_leaf_depth_lt_pow2 t h =
     else
       min_leaf_depth_lt_pow2 (right t) (h - 1)
 
+let rec code_do_decode_cancel (rt: root) (t: non_leaf) (sym: tree_symbol t): Lemma
+  (ensures (match do_decode rt t (code t sym) with
+  | Some s -> equal s (create 1 sym)
+  | None -> False)) =
+  let c = code t sym in let l = left t in let r = right t in
+  lemma_mem_append (symbol_seq l) (symbol_seq r);
+  if Seq.mem sym (symbol_seq l) then
+    if Leaf? l then
+      ()
+    else begin
+      assert(equal c (create 1 false @| code l sym));
+      assert(equal (tail c) (code l sym));
+      code_do_decode_cancel rt l sym
+    end
+  else
+    if Leaf? r then
+      ()
+    else begin
+      assert(equal c (create 1 true @| code r sym));
+      assert(equal (tail c) (code r sym));
+      code_do_decode_cancel rt r sym
+    end
+
+let rec do_decode_append (rt: root) (t: well_formed_tree) (a b: seq bool) (sym: nat): Lemma
+  (requires do_decode rt t a = Some (create 1 sym))
+  (ensures Seq.length b > 0 ==>
+    do_decode rt t (a @| b) == (match do_decode rt rt b with
+    | Some res -> Some ((create 1 sym) @| res)
+    | None -> None))
+  (decreases (%[Seq.length a; if Seq.length a > 0 then 1 else 0])) =
+  if Leaf? t then
+    if Seq.length a = 0 then begin
+      lemma_empty a;
+      append_empty_l b
+    end else
+      ()
+  else
+    if Seq.length a = 0 then
+      ()
+    else begin
+      let t' = if head a then right t else left t in
+      assert(equal (tail (a @| b)) ((tail a) @| b));
+      do_decode_append rt t' (tail a) b sym
+    end
+
+let decode_append (r: root) (a b: seq bool) (sym: nat): Lemma
+  (requires decode r a == Some (create 1 sym) /\ Seq.length b > 0)
+  (ensures decode r (a @| b) == (match decode r b with
+  | Some res -> Some ((create 1 sym) @| res)
+  | None -> None)) =
+  do_decode_append r r a b sym
+
+let rec encode_decode_cancel r s =
+  code_do_decode_cancel r r s.[0];
+  if Seq.length s > 1 then begin
+    encode_decode_cancel r (tail s);
+    decode_append r (code r s.[0]) (encode r (tail s)) s.[0]
+  end else
+    ();
+  match (decode r (encode r s)) with
+  | Some res -> assert(equal s res)
+  | None -> ()
+
 #set-options "--z3rlimit 200"
 let rec kraft_sum_non_root t =
   match t with

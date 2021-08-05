@@ -27,15 +27,23 @@ let length (t: tree): nat =
   | Internal _ len _ _ -> len
   | Leaf _ len _ -> len
 
+let rec symbol_seq (t: tree): Seq.seq nat =
+  match t with
+  | Root _ l r -> symbol_seq l @| symbol_seq r
+  | Internal _ _ l r -> symbol_seq l @| symbol_seq r
+  | Leaf _ _ symbol -> create 1 symbol
+
 let rec well_formed (t: tree): Type0 =
   match t with
   | Root f l r ->
     Root? l == false /\ Root? r == false /\
     length l == 1 /\ length r == 1 /\
+    no_dup (symbol_seq t) /\
     well_formed l /\ well_formed r
   | Internal f len l r ->
     Root? l == false /\ Root? r == false /\
     length l == len + 1 /\ length r == len + 1 /\
+    no_dup (symbol_seq t) /\
     well_formed l /\ well_formed r
   | _ -> True
 
@@ -67,6 +75,10 @@ let right (t: non_leaf): well_formed_tree =
   | Root _ _ r -> r
   | Internal _ _ _ r -> r
 
+let symbol (t: leaf): nat = 
+  match t with
+  | Leaf _ _ symbol -> symbol
+
 let rec height (t: well_formed_tree): Tot nat =
   match t with
   | Root _ l r ->
@@ -78,6 +90,53 @@ let rec height (t: well_formed_tree): Tot nat =
     let rd = height r in
     1 + (if ld > rd then ld else rd)
   | Leaf _ len _ -> 0
+
+type tree_symbol (t: well_formed_tree) = s: nat{Seq.mem s (symbol_seq t)}
+
+let rec code (t: non_leaf) (s: tree_symbol t): Tot (res: seq bool{Seq.length res > 0}) =
+  let l = left t in let r = right t in
+  lemma_mem_append (symbol_seq l) (symbol_seq r);
+  if Seq.mem s (symbol_seq l) then
+    let zero = Seq.create 1 false in
+    if Leaf? l then zero else zero @| code l s
+  else
+    let one = Seq.create 1 true in
+    if Leaf? r then one else one @| code r s
+
+let rec encode (t: non_leaf) (s: seq nat{
+  forall i. mem s.[i] (symbol_seq t)
+}):
+  Tot (Seq.seq bool)
+  (decreases Seq.length s) =
+  let l = left t in let r = right t in
+  if Seq.length s > 0 then code t (head s) @| encode t (tail s) else empty #bool
+
+private let rec do_decode (r: root) (t: well_formed_tree) (s: seq bool):
+  Tot (o: option (seq nat){
+    match o with
+    | Some s -> Seq.length s > 0
+    | None -> True
+  })
+  (decreases %[Seq.length s; if Leaf? t && Seq.length s > 0 then 1 else 0]) =
+  if Leaf? t then
+    if Seq.length s > 0 then
+      match do_decode r r s with
+      | Some res -> Some ((create 1 (symbol t)) @| res)
+      | None -> None
+    else
+      Some (create 1 (symbol t))
+  else
+    match Seq.length s with
+    | 0 -> None
+    | _ ->
+      if head s then
+        do_decode r (right t) (tail s)
+      else
+        do_decode r (left t) (tail s)
+
+let decode (r: root) (s: seq bool):
+  Tot (option (seq nat))
+  (decreases Seq.length s) = do_decode r r s
 
 let rec leaf_count (t: well_formed_tree) (h: nat): Tot nat =
   match t with
@@ -161,6 +220,13 @@ val min_leaf_depth_leaf_count: (t: well_formed_tree) -> Lemma
 val min_leaf_depth_lt_pow2: (t: well_formed_tree) -> (h: nat) -> Lemma
   (requires total_leaf_count t < pow2 h)
   (ensures min_leaf_depth t < h)
+
+val encode_decode_cancel: (r: root) -> (s: seq nat{
+  forall i. Seq.mem s.[i] (symbol_seq r)
+}) -> Lemma
+  (requires Seq.length s > 0)
+  (ensures decode r (encode r s) == Some s)
+  (decreases Seq.length s)
 
 unfold let kraft_term (n: nat): rat = (1, pow2 n)
 
