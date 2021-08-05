@@ -1,5 +1,5 @@
 [
-  ";\u0014Nd_×Ž¸½sòv’Óq\u0004",
+  "\u001aŒ\u0013Ÿá¶ð\u0016\u0007±!¿\u000f—Í\u000b",
   [
     [
       "Lib.Seq.unsnoc",
@@ -26,7 +26,67 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "ba646a6e2009d4c67a6ab5cae33c41e2"
+      "fb8dd41906807540f21ac888e047c82e"
+    ],
+    [
+      "Lib.Seq.disjoint_comm",
+      1,
+      2,
+      1,
+      [ "@query", "equation_Lib.Seq.disjoint" ],
+      0,
+      "a9f0e9922e23c0e15eaa88f7bc19aae7"
+    ],
+    [
+      "Lib.Seq.no_dup_append",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_FStar.Seq.Properties.count.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "bool_inversion", "equation_FStar.Seq.Properties.mem",
+        "equation_Lib.Seq.disjoint", "equation_Lib.Seq.no_dup",
+        "equation_Prims.eqtype", "equation_Prims.nat",
+        "equation_with_fuel_FStar.Seq.Properties.count.fuel_instrumented",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_GreaterThan",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_FStar.Seq.Base.append", "typing_FStar.Seq.Properties.count",
+        "typing_FStar.Seq.Properties.mem"
+      ],
+      0,
+      "5386b9b0655f402815848f2d1c3a312b"
+    ],
+    [
+      "Lib.Seq.no_dup_append'",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_FStar.Seq.Properties.count.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "bool_inversion", "equation_FStar.Seq.Properties.mem",
+        "equation_Lib.Seq.disjoint", "equation_Lib.Seq.no_dup",
+        "equation_Prims.eqtype", "equation_Prims.nat",
+        "equation_with_fuel_FStar.Seq.Properties.count.fuel_instrumented",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_GreaterThan",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_FStar.Seq.Properties.count",
+        "typing_FStar.Seq.Properties.mem"
+      ],
+      0,
+      "72ea98112ab024a73a114b3b674ccb26"
     ],
     [
       "Lib.Seq.slice_empty",
@@ -48,7 +108,7 @@
         "typing_FStar.Seq.Base.empty", "typing_FStar.Seq.Base.length"
       ],
       0,
-      "bde92eb9d6e84a02e965722c1e4b561c"
+      "712b27abb10a365678eca48967db2092"
     ],
     [
       "Lib.Seq.append_empty_seq_r",
@@ -57,7 +117,7 @@
       1,
       [ "@query" ],
       0,
-      "b875277e27a261ebecd5e9d48d810fe1"
+      "447c350283ac51a6f84cb89a1335ee53"
     ]
   ]
 ]
