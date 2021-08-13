@@ -6,6 +6,7 @@ module U16 = FStar.UInt16
 module U32 = FStar.UInt32
 module U8 = FStar.UInt8
 
+open FStar.Mul
 open Yazi.Deflate.Constants
 
 noeq
@@ -14,19 +15,11 @@ type ct_data = {
   code_or_len: U16.t;
 }
 
-type dyn_ltree_t = tree: B.buffer ct_data{
-  B.len tree == heap_size
-}
+type dyn_ltree_t = B.lbuffer ct_data (U32.v heap_size)
 
-type dyn_dtree_t = tree: B.buffer ct_data{
-  let open U32 in
-  B.length tree == U32.v (2ul *^ d_codes +^ 1ul)
-}
+type dyn_dtree_t = B.lbuffer ct_data (2 * U32.v d_codes + 1)
 
-type bl_tree_t = tree: B.buffer ct_data{
-  let open U32 in
-  B.len tree == 2ul *^ bl_codes +^ 1ul
-}
+type bl_tree_t = B.lbuffer ct_data (2 * U32.v bl_codes + 1)
 
 noeq
 type static_tree_desc = {
@@ -43,20 +36,23 @@ type tree_desc = {
   stat_desc: CB.const_buffer static_tree_desc;
 }
 
-type bl_count_t = count: B.buffer U16.t{
-  let open U32 in
-  B.len count == max_bits +^ 1ul
+type bl_count_t = B.lbuffer U16.t (U32.v max_bits + 1)
+
+type tree_heap_t = B.lbuffer U32.t (2 * U32.v l_codes + 1)
+
+type heap_len_t = l: U32.t{0 < U32.v l /\ U32.v l < U32.v heap_size}
+
+type heap_index_t (hl: heap_len_t) = i: U32.t{
+  0 < U32.v i /\ U32.v i <= U32.v hl
 }
 
-type tree_heap_t = heap: B.buffer U32.t{
-  let open U32 in
-  B.len heap == 2ul *^ l_codes +^ 1ul
+type heap_internal_index_t (hl: heap_len_t) = i: U32.t{
+  0 < U32.v i /\ U32.v i <= U32.v hl / 2
 }
 
-type tree_depth_t = depth: B.buffer U8.t{
-  let open U32 in
-  B.len depth == 2ul *^ l_codes +^ 1ul
-}
+type tree_len_t = tl: Ghost.erased nat{tl <= U32.v heap_size}
+
+type tree_depth_t = B.lbuffer U8.t (2 * U32.v l_codes + 1)
 
 type lit_bufsize_t = s: U32.t {
   let open U32 in
