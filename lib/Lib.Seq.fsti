@@ -13,18 +13,17 @@ let unsnoc (#a: Type) (s: Seq.seq a{
 }) =
   Seq.slice s 0 (Seq.length s - 1)
 
-let upd_count (#a: eqtype) (s1 s2: Seq.seq a) (n: nat{n < Seq.length s1}) (x: a): Lemma
-  (requires s2 == Seq.upd s1 n x)
+let upd_count (#a: eqtype) (s1: Seq.seq a) (n: nat{n < Seq.length s1}) (x: a): Lemma
   (ensures 
     (x <> Seq.index s1 n ==>
-      Seq.count x s1 + 1 == Seq.count x s2 /\
-      Seq.count (Seq.index s1 n) s1 == Seq.count (Seq.index s1 n) s2 + 1) /\
-    (x == Seq.index s1 n ==> Seq.count x s1 == Seq.count x s2) /\
-    (forall (y: a). {:pattern (Seq.count y s1) \/ (Seq.count y s2)}
-      (y <> x /\ y <> Seq.index s1 n) ==> Seq.count y s1 == Seq.count y s2))
-  [SMTPat (s2 == Seq.upd s1 n x)] =
+      Seq.count x s1 + 1 == Seq.count x (Seq.upd s1 n x) /\
+      Seq.count (Seq.index s1 n) s1 == Seq.count (Seq.index s1 n) (Seq.upd s1 n x) + 1) /\
+    (x == Seq.index s1 n ==> Seq.count x s1 == Seq.count x (Seq.upd s1 n x)) /\
+    (forall (y: a). {:pattern (Seq.count y s1) \/ (Seq.count y (Seq.upd s1 n x))}
+      (y <> x /\ y <> Seq.index s1 n) ==> Seq.count y s1 == Seq.count y (Seq.upd s1 n x)))
+  [SMTPat (Seq.upd s1 n x)] =
   Seq.lemma_count_slice s1 n;
-  Seq.lemma_count_slice s2 n
+  Seq.lemma_count_slice (Seq.upd s1 n x) n
 
 let no_dup (#a: eqtype) (s: Seq.seq a) =
   forall (x: a). {:pattern Seq.count x s} Seq.mem x s ==> Seq.count x s == 1
