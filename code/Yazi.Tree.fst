@@ -42,24 +42,33 @@ let smaller
   else
     false
 
+let heap_common_pre_cond
+  (h: HS.mem) (heap: tree_heap_t) (hl: heap_len_t)
+  (tl: tree_len_t) (tree: B.lbuffer ct_data tl)
+  (depth: tree_depth_t)
+  (i: U32.t{U32.v i < tl})
+  (root: Ghost.erased (heap_internal_index_t hl))
+  (hole: heap_index_t hl) =
+  let open U32 in
+  let partial_well_formed = SH.partial_well_formed h heap hl tl tree depth in
+  v root <= v hole /\
+  htd_seperate h heap tree depth /\
+  SH.smaller h tl tree depth (B.as_seq h heap).[v hole] i /\
+  (v root == v hole ==>
+    partial_well_formed (root +^ 1ul) /\
+    (B.as_seq h heap).[v root] == i) /\
+  (v root < v hole ==> partial_well_formed root)
+
 inline_for_extraction
 let smallest
   (heap: tree_heap_t) (hl: heap_len_t)
   (tl: tree_len_t) (tree: B.lbuffer ct_data tl)
-  (depth: tree_depth_t) (i: U32.t{U32.v i < tl})
+  (depth: tree_depth_t)
+  (i: U32.t{U32.v i < tl})
   (root: Ghost.erased (heap_internal_index_t hl))
   (hole: heap_internal_index_t hl):
   ST.Stack U32.t
-  (requires fun h ->
-    let open U32 in
-    let partial_well_formed = SH.partial_well_formed h heap hl tl tree depth in
-    v root <= v hole /\
-    htd_seperate h heap tree depth /\
-    SH.smaller h tl tree depth (B.as_seq h heap).[v hole] i /\
-    (v root == v hole ==>
-      partial_well_formed (root +^ 1ul) /\
-      (B.as_seq h heap).[v root] == i) /\
-    (v root < v hole ==> partial_well_formed root))
+  (requires fun h -> heap_common_pre_cond h heap hl tl tree depth i root hole)
   (ensures fun h0 res h1 ->
     let heap = B.as_seq h1 heap in let hl = U32.v hl in
     let root = U32.v root in let hole = U32.v hole in
@@ -101,13 +110,8 @@ let rec do_pqdownheap
   (hole: heap_index_t hl):
   ST.Stack unit
   (requires fun h ->
-    let open U32 in
-    v root <= v hole /\
-    (B.as_seq h_init heap).[v root] == i /\
-    htd_seperate h heap tree depth /\
-    SH.smaller h tl tree depth (B.as_seq h heap).[v hole] i /\
-    (v root == v hole ==> SH.partial_well_formed h heap hl tl tree depth (root +^ 1ul)) /\
-    (v root < v hole ==> SH.partial_well_formed h heap hl tl tree depth root) /\
+    (B.as_seq h_init heap).[U32.v root] == i /\
+    heap_common_pre_cond h heap hl tl tree depth i root hole /\
     SH.permutation_partial (B.as_seq h_init heap) (B.as_seq h heap) root hole)
   (ensures fun h0 _ h1 ->
     B.modifies (B.loc_buffer heap) h0 h1 /\
@@ -115,7 +119,7 @@ let rec do_pqdownheap
     Seq.permutation U32.t (B.as_seq h_init heap) (B.as_seq h1 heap))
   (decreases U32.v hl / 2 - U32.v hole) =
   let open U32 in
-  if hole >^ hl /^ 2ul then 
+  if hole >^ hl /^ 2ul then
     heap.(hole) <- i
   else
     let s = smallest heap hl tl tree depth i root hole in
