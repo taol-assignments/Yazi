@@ -104,8 +104,7 @@ inline_for_extraction
 let rec do_pqdownheap
   (h_init: Ghost.erased HS.mem)
   (heap: tree_heap_t) (hl: heap_len_t)
-  (tl: tree_len_t) (tree: B.lbuffer ct_data tl)
-  (depth: tree_depth_t)
+  (tl: tree_len_t) (tree: B.lbuffer ct_data tl) (depth: tree_depth_t)
   (i: U32.t{U32.v i < tl})
   (root: Ghost.erased (heap_internal_index_t hl))
   (hole: heap_index_t hl):
@@ -134,8 +133,7 @@ let rec do_pqdownheap
 inline_for_extraction
 let pqdownheap
   (heap: tree_heap_t) (hl: heap_len_t)
-  (tl: tree_len_t) (tree: B.lbuffer ct_data tl)
-  (depth: tree_depth_t)
+  (tl: tree_len_t) (tree: B.lbuffer ct_data tl) (depth: tree_depth_t)
   (i: heap_internal_index_t hl):
   ST.Stack unit
   (requires fun h ->
@@ -230,3 +228,23 @@ let rec init_heap
     else
       (hl +^ 1ul, j)
   end
+
+[@ CInline ]
+let rec sort_leaves
+  (heap: tree_heap_t) (hl: heap_len_t)
+  (tl: tree_len_t) (tree: B.lbuffer ct_data tl) (depth: tree_depth_t)
+  (i: heap_internal_index_t hl):
+  ST.Stack unit
+  (requires fun h ->
+    htd_seperate h heap tree depth /\
+    SH.partial_well_formed h heap hl tl tree depth (U32.add i 1ul))
+  (ensures fun h0 _ h1 ->
+    B.modifies (B.loc_buffer heap) h0 h1 /\
+    SH.well_formed h1 heap hl tl tree depth /\
+    Seq.permutation U32.t (B.as_seq h0 heap) (B.as_seq h1 heap)) =
+  let open U32 in
+  pqdownheap heap hl tl tree depth i;
+  if i >^ 1ul then
+    sort_leaves heap hl tl tree depth (i -^ 1ul)
+  else
+    ()
