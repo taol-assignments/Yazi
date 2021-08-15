@@ -15,7 +15,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "53c9fecd29b63f205db9b10ee52e88c5"
+      "997cfabcf0141c7c1ae093ab40c7af94"
     ],
     [
       "Spec.Tree.__proj__Root__item__freq",
@@ -27,7 +27,7 @@
         "refinement_interpretation_Tm_refine_ccd3da6a2c4ad0f2699c6ead48ea11da"
       ],
       0,
-      "5dfd79189e5db0de81ecd4fa207aac22"
+      "2ac297c69d6806daa9dccb06627c2321"
     ],
     [
       "Spec.Tree.__proj__Root__item__left",
@@ -39,7 +39,7 @@
         "refinement_interpretation_Tm_refine_ccd3da6a2c4ad0f2699c6ead48ea11da"
       ],
       0,
-      "85d96d7e102079c41a3a84ff56b2476f"
+      "a2df33445b11ec833ca2f5c580eef984"
     ],
     [
       "Spec.Tree.__proj__Root__item__right",
@@ -51,7 +51,7 @@
         "refinement_interpretation_Tm_refine_ccd3da6a2c4ad0f2699c6ead48ea11da"
       ],
       0,
-      "d9fe8e2591234f05459a25f4e0d8d826"
+      "06236938259ed3212542ec905a076496"
     ],
     [
       "Spec.Tree.__proj__Internal__item__freq",
@@ -63,7 +63,7 @@
         "refinement_interpretation_Tm_refine_3929bc1788a89ffc8584cb4a277d9fdf"
       ],
       0,
-      "41f8cc7148582eb8450aa7c2f77b5fd1"
+      "91c2580b4b0a630f53f9e821a7ad3c18"
     ],
     [
       "Spec.Tree.__proj__Internal__item__len",
@@ -75,7 +75,7 @@
         "refinement_interpretation_Tm_refine_3929bc1788a89ffc8584cb4a277d9fdf"
       ],
       0,
-      "a4e5c4b0a83d91a258fb9c2afa5de317"
+      "6688a6794e65498bfc073e8529b050c3"
     ],
     [
       "Spec.Tree.__proj__Internal__item__left",
@@ -87,7 +87,7 @@
         "refinement_interpretation_Tm_refine_3929bc1788a89ffc8584cb4a277d9fdf"
       ],
       0,
-      "376df7fc840ccd486aa8fb95fd5013d1"
+      "9d08a7184c645c2ddbbbc081d0d187ba"
     ],
     [
       "Spec.Tree.__proj__Internal__item__right",
@@ -99,7 +99,7 @@
         "refinement_interpretation_Tm_refine_3929bc1788a89ffc8584cb4a277d9fdf"
       ],
       0,
-      "4338827809b4a0a05a0839ecfc7be208"
+      "d9470dee8b8f7a19cab58eb30add816e"
     ],
     [
       "Spec.Tree.__proj__Leaf__item__freq",
@@ -111,7 +111,7 @@
         "refinement_interpretation_Tm_refine_31abffd169bd34737da9961170cf5167"
       ],
       0,
-      "32fdc3c32a5a76276f425147037d72f1"
+      "a7c921fa90cfa1de08f32f73bba99257"
     ],
     [
       "Spec.Tree.__proj__Leaf__item__len",
@@ -123,7 +123,7 @@
         "refinement_interpretation_Tm_refine_31abffd169bd34737da9961170cf5167"
       ],
       0,
-      "666b64096085c7cbc8025fe093937778"
+      "f8f74efdce60d2f25d9616141c20fa32"
     ],
     [
       "Spec.Tree.__proj__Leaf__item__symbol",
@@ -135,7 +135,7 @@
         "refinement_interpretation_Tm_refine_31abffd169bd34737da9961170cf5167"
       ],
       0,
-      "8ba069231573bb2a9305618eb2f8c898"
+      "a21966b234784e96d50326b96336613d"
     ],
     [
       "Spec.Tree.freq",
@@ -150,7 +150,7 @@
         "refinement_interpretation_Tm_refine_008b9513cb73eb18814c8f81cd5db5ca"
       ],
       0,
-      "fd954493a3b5b7ef22cdbdf7faeff26b"
+      "b348135b6ee96306fd65c221ef4fde89"
     ],
     [
       "Spec.Tree.length",
@@ -164,7 +164,7 @@
         "projection_inverse_BoxBool_proj_0"
       ],
       0,
-      "3f3581792b54c5226d6ac07c94987a3f"
+      "86839f5a3f5d33884557f7662f030d19"
     ],
     [
       "Spec.Tree.symbol_seq",
@@ -183,7 +183,7 @@
         "subterm_ordering_Spec.Tree.Root"
       ],
       0,
-      "bf417655ae507046b85bcbef39f7b746"
+      "271c37d46cdbb5be72935d2f0f8ea213"
     ],
     [
       "Spec.Tree.well_formed",
@@ -202,7 +202,7 @@
         "subterm_ordering_Spec.Tree.Root"
       ],
       0,
-      "7187a6e91e9d4498f99f291656b31bcb"
+      "105b842c7e1f44c5affca0cfa3878ed3"
     ],
     [
       "Spec.Tree.optimal'",
@@ -234,7 +234,7 @@
         "subterm_ordering_Spec.Tree.Root", "typing_Spec.Tree.uu___is_Root"
       ],
       0,
-      "40677263897976203130b207478b808f"
+      "8b54d9e19d3cc7782077be63773bee6d"
     ],
     [
       "Spec.Tree.optimal",
@@ -243,7 +243,7 @@
       1,
       [ "@query" ],
       0,
-      "a3f1b32e12c8a3b824430ca0c3484325"
+      "874828d07d643b371b8ea3777915d20b"
     ],
     [
       "Spec.Tree.left",
@@ -273,7 +273,7 @@
         "refinement_interpretation_Tm_refine_ff279499dddd68a4982e677278b0625d"
       ],
       0,
-      "d008cbf3beb7df498414925f08ebe536"
+      "b22242396ec2547844f6c11e42ad11ac"
     ],
     [
       "Spec.Tree.right",
@@ -303,7 +303,7 @@
         "refinement_interpretation_Tm_refine_ff279499dddd68a4982e677278b0625d"
       ],
       0,
-      "3238df0869947d6dbb1e72dcaeaff568"
+      "d16db26b5a81ded6263c484fef2934ad"
     ],
     [
       "Spec.Tree.symbol",
@@ -316,7 +316,7 @@
         "refinement_interpretation_Tm_refine_92973213bfbfc8d80e0f8e5344d07dab"
       ],
       0,
-      "4b32410c297ab57e484c17ca47d43484"
+      "2bab9d310557e26f1cdc197b029fc270"
     ],
     [
       "Spec.Tree.height",
@@ -354,7 +354,7 @@
         "subterm_ordering_Spec.Tree.Root"
       ],
       0,
-      "91b2c3b3a6c6c51a29345c37554a8fdc"
+      "7bbce3e9464f9f2944837fa3b104e612"
     ],
     [
       "Spec.Tree.tree_symbol",
@@ -368,7 +368,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "a0055683f2c3276a2fc68e35f643471a"
+      "72e6696f4afbf11fbdbe63875d22ce9e"
     ],
     [
       "Spec.Tree.code",
@@ -418,7 +418,7 @@
         "typing_Spec.Tree.right", "typing_Spec.Tree.symbol_seq"
       ],
       0,
-      "610198ff8287274532b6b64a473a9c82"
+      "4e0dea658a0279d657aa9185dea6c3de"
     ],
     [
       "Spec.Tree.encode",
@@ -432,7 +432,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "a69321a9d50fcfa33f3749fc5173295f"
+      "68b4923064746d71fb8febb9aa7bfb6c"
     ],
     [
       "Spec.Tree.encode",
@@ -484,7 +484,7 @@
         "typing_Spec.Tree.symbol_seq", "well-founded-ordering-on-nat"
       ],
       0,
-      "3143b6410e96e752fc8858c1a0ec8113"
+      "4f9b150c3c58f99f771039406f7b0ab3"
     ],
     [
       "Spec.Tree.do_decode",
@@ -498,7 +498,7 @@
         "typing_FStar.Seq.Base.seq"
       ],
       0,
-      "c628f0f3fde98417ef159074a69f5e26"
+      "8df7dc8fc5fdbd4ff7f0c4c5098edcfa"
     ],
     [
       "Spec.Tree.do_decode",
@@ -545,7 +545,7 @@
         "typing_Spec.Tree.length", "well-founded-ordering-on-nat"
       ],
       0,
-      "66be66e63625af609c31d737ffc1268f"
+      "5b472252aca386544c1dcd5fa3a7ad7d"
     ],
     [
       "Spec.Tree.leaf_count",
@@ -584,7 +584,7 @@
         "subterm_ordering_Spec.Tree.Root"
       ],
       0,
-      "4dba640ac234fe39f22e627a4c84a20c"
+      "fc308b37f234a0e0546e9f5b266aa9d8"
     ],
     [
       "Spec.Tree.do_total_leaf_count",
@@ -604,7 +604,7 @@
         "typing_Spec.Tree.leaf_count", "well-founded-ordering-on-nat"
       ],
       0,
-      "2724061438c3eaec874a0574f6369d02"
+      "d6d6118cb82a596be50923b2a3da2acc"
     ],
     [
       "Spec.Tree.height_one",
@@ -613,7 +613,7 @@
       1,
       [ "@query" ],
       0,
-      "3a367a92516f7501f535e4c7f847c1a7"
+      "a31a5a3350791ba64bfbde9aceb86e38"
     ],
     [
       "Spec.Tree.height_one",
@@ -644,7 +644,7 @@
         "typing_Spec.Tree.height", "unit_inversion", "unit_typing"
       ],
       0,
-      "0ca6820c77446ea441047020db2a310a"
+      "3a53ec6926c918f883178edc476e7d84"
     ],
     [
       "Spec.Tree.height_gt_one",
@@ -653,7 +653,7 @@
       1,
       [ "@query" ],
       0,
-      "75aa01ffb58ab2641ce4f9606aa0dba8"
+      "7d0ef86fa5f396b326fadc6b16a7b55b"
     ],
     [
       "Spec.Tree.height_gt_one",
@@ -697,7 +697,7 @@
         "typing_Spec.Tree.uu___is_Root", "unit_inversion", "unit_typing"
       ],
       0,
-      "710a827964916d1d94619c2140fd9806"
+      "7b599ac912b40309d8eea92b88e794de"
     ],
     [
       "Spec.Tree.leaf_count_gt_height",
@@ -745,7 +745,7 @@
         "typing_Spec.Tree.uu___is_Leaf"
       ],
       0,
-      "60b9f309d59ba2cacff5ce21bcb4874a"
+      "70f4479bf5bf119756d555415d9946cf"
     ],
     [
       "Spec.Tree.do_total_leaf_count_gt_height",
@@ -754,7 +754,7 @@
       2,
       [ "@query" ],
       0,
-      "21816811d493bca44d3cef1b496fb3ca"
+      "49f1a3c4ee9535242a069c97d7f987d7"
     ],
     [
       "Spec.Tree.do_total_leaf_count_gt_height",
@@ -801,7 +801,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "ca2d36d475ab2ca20442a5f2dfb801b2"
+      "4ec59e44d795e481888fe83b67b367c0"
     ],
     [
       "Spec.Tree.do_total_leaf_count_lr",
@@ -820,7 +820,7 @@
         "refinement_interpretation_Tm_refine_e1ddd695c46c26d0cf2080e8a62ee848"
       ],
       0,
-      "227efdf3ed6d8f640577a2165ca0334d"
+      "401aa11f0b65a6a71dd095b6aa399a71"
     ],
     [
       "Spec.Tree.do_total_leaf_count_lr",
@@ -879,7 +879,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "389e9ee4c38d44c19147e5a50707c315"
+      "4b05dace64844e4304426358951813db"
     ],
     [
       "Spec.Tree.total_leaf_count_lr",
@@ -927,7 +927,7 @@
         "typing_Spec.Tree.total_leaf_count"
       ],
       0,
-      "856e9214a6de11d536702d81539400e7"
+      "48b77ed7c281ae241ff070cc12b13539"
     ],
     [
       "Spec.Tree.total_leaf_count_lower_bound",
@@ -974,7 +974,7 @@
         "typing_Spec.Tree.right", "typing_Spec.Tree.uu___is_Leaf"
       ],
       0,
-      "0f0f256c24c2b9af040cdfe38bf4ca84"
+      "b85f0184ed6d0a58eb9dbef2bdadbe78"
     ],
     [
       "Spec.Tree.total_leaf_count_upper_bound",
@@ -1033,7 +1033,7 @@
         "typing_Spec.Tree.right", "unit_inversion", "unit_typing"
       ],
       0,
-      "bc0c491cb10bc5eb086c0caa35a45eab"
+      "a5769f9e3935a0e68572c66291408ead"
     ],
     [
       "Spec.Tree.do_leaf_count_seq",
@@ -1084,7 +1084,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "8951cee87e34af78b131ba0d58ca8543"
+      "46f4e0804cda2a2d3a6f4829519071c0"
     ],
     [
       "Spec.Tree.leaf_count_seq",
@@ -1093,7 +1093,7 @@
       2,
       [ "@query" ],
       0,
-      "2d422f792c89235a07297bc78df90877"
+      "497c778c06538bc551217f338d7f321c"
     ],
     [
       "Spec.Tree.min_leaf_depth",
@@ -1132,7 +1132,7 @@
         "typing_Spec.Tree.leaf_count", "typing_Spec.Tree.min_leaf_depth"
       ],
       0,
-      "b870950655bc31c0b3f132c821ea62ba"
+      "9ec2f34f18284cccb0084d5becf72c43"
     ],
     [
       "Spec.Tree.min_leaf_depth_aux",
@@ -1168,7 +1168,7 @@
         "typing_Spec.Tree.leaf_count_seq", "typing_Spec.Tree.min_leaf_depth"
       ],
       0,
-      "b524086f7056461f3e4aa9dec83ebd0e"
+      "1d48f2363084a5d4d9ab26c9b4ecbd2e"
     ],
     [
       "Spec.Tree.min_leaf_depth_leaf_count",
@@ -1221,7 +1221,7 @@
         "typing_Spec.Tree.right"
       ],
       0,
-      "568e62d2c289d559baa8c03494dc2c05"
+      "5ca55458d1ab9e8521920dff505ac897"
     ],
     [
       "Spec.Tree.min_leaf_depth_lt_pow2",
@@ -1269,7 +1269,7 @@
         "typing_Spec.Tree.right", "unit_inversion", "unit_typing"
       ],
       0,
-      "aeed0964c8dcd61241fd19efccdf3111"
+      "19cb9c685ea5a42bb4ddfd949b7132cf"
     ],
     [
       "Spec.Tree.code_do_decode_cancel",
@@ -1292,7 +1292,7 @@
         "typing_Spec.Tree.do_decode"
       ],
       0,
-      "73452301c6c89887db217cbe1ecda757"
+      "76e91b11f0d0796b36f12be335d0ae32"
     ],
     [
       "Spec.Tree.code_do_decode_cancel",
@@ -1397,7 +1397,7 @@
         "unit_inversion", "unit_typing"
       ],
       0,
-      "821561e7c09b75dcf2124613bd99e5bf"
+      "44d45df923a7a77bb376757157ed503b"
     ],
     [
       "Spec.Tree.do_decode_append",
@@ -1422,7 +1422,7 @@
         "typing_FStar.Seq.Base.seq", "typing_Spec.Tree.do_decode"
       ],
       0,
-      "27f67af2123b897d6eb81423bbf0f046"
+      "8987ecce6c00fe6c255cc386a3bfc6b0"
     ],
     [
       "Spec.Tree.do_decode_append",
@@ -1504,7 +1504,7 @@
         "unit_inversion", "unit_typing", "well-founded-ordering-on-nat"
       ],
       0,
-      "f8aeffc10db819af55d168917ededd3a"
+      "7bd9ec869bb36ebb5f9dde1d9585763f"
     ],
     [
       "Spec.Tree.decode_append",
@@ -1527,7 +1527,7 @@
         "typing_Spec.Tree.do_decode"
       ],
       0,
-      "9fe189ea35a43cd7de37f7515757a1c4"
+      "b8697352f7e1e3a9da00d966dfcc3129"
     ],
     [
       "Spec.Tree.encode_decode_cancel",
@@ -1543,7 +1543,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "96e2014047ca4460f4659deeb8e32bf0"
+      "5a183b1e43f70f07f65b103eae33157e"
     ],
     [
       "Spec.Tree.encode_decode_cancel",
@@ -1562,7 +1562,7 @@
         "refinement_interpretation_Tm_refine_88722d5b1e53ec3cfa11c2b78b053549"
       ],
       0,
-      "998d948c5e7fa61b6b5652935e155811"
+      "2678e413c930a629a2e87a4b17ed9727"
     ],
     [
       "Spec.Tree.encode_decode_cancel",
@@ -1655,7 +1655,7 @@
         "typing_Spec.Tree.symbol_seq", "well-founded-ordering-on-nat"
       ],
       0,
-      "c35e859414f6b8ab185a687a5ca6fbff"
+      "7636d85b1cf3c6ffd9a5c16d5323114c"
     ],
     [
       "Spec.Tree.kraft_term_plus",
@@ -1685,7 +1685,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "79e20ff672317bcd760f5c8dbbbf1bc4"
+      "389f08ef48315b3d3465f60522ad9d44"
     ],
     [
       "Spec.Tree.term_times",
@@ -1702,7 +1702,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "090a2657c54962845a364c63d185167d"
+      "b47fc91480d96247c84363ea3645d963"
     ],
     [
       "Spec.Tree.kraft_sum",
@@ -1734,7 +1734,7 @@
         "subterm_ordering_Spec.Tree.Root"
       ],
       0,
-      "d5932fd20b3610302f19bfa3a09efa71"
+      "a2ca82b2ac5565339949f160c93bb798"
     ],
     [
       "Spec.Tree.kraft_sum_non_root",
@@ -1782,7 +1782,7 @@
         "typing_Lib.Rational.op_Plus_Dollar", "typing_Spec.Tree.kraft_sum"
       ],
       0,
-      "92114d0e2668bd613ef0b0375010a637"
+      "d47d15c02eb5bee084aba90a00a10efb"
     ],
     [
       "Spec.Tree.kraft_sum_root",
@@ -1832,7 +1832,7 @@
         "typing_Spec.Tree.kraft_sum", "typing_Spec.Tree.length"
       ],
       0,
-      "de70ca04dae3ee11c3736eb70b919adc"
+      "aa45759943df9ec33559cf75052e8b4f"
     ],
     [
       "Spec.Tree.kraft_sum_lc_seq",
@@ -1865,7 +1865,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "6ec9f3b5ba6d85ec5cba725704ccba24"
+      "6d496352517553107b34707d225495ec"
     ],
     [
       "Spec.Tree.tree_context_valid",
@@ -1877,7 +1877,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "deba00e8f90ae9c90a3c0aa639d6cc35"
+      "3da846770523601162c544d446527674"
     ]
   ]
 ]
