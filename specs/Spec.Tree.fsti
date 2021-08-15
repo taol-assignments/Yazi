@@ -10,6 +10,7 @@ open Lib.Seq
 open FStar.Mul
 open FStar.Seq
 open Yazi.Tree.Types
+open Yazi.Deflate.Constants
 
 type tree =
   | Root: freq: pos -> left: tree -> right: tree -> tree
@@ -313,4 +314,17 @@ let tree_context_valid (h: HS.mem) (c: CB.const_buffer tree_context) =
   B.length ctx.pending_buf == U32.v ctx.pending_buf_size /\
   CB.length ctx.l_desc.stat_desc == 1 /\
   CB.length ctx.d_desc.stat_desc == 1 /\
-  CB.length ctx.bl_desc.stat_desc == 1)
+  CB.length ctx.bl_desc.stat_desc == 1 /\
+  
+  (let l_stat_desc = B.get h (CB.as_mbuf ctx.l_desc.stat_desc) 0 in
+  let d_stat_desc = B.get h (CB.as_mbuf ctx.d_desc.stat_desc) 0 in
+  let bl_stat_desc = B.get h (CB.as_mbuf ctx.bl_desc.stat_desc) 0 in
+  U32.v l_stat_desc.extra_base == U32.v literals + 1 /\
+  U32.v d_stat_desc.extra_base == 0 /\
+  U32.v bl_stat_desc.extra_base == 0 /\
+  U32.v l_stat_desc.elems == U32.v l_codes /\
+  U32.v d_stat_desc.elems == U32.v d_codes /\
+  U32.v bl_stat_desc.elems == U32.v bl_codes /\
+  U32.v l_stat_desc.max_length == 15 /\
+  U32.v d_stat_desc.max_length == 15 /\
+  U32.v bl_stat_desc.max_length == 7))

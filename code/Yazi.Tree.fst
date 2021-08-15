@@ -12,6 +12,7 @@ module U8 = FStar.UInt8
 open FStar.Mul
 open Lib.Seq
 open LowStar.BufferOps
+open Yazi.Deflate.Constants
 open Yazi.Tree.Types
 
 let htd_seperate
@@ -145,3 +146,87 @@ let pqdownheap
     SH.partial_well_formed h1 heap hl tl tree depth i /\
     Seq.permutation U32.t (B.as_seq h0 heap) (B.as_seq h1 heap)) =
   do_pqdownheap (ST.get ()) heap hl tl tree depth heap.(i) i i
+
+unfold let init_heap_common_cond
+  (h: HS.mem)
+  (heap: tree_heap_t) (hl: U32.t)
+  (tree: B.buffer ct_data) (depth: tree_depth_t)
+  (j: U32.t) (max_code: U32.t) (elems: U32.t) =
+  let open U32 in
+  let heap = B.as_seq h heap in
+  let tree = B.as_seq h tree in
+  let depth = B.as_seq h depth in
+  let j = U32.v j in
+  let hl = U32.v hl in
+  let max_code = U32.v max_code in
+  let elems = U32.v elems in
+  Seq.length tree >= elems /\ j <= elems /\
+  hl < U32.v heap_size /\
+  hl < j + 1 /\ max_code < j /\ elems <= v l_codes /\
+  (forall i. {:pattern (heap.[i]) \/ ((tree.[v heap.[i]]).freq_or_dad)}
+    0 < i /\ i <= hl ==> v heap.[i] < j /\ U16.v (tree.[v heap.[i]]).freq_or_dad > 0) /\
+  (forall i. (i >= j \/ U16.v (tree.[i]).freq_or_dad == 0) ==>
+    Seq.count (uint_to_t i) (Seq.slice heap 1 (hl + 1)) == 0) /\
+  (forall i. (i < j /\ U16.v (tree.[i]).freq_or_dad > 0) ==>
+    Seq.count (uint_to_t i) (Seq.slice heap 1 (hl + 1)) == 1) /\
+  (forall i. {:pattern (tree.[i]).code_or_len}
+    (i < j /\ U16.v (tree.[i]).freq_or_dad == 0) ==> U16.v (tree.[i]).code_or_len == 0) /\
+  (forall i. {:pattern (depth.[i])}
+    (i < j /\ U16.v (tree.[i]).freq_or_dad > 0) ==> U8.v depth.[i] = 0) /\
+  (forall i. {:pattern (tree.[i]).freq_or_dad}
+    (max_code < i /\ i < j) ==> U16.v (tree.[i]).freq_or_dad == 0)
+
+#set-options "--z3refresh --z3rlimit 4096 --fuel 1 --ifuel 1"
+[@ CInline ]
+let rec init_heap
+  (heap: tree_heap_t) (hl: U32.t{U32.v hl < U32.v heap_size})
+  (tree: B.buffer ct_data) (depth: tree_depth_t)
+  (j: U32.t) (max_code: U32.t) (elems: U32.t):
+  ST.Stack (U32.t & U32.t)
+  (requires fun h ->
+    htd_seperate h heap tree depth /\
+    U32.v j < U32.v elems /\
+    init_heap_common_cond h heap hl tree depth j max_code elems)
+  (ensures fun h0 res h1 ->
+    let open U32 in
+    let (hl, max_code) = res in
+    let t0 = B.as_seq h0 tree in
+    let t1 = B.as_seq h1 tree in
+    B.modifies
+      (B.loc_buffer heap `B.loc_union`
+      B.loc_buffer tree `B.loc_union`
+      B.loc_buffer depth)
+      h0 h1 /\
+    (forall i. {:pattern ((t1.[i]).freq_or_dad) \/ ((t0.[i]).freq_or_dad)}
+      (t1.[i]).freq_or_dad == (t0.[i]).freq_or_dad) /\
+    init_heap_common_cond h1 heap hl tree depth elems max_code elems)
+  (decreases U32.v elems - U32.v j) =
+  let open U32 in
+  let f = (tree.(j)).freq_or_dad in
+  if f = 0us then begin
+    tree.(j) <- {tree.(j) with code_or_len = 0us};
+    if j +^ 1ul <^ elems then
+      init_heap heap hl tree depth (j +^ 1ul) max_code elems
+    else
+      (hl, max_code)
+  end else begin
+    heap.(hl +^ 1ul) <- j;
+    depth.(j) <- 0uy;
+
+    let h = ST.get () in
+    let tree' = Ghost.hide (B.as_seq h tree) in
+    let heap' = Ghost.hide (B.as_seq h heap) in
+    assert(Seq.equal
+      (Seq.slice heap' 1 (v hl + 2))
+      (Seq.append (Seq.slice heap' 1 (v hl + 1)) (Seq.create 1 j)));
+    count_neq (Seq.slice heap' 1 (v hl + 1)) j;
+    Seq.lemma_append_count (Seq.slice heap' 1 (v hl + 1)) (Seq.create 1 j);
+    assert_norm(forall i. i < v j ==> Seq.count (uint_to_t i) (Seq.create 1 j) == 0);
+    assert(forall i. (i > v j \/ U16.v (tree'.[i]).freq_or_dad == 0) ==>
+      normalize_term (Seq.count (uint_to_t i) (Seq.create 1 j)) == 0);
+
+    if j +^ 1ul <^ elems then
+      init_heap heap (hl +^ 1ul) tree depth (j +^ 1ul) j elems
+    else
+      (hl +^ 1ul, j)
+  end

@@ -2,6 +2,8 @@ module Lib.Seq
 
 module Seq = FStar.Seq
 
+open FStar.Calc
+
 unfold let op_String_Access #a = Seq.index #a
 
 let unsnoc (#a: Type) (s: Seq.seq a{
@@ -24,6 +26,30 @@ let upd_count (#a: eqtype) (s1: Seq.seq a) (n: nat{n < Seq.length s1}) (x: a): L
   [SMTPat (Seq.upd s1 n x)] =
   Seq.lemma_count_slice s1 n;
   Seq.lemma_count_slice (Seq.upd s1 n x) n
+
+let rec count_neq (#a: eqtype) (s: Seq.seq a) (x: a): Lemma
+  (requires forall i. Seq.index s i <> x)
+  (ensures Seq.count x s == 0)
+  (decreases Seq.length s) =
+  match Seq.length s with
+  | 0 -> ()
+  | _ -> count_neq (Seq.tail s) x
+
+let rec count_create_cancel (#a: eqtype) (n: nat) (x: a): Lemma
+  (ensures Seq.count x (Seq.create n x) == n)
+  [SMTPat (Seq.count x (Seq.create n x))] =
+  match n with
+  | 0 -> ()
+  | _ ->
+    calc (==) {
+      Seq.count x (Seq.create n x);
+      =={}
+      1 + Seq.count x (Seq.tail (Seq.create n x));
+      =={assert(Seq.equal (Seq.tail (Seq.create n x)) (Seq.create (n - 1) x))}
+      1 + Seq.count x (Seq.create (n - 1) x);
+      =={count_create_cancel (n - 1) x}
+      n;
+    }
 
 let no_dup (#a: eqtype) (s: Seq.seq a) =
   forall (x: a). {:pattern Seq.count x s} Seq.mem x s ==> Seq.count x s == 1
