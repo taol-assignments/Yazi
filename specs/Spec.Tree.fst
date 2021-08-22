@@ -1,6 +1,9 @@
 module Spec.Tree
 
+module BV = FStar.BitVector
 module Math = FStar.Math.Lemmas
+
+open Lib.UInt
 
 #set-options "--z3rlimit 200 --fuel 1 --ifuel 1"
 let height_one t =
@@ -29,7 +32,7 @@ let height_gt_one t =
       assert_norm(height (left t) >= 1)
   | Leaf _ _ _ -> ()
 
-#set-options "--z3rlimit 512 --fuel 2 --ifuel 2"
+#set-options "--z3refresh --z3rlimit 512 --fuel 2 --ifuel 2"
 let rec leaf_count_gt_height t h =
   match height t with
   | 0 -> ()
@@ -168,7 +171,6 @@ let rec code_do_decode_cancel (rt: root) (t: non_leaf) (sym: tree_symbol t): Lem
   | Some s -> equal s (create 1 sym)
   | None -> False)) =
   let c = code t sym in let l = left t in let r = right t in
-  lemma_mem_append (symbol_seq l) (symbol_seq r);
   if Seq.mem sym (symbol_seq l) then
     if Leaf? l then
       ()
@@ -226,7 +228,114 @@ let rec encode_decode_cancel r s =
   | Some res -> assert(equal s res)
   | None -> ()
 
-#set-options "--z3rlimit 200"
+let rec code_height t s =
+  match height t with
+  | 1 -> ()
+  | _ ->
+    let l = left t in let r = right t in
+    if Seq.mem s (symbol_seq l) then
+      if Leaf? l then () else code_height l s
+    else
+      if Leaf? r then () else code_height r s
+
+#set-options "--z3refresh --z3rlimit 512 --fuel 2 --ifuel 2"
+let rec symbol_seq_len_aux t =
+  match height t with
+  | 1 -> ()
+  | _ ->
+    if Leaf? (left t) then () else symbol_seq_len_aux (left t);
+    if Leaf? (right t) then () else symbol_seq_len_aux (right t)
+
+#set-options "--z3refresh --z3rlimit 512 --fuel 1 --ifuel 1"
+let rec leftmost_code_vec t =
+  match height t with
+  | 1 -> ()
+  | _ ->
+    let l = left t in
+    let h = (symbol_seq t).[0] in
+    if Leaf? l then
+      ()
+    else begin
+      leftmost_code_vec l;
+      assert(equal ((create 1 false) @| code l h) (BV.zero_vec #(code_len t h)))
+    end
+
+#set-options "--z3refresh --z3rlimit 512 --fuel 2 --ifuel 2"
+let rec rightmost_code_vec t =
+  match height t with
+  | 1 -> ()
+  | _ ->
+    let r = right t in
+    let e = last (symbol_seq t) in
+    if Leaf? r then
+      ()
+    else begin
+      rightmost_code_vec r;
+      assert(equal ((create 1 true) @| code r e) (BV.ones_vec #(code_len t e)))
+    end
+
+#set-options "--z3refresh --z3rlimit 2048 --fuel 1 --ifuel 1 --z3seed 14"
+let rec code_partial_next t i depth =
+  match height t with
+  | 1 -> ()
+  | _ ->
+    let l = left t in let r = right t in
+    let ts = symbol_seq t in
+    let ls = symbol_seq l in let rs = symbol_seq r in
+    let zero = BV.zero_vec #1 in
+    let one = BV.ones_vec #1 in
+    calc (==) {
+      ((pow2 1) - 1) * pow2 (depth - 1);
+      =={assert_norm((pow2 1) - 1 == 1)}
+      pow2 (depth - 1);
+    };
+    Math.pow2_double_mult (depth - 1);
+
+    if depth = 1 then
+      ()
+    else if i + 1 < total_leaf_count l then begin
+      zero_prefix_vec 1 (code_partial l ls.[i] (depth - 1));
+      zero_prefix_vec 1 (code_partial l ls.[i + 1] (depth - 1));
+      code_partial_next l i (depth - 1)
+    end else if total_leaf_count l <= i then
+      let i' = i - total_leaf_count l in
+      calc (==) {
+        UInt.from_vec (code t ts.[i]) + 1;
+        =={}
+        UInt.from_vec #depth (one @| code r rs.[i']) + 1;
+        =={one_prefix_vec 1 (code r rs.[i'])}
+        pow2 (depth - 1) +
+        (UInt.from_vec (code r rs.[i']) + 1);
+        =={code_partial_next r i' (depth - 1)}
+        pow2 (depth - 1) +
+        UInt.from_vec (code r rs.[i' + 1]);
+        =={one_prefix_vec 1 (code r rs.[i' + 1])}
+        UInt.from_vec #depth (one @| code r rs.[i' + 1]);
+        =={}
+        UInt.from_vec (code t ts.[i + 1]);
+      }
+    else
+      calc (==) {
+        UInt.from_vec (code t ts.[i]) + 1;
+        =={}
+        UInt.from_vec #depth (zero @| code l ls.[i]) + 1;
+        =={symbol_seq_len_aux l}
+        UInt.from_vec #depth (zero @| code l (last ls)) + 1;
+        =={rightmost_code_val l}
+        pow2 (code_len l (last ls));
+        =={}
+        pow2 (depth - 1);
+        =={UInt.pow2_from_vec_lemma #depth 0}
+        UInt.from_vec (BV.elem_vec #depth 0);
+        =={
+          leftmost_code_vec r;
+          assert(equal (BV.elem_vec #depth 0) (one @| code r rs.[0]))
+        }
+        UInt.from_vec #depth (one @| code r rs.[0]);
+        =={}
+        UInt.from_vec (code t ts.[i + 1]);
+      }
+
 let rec kraft_sum_non_root t =
   match t with
   | Internal _ len l r ->

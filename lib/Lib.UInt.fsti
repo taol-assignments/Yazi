@@ -109,3 +109,21 @@ let shift_left_append (#n: nat{n > 0}) (a s1 s2: UInt.uint_t n): Lemma
     =={UInt.shift_left_value_lemma a (s1 + s2)}
     UInt.shift_left a (s1 + s2);
   }
+
+let zero_prefix_vec (n: pos) (v: Seq.seq bool): Lemma
+  (requires Seq.length v > 0)
+  (ensures UInt.from_vec #(n + Seq.length v) (Seq.append (BV.zero_vec #n) v) ==
+    UInt.from_vec #(Seq.length v) v)
+  [SMTPat (UInt.from_vec #(n + Seq.length v) (Seq.append (BV.zero_vec #n) v))] =
+  let l = Seq.length v in
+  let zero = BV.zero_vec #n in
+  UInt.append_lemma #n #l zero v
+
+let one_prefix_vec (n: pos) (v: Seq.seq bool): Lemma
+  (requires Seq.length v > 0)
+  (ensures UInt.from_vec #(n + Seq.length v) (Seq.append (BV.ones_vec #n) v) ==
+    ((pow2 n) - 1) * pow2 (Seq.length v) + UInt.from_vec #(Seq.length v) v)
+  [SMTPat (UInt.from_vec #(n + Seq.length v) (Seq.append (BV.ones_vec #n) v))] =
+  let l = Seq.length v in
+  let one = BV.ones_vec #n in
+  UInt.append_lemma #n #l one v

@@ -18,8 +18,8 @@ let smaller (h: HS.mem)
   let tree = B.as_seq h tree in
   let depth = B.as_seq h depth in
   v i < tl /\ v j < tl /\ v i < length depth /\ v j < length depth /\
-  (let fi = U16.v (tree.[v i]).freq_or_dad in
-  let fj = U16.v (tree.[v j]).freq_or_dad in
+  (let fi = U16.v (tree.[v i]).freq_or_code in
+  let fj = U16.v (tree.[v j]).freq_or_code in
   (fi < fj \/ (fi == fj /\ U8.v depth.[v i] <= U8.v depth.[v j])))
 
 let element_in_range (h: HS.mem) (heap: tree_heap_t) (hl: heap_len_t) (tl: nat) =

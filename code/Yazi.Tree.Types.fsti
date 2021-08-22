@@ -11,8 +11,8 @@ open Yazi.Deflate.Constants
 
 noeq
 type ct_data = {
-  freq_or_dad: U16.t;
-  code_or_len: U16.t;
+  freq_or_code: U16.t;
+  dad_or_len: U16.t;
 }
 
 type dyn_ltree_t = B.lbuffer ct_data (U32.v heap_size)

@@ -1,8 +1,10 @@
 module Spec.Tree
 
 module B = LowStar.Buffer
+module BV = FStar.BitVector
 module CB = LowStar.ConstBuffer
 module HS = FStar.HyperStack
+module U16 = FStar.UInt16
 module U32 = FStar.UInt32
 
 open Lib.Rational
@@ -13,11 +15,11 @@ open Yazi.Tree.Types
 open Yazi.Deflate.Constants
 
 type tree =
-  | Root: freq: pos -> left: tree -> right: tree -> tree
-  | Internal: freq: pos -> len: pos -> left: tree -> right: tree -> tree
-  | Leaf: freq: pos -> len: pos -> symbol: nat -> tree
+  | Root: freq: nat -> left: tree -> right: tree -> tree
+  | Internal: freq: nat -> len: pos -> left: tree -> right: tree -> tree
+  | Leaf: freq: nat -> len: pos -> symbol: nat -> tree
 
-let freq (t: tree{Root? t == false}): pos =
+let freq (t: tree{Root? t == false}): nat =
   match t with
   | Internal freq _ _ _ -> freq
   | Leaf freq _ _ -> freq
@@ -35,18 +37,18 @@ let rec symbol_seq (t: tree): Seq.seq nat =
   | Leaf _ _ symbol -> create 1 symbol
 
 let rec well_formed (t: tree): Type0 =
-  match t with
-  | Root f l r ->
-    Root? l == false /\ Root? r == false /\
-    length l == 1 /\ length r == 1 /\
-    no_dup (symbol_seq t) /\
-    well_formed l /\ well_formed r
-  | Internal f len l r ->
+  if Leaf? t then
+    True
+  else
+    let (l, r) = (match t with
+    | Root _ l r -> (l, r)
+    | Internal _ _ l r -> (l, r))
+    in
+    let len = length t in
     Root? l == false /\ Root? r == false /\
     length l == len + 1 /\ length r == len + 1 /\
     no_dup (symbol_seq t) /\
     well_formed l /\ well_formed r
-  | _ -> True
 
 private let rec optimal' (t: tree{well_formed t}): Type0 =
   match t with
@@ -54,7 +56,7 @@ private let rec optimal' (t: tree{well_formed t}): Type0 =
   | Internal f len l r -> freq l + freq r == f /\ optimal' l /\ optimal' r
   | Leaf _ _ _ -> True
 
-let optimal (t: tree): Type0 = well_formed t /\ optimal' t
+type optimal_tree = t: tree{well_formed t /\ optimal' t}
 
 type well_formed_tree = t: tree{well_formed t}
 
@@ -94,15 +96,38 @@ let rec height (t: well_formed_tree): Tot nat =
 
 type tree_symbol (t: well_formed_tree) = s: nat{Seq.mem s (symbol_seq t)}
 
-let rec code (t: non_leaf) (s: tree_symbol t): Tot (res: seq bool{Seq.length res > 0}) =
+let symbol_seq_aux (t: non_leaf) (s: tree_symbol t): Lemma
+  (ensures
+    disjoint (symbol_seq (left t)) (symbol_seq (right t)) /\
+    (Seq.mem s (symbol_seq (left t)) \/ Seq.mem s (symbol_seq (right t))))
+  [SMTPatOr
+    [[SMTPat (Seq.mem s (symbol_seq (left t)))];
+    [SMTPat (Seq.mem s (symbol_seq (right t)))]]] =
+    lemma_mem_append (symbol_seq (left t)) (symbol_seq (right t))
+
+let rec code_len (t: non_leaf) (s: tree_symbol t): Tot pos =
   let l = left t in let r = right t in
-  lemma_mem_append (symbol_seq l) (symbol_seq r);
+  if Seq.mem s (symbol_seq l) then
+    if Leaf? l then 1 else 1 + code_len l s
+  else
+    if Leaf? r then 1 else 1 + code_len r s
+
+#set-options "--z3rlimit 128 --ifuel 1 --fuel 1"
+let rec code_partial
+  (t: non_leaf) (s: tree_symbol t) (depth: pos{
+    depth <= code_len t s
+  }): Tot (BV.bv_t depth) =
+  let l = left t in let r = right t in
   if Seq.mem s (symbol_seq l) then
     let zero = Seq.create 1 false in
-    if Leaf? l then zero else zero @| code l s
+    if depth = 1 then zero else zero @| code_partial l s (depth - 1)
   else
     let one = Seq.create 1 true in
-    if Leaf? r then one else one @| code r s
+    if depth = 1 then one else one @| code_partial r s (depth - 1)
+
+#reset-options
+unfold let code (t: non_leaf) (s: tree_symbol t): Tot (BV.bv_t (code_len t s)) =
+  code_partial t s (code_len t s)
 
 let rec encode (t: non_leaf) (s: seq nat{
   forall i. mem s.[i] (symbol_seq t)
@@ -169,7 +194,10 @@ val leaf_count_gt_height: (t: well_formed_tree) -> (h: nat{h > height t}) -> Lem
 
 val total_leaf_count_lr: (t: non_leaf) -> Lemma
   (ensures total_leaf_count t = total_leaf_count (left t) + total_leaf_count (right t))
-  [SMTPat (total_leaf_count t)]
+  [SMTPatOr
+    [[SMTPat (total_leaf_count t)];
+    [SMTPat (total_leaf_count (left t))];
+    [SMTPat (total_leaf_count (right t))]]]
 
 val total_leaf_count_lower_bound: (t: well_formed_tree) -> Lemma
   (ensures total_leaf_count t >= 1 + height t)
@@ -229,6 +257,77 @@ val encode_decode_cancel: (r: root) -> (s: seq nat{
   (ensures decode r (encode r s) == Some s)
   (decreases Seq.length s)
 
+val code_height: (t: non_leaf) -> (s: tree_symbol t) -> Lemma
+  (ensures Seq.length (code t s) <= height t)
+  [SMTPat (Seq.length (code t s))]
+
+let rec canonical (t: well_formed_tree) =
+  if Leaf? t then
+    True
+  else
+    let l = left t in let r = right t in
+    let s = symbol_seq t in
+    (forall i j. // {:pattern
+      // (code_len t s.[i] < code_len t s.[j]) \/
+      // (code_len t s.[i] == code_len t s.[j] /\ s.[i] < s.[j])}
+      i < j ==>
+        code_len t s.[i] < code_len t s.[j] \/
+        (code_len t s.[i] == code_len t s.[j] /\ s.[i] < s.[j])) /\
+    canonical l /\ canonical r
+
+type canonical_tree = t: well_formed_tree{canonical t}
+
+type canonical_non_leaf = t: canonical_tree{Leaf? t == false}
+
+#set-options "--z3refresh --z3rlimit 256"
+val symbol_seq_len_aux: (t: non_leaf) -> Lemma
+  (ensures Seq.length (symbol_seq t) == total_leaf_count t)
+  [SMTPatOr [[SMTPat (Seq.length (symbol_seq t))]; [SMTPat (total_leaf_count t)]]]
+
+val leftmost_code_vec: (t: non_leaf) -> Lemma
+  (ensures code t (symbol_seq t).[0] == BV.zero_vec #(code_len t (symbol_seq t).[0]))
+  [SMTPat (code t (symbol_seq t).[0])]
+
+let leftmost_code_val (t: non_leaf): Lemma
+  (ensures UInt.from_vec #(code_len t (symbol_seq t).[0]) (code t (symbol_seq t).[0]) == 0)
+  [SMTPat (UInt.from_vec #(code_len t (symbol_seq t).[0]) (code t (symbol_seq t).[0]))] =
+  leftmost_code_vec t
+
+val rightmost_code_vec: (t: non_leaf) -> Lemma
+  (ensures code t (last (symbol_seq t)) == BV.ones_vec #(code_len t (last (symbol_seq t))))
+  [SMTPat (code t (last (symbol_seq t)))]
+
+let rightmost_code_val (t: non_leaf): Lemma
+  (ensures UInt.from_vec
+    #(code_len t (last (symbol_seq t)))
+    (code t (last (symbol_seq t))) == pow2 (code_len t (last (symbol_seq t))) - 1)
+  [SMTPat (UInt.from_vec
+    #(code_len t (last (symbol_seq t)))
+    (code t (last (symbol_seq t))))] =
+  rightmost_code_vec t
+
+val code_partial_next: (t: non_leaf) -> (i: nat) -> (depth: pos) -> Lemma
+  (requires
+    i < total_leaf_count t - 1 /\
+    depth == code_len t (symbol_seq t).[i] /\
+    depth == code_len t (symbol_seq t).[i + 1])
+  (ensures
+    UInt.from_vec #depth (code t (symbol_seq t).[i]) + 1 ==
+    UInt.from_vec #depth (code t (symbol_seq t).[i + 1]))
+
+unfold let tree_correspond
+  (h0 h1: HS.mem) (t: root) (tree: B.buffer ct_data)
+  (max_code: U32.t) =
+  let max_code = U32.v max_code in
+  let t0 = B.as_seq h0 tree in
+  let t1 = B.as_seq h1 tree in
+  height t <= 16 /\
+  max_code < B.length tree /\
+  (forall (i: nat{i < max_code /\ U16.v (t0.[i]).freq_or_code > 0}).
+    mem i (symbol_seq t) /\
+    U16.v (t1.[i]).dad_or_len == Seq.length (code t i) /\
+    U16.v (t1.[i]).freq_or_code == UInt.from_vec #(Seq.length (code t i)) (code t i))
+
 unfold let kraft_term (n: nat): rat = (1, pow2 n)
 
 let kraft_term_plus (n: pos): Lemma
@@ -246,7 +345,6 @@ let rec kraft_sum (t: well_formed_tree): rat =
   | Internal _ _ l r -> kraft_sum l +$ kraft_sum r
   | Leaf _ len _ -> kraft_term len  
 
-#set-options "--z3rlimit 200"
 val kraft_sum_non_root: (t: well_formed_tree) -> Lemma
   (requires Root? t == false)
   (ensures kraft_sum t =$ kraft_term (length t))

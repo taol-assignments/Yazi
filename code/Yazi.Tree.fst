@@ -12,6 +12,7 @@ module U8 = FStar.UInt8
 open FStar.Mul
 open Lib.Seq
 open LowStar.BufferOps
+open Spec.Tree
 open Yazi.Deflate.Constants
 open Yazi.Tree.Types
 
@@ -32,8 +33,8 @@ let smaller
   (ensures fun h0 res h1 ->
     B.modifies B.loc_none h0 h1 /\
     (res <==> SH.smaller h1 tl tree depth n m)) =
-  let nfd = (tree.(n)).freq_or_dad in
-  let mfd = (tree.(m)).freq_or_dad in
+  let nfd = (tree.(n)).freq_or_code in
+  let mfd = (tree.(m)).freq_or_code in
   if nfd `U16.lt` mfd then
     true
   else if nfd `U16.eq` mfd then
@@ -161,18 +162,19 @@ unfold let init_heap_common_cond
   Seq.length tree >= elems /\ j <= elems /\
   hl < U32.v heap_size /\
   hl < j + 1 /\ max_code < j /\ elems <= v l_codes /\
-  (forall i. {:pattern (heap.[i]) \/ ((tree.[v heap.[i]]).freq_or_dad)}
-    0 < i /\ i <= hl ==> v heap.[i] < j /\ U16.v (tree.[v heap.[i]]).freq_or_dad > 0) /\
-  (forall i. (i >= j \/ U16.v (tree.[i]).freq_or_dad == 0) ==>
+  (hl == 0 ==> max_code == 0) /\
+  (forall i. {:pattern (heap.[i]) \/ ((tree.[v heap.[i]]).freq_or_code)}
+    0 < i /\ i <= hl ==> v heap.[i] < j /\ U16.v (tree.[v heap.[i]]).freq_or_code > 0) /\
+  (forall i. (i >= j \/ U16.v (tree.[i]).freq_or_code == 0) ==>
     Seq.count (uint_to_t i) (Seq.slice heap 1 (hl + 1)) == 0) /\
-  (forall i. (i < j /\ U16.v (tree.[i]).freq_or_dad > 0) ==>
+  (forall i. (i < j /\ U16.v (tree.[i]).freq_or_code > 0) ==>
     Seq.count (uint_to_t i) (Seq.slice heap 1 (hl + 1)) == 1) /\
-  (forall i. {:pattern (tree.[i]).code_or_len}
-    (i < j /\ U16.v (tree.[i]).freq_or_dad == 0) ==> U16.v (tree.[i]).code_or_len == 0) /\
+  (forall i. {:pattern (tree.[i]).freq_or_code}
+    (i < j /\ U16.v (tree.[i]).freq_or_code == 0) ==> U16.v (tree.[i]).dad_or_len == 0) /\
   (forall i. {:pattern (depth.[i])}
-    (i < j /\ U16.v (tree.[i]).freq_or_dad > 0) ==> U8.v depth.[i] = 0) /\
-  (forall i. {:pattern (tree.[i]).freq_or_dad}
-    (max_code < i /\ i < j) ==> U16.v (tree.[i]).freq_or_dad == 0)
+    (i < j /\ U16.v (tree.[i]).freq_or_code > 0) ==> U8.v depth.[i] = 0) /\
+  (forall i. {:pattern (tree.[i]).freq_or_code}
+    (max_code < i /\ i < j) ==> U16.v (tree.[i]).dad_or_len == 0)
 
 #set-options "--z3refresh --z3rlimit 4096 --fuel 1 --ifuel 1"
 [@ CInline ]
@@ -195,14 +197,15 @@ let rec init_heap
       B.loc_buffer tree `B.loc_union`
       B.loc_buffer depth)
       h0 h1 /\
-    (forall i. {:pattern ((t1.[i]).freq_or_dad) \/ ((t0.[i]).freq_or_dad)}
-      (t1.[i]).freq_or_dad == (t0.[i]).freq_or_dad) /\
-    init_heap_common_cond h1 heap hl tree depth elems max_code elems)
+    (forall i. {:pattern ((t1.[i]).freq_or_code) \/ ((t0.[i]).freq_or_code)}
+      (t1.[i]).freq_or_code == (t0.[i]).freq_or_code) /\
+    init_heap_common_cond h1 heap hl tree depth elems max_code elems /\
+    (v hl == 0 ==> v max_code == 0 /\ U16.v (t1.[0]).freq_or_code == 0))
   (decreases U32.v elems - U32.v j) =
   let open U32 in
-  let f = (tree.(j)).freq_or_dad in
+  let f = (tree.(j)).freq_or_code in
   if f = 0us then begin
-    tree.(j) <- {tree.(j) with code_or_len = 0us};
+    tree.(j) <- {tree.(j) with dad_or_len = 0us};
     if j +^ 1ul <^ elems then
       init_heap heap hl tree depth (j +^ 1ul) max_code elems
     else
@@ -220,7 +223,7 @@ let rec init_heap
     count_neq (Seq.slice heap' 1 (v hl + 1)) j;
     Seq.lemma_append_count (Seq.slice heap' 1 (v hl + 1)) (Seq.create 1 j);
     assert_norm(forall i. i < v j ==> Seq.count (uint_to_t i) (Seq.create 1 j) == 0);
-    assert(forall i. (i > v j \/ U16.v (tree'.[i]).freq_or_dad == 0) ==>
+    assert(forall i. (i > v j \/ U16.v (tree'.[i]).freq_or_code == 0) ==>
       normalize_term (Seq.count (uint_to_t i) (Seq.create 1 j)) == 0);
 
     if j +^ 1ul <^ elems then
@@ -229,6 +232,7 @@ let rec init_heap
       (hl +^ 1ul, j)
   end
 
+#set-options "--z3refresh --z3rlimit 256 --fuel 0 --ifuel 0"
 [@ CInline ]
 let rec sort_leaves
   (heap: tree_heap_t) (hl: heap_len_t)
@@ -248,3 +252,75 @@ let rec sort_leaves
     sort_leaves heap hl tl tree depth (i -^ 1ul)
   else
     ()
+
+let encoder_seperate
+  (h: HS.mem) (heap: tree_heap_t)
+  (tree: B.buffer ct_data) (depth: tree_depth_t)
+  (opt_len static_len: B.pointer U32.t) =
+  htd_seperate h heap tree depth /\
+  B.live h opt_len /\ B.live h static_len /\
+  B.disjoint opt_len static_len /\
+  B.disjoint opt_len heap /\ B.disjoint opt_len tree /\ B.disjoint opt_len depth /\
+  B.disjoint static_len heap /\ B.disjoint static_len tree /\ B.disjoint static_len depth
+
+    // while (s->heap_len < 2) {
+    //     node = s->heap[++(s->heap_len)] = (max_code < 2 ? ++max_code : 0);
+    //     tree[node].Freq = 1;
+    //     s->depth[node] = 0;
+    //     s->opt_len--; if (stree) s->static_len -= stree[node].Len;
+    //     /* node is 0 or 1 so it does not have extra bits */
+    // }
+
+#set-options "--fuel 4 --ifuel 4"
+let build_small_tree
+  (hl: heap_len_t) (max_code: U32.t)
+  (tl: tree_len_t) (tree: B.lbuffer ct_data tl):
+  ST.Stack (Ghost.erased optimal_tree)
+  (requires fun h ->
+    let hl = U32.v hl in
+    let max_code = U32.v max_code in
+    let tree' = B.as_seq h tree in
+    B.live h tree /\ hl < 2 /\ max_code < tl /\ 2 < tl /\
+    (hl == 0 ==>
+      max_code == 0 /\
+      (forall i. U16.v (tree'.[i]).freq_or_code == 0)) /\
+    (hl > 0 ==>
+      U16.v (tree'.[max_code]).freq_or_code > 0 /\
+      (forall i. i <> max_code ==> U16.v (tree'.[i]).freq_or_code == 0)))
+  (ensures fun h0 t h1 ->
+    B.modifies (B.loc_buffer tree) h0 h1 /\
+    height t == 1 /\ Root? t /\
+    tree_correspond h0 h1 t tree max_code) =
+  if hl = 0ul then begin
+    tree.(0ul) <- {
+      freq_or_code = 0us;
+      dad_or_len = 1us;
+    };
+    tree.(1ul) <- {
+      freq_or_code = 0us;
+      dad_or_len = 1us;
+    };
+    Root 0 (Leaf 0 1 0) (Leaf 0 1 1)
+  end else
+    let f = (tree.(max_code)).freq_or_code in
+    if max_code = 0ul then begin
+      tree.(max_code) <- {
+        freq_or_code = 0us;
+        dad_or_len = 1us
+      };
+      tree.(1ul) <- {
+        freq_or_code = 1us;
+        dad_or_len = 1us;
+      };
+      Root (U16.v f) (Leaf (U16.v f) 1 0) (Leaf 0 1 1)
+    end else begin
+      tree.(0ul) <- {
+        freq_or_code = 0us;
+        dad_or_len = 1us;
+      };
+      tree.(max_code) <- {
+        freq_or_code = 1us;
+        dad_or_len = 1us;
+      };
+      Root (U16.v f) (Leaf 0 1 0) (Leaf (U16.v f) 1 (U32.v max_code))
+    end
