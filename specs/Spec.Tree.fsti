@@ -4,6 +4,7 @@ module B = LowStar.Buffer
 module BV = FStar.BitVector
 module CB = LowStar.ConstBuffer
 module HS = FStar.HyperStack
+module Math = FStar.Math.Lemmas
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
 
@@ -112,6 +113,19 @@ let rec code_len (t: non_leaf) (s: tree_symbol t): Tot pos =
   else
     if Leaf? r then 1 else 1 + code_len r s
 
+let rec code_len_le_height (t: non_leaf) (s: tree_symbol t): Lemma
+  (ensures height t >= code_len t s)
+  [SMTPat (code_len t s)] =
+  match height t with
+  | 1 -> ()
+  | _ ->
+    let l = left t in
+    if mem s (symbol_seq l) then
+      if Leaf? l then () else code_len_le_height l s
+    else
+      let r = right t in
+      if Leaf? r then () else code_len_le_height r s
+
 #set-options "--z3rlimit 128 --ifuel 1 --fuel 1"
 let rec code_partial
   (t: non_leaf) (s: tree_symbol t) (depth: pos{
@@ -188,12 +202,16 @@ val height_gt_one: (t: well_formed_tree) -> Lemma
   (ensures Leaf? t == false /\ (Leaf? (left t) == false \/ Leaf? (right t) == false))
   [SMTPat (height t)]
 
+let height_gt_sub_tree (t: non_leaf): Lemma
+  (ensures height t > height (left t) /\ height t > height (right t))
+  [SMTPat (height t)] = ()
+
 val leaf_count_gt_height: (t: well_formed_tree) -> (h: nat{h > height t}) -> Lemma
   (ensures leaf_count t h == 0)
   [SMTPat (leaf_count t h)]
 
 val total_leaf_count_lr: (t: non_leaf) -> Lemma
-  (ensures total_leaf_count t = total_leaf_count (left t) + total_leaf_count (right t))
+  (ensures total_leaf_count t == total_leaf_count (left t) + total_leaf_count (right t))
   [SMTPatOr
     [[SMTPat (total_leaf_count t)];
     [SMTPat (total_leaf_count (left t))];
@@ -284,36 +302,95 @@ val symbol_seq_len_aux: (t: non_leaf) -> Lemma
   (ensures Seq.length (symbol_seq t) == total_leaf_count t)
   [SMTPatOr [[SMTPat (Seq.length (symbol_seq t))]; [SMTPat (total_leaf_count t)]]]
 
-val leftmost_code_vec: (t: non_leaf) -> Lemma
-  (ensures code t (symbol_seq t).[0] == BV.zero_vec #(code_len t (symbol_seq t).[0]))
-  [SMTPat (code t (symbol_seq t).[0])]
+val leftmost_code_vec: (t: non_leaf) -> (depth: pos) -> Lemma
+  (requires depth <= code_len t (symbol_seq t).[0])
+  (ensures code_partial t (symbol_seq t).[0] depth == BV.zero_vec #depth)
+  [SMTPat (code_partial t (symbol_seq t).[0] depth)]
 
-let leftmost_code_val (t: non_leaf): Lemma
-  (ensures UInt.from_vec #(code_len t (symbol_seq t).[0]) (code t (symbol_seq t).[0]) == 0)
-  [SMTPat (UInt.from_vec #(code_len t (symbol_seq t).[0]) (code t (symbol_seq t).[0]))] =
-  leftmost_code_vec t
+let leftmost_code_val (t: non_leaf) (depth: pos): Lemma
+  (requires depth <= code_len t (symbol_seq t).[0])
+  (ensures UInt.from_vec (code_partial t (symbol_seq t).[0] depth) == 0)
+  [SMTPat (UInt.from_vec (code_partial t (symbol_seq t).[0] depth))] =
+  leftmost_code_vec t depth
 
-val rightmost_code_vec: (t: non_leaf) -> Lemma
-  (ensures code t (last (symbol_seq t)) == BV.ones_vec #(code_len t (last (symbol_seq t))))
-  [SMTPat (code t (last (symbol_seq t)))]
+val rightmost_code_vec: (t: non_leaf) -> (depth: pos) -> Lemma
+  (requires depth <= code_len t (last (symbol_seq t)))
+  (ensures code_partial t (last (symbol_seq t)) depth == BV.ones_vec #depth)
+  [SMTPat (code_partial t (last (symbol_seq t)) depth)]
 
-let rightmost_code_val (t: non_leaf): Lemma
-  (ensures UInt.from_vec
-    #(code_len t (last (symbol_seq t)))
-    (code t (last (symbol_seq t))) == pow2 (code_len t (last (symbol_seq t))) - 1)
-  [SMTPat (UInt.from_vec
-    #(code_len t (last (symbol_seq t)))
-    (code t (last (symbol_seq t))))] =
-  rightmost_code_vec t
+let rightmost_code_val (t: non_leaf) (depth: pos): Lemma
+  (requires depth <= code_len t (last (symbol_seq t)))
+  (ensures UInt.from_vec (code_partial t (last (symbol_seq t)) depth) == pow2 depth - 1)
+  [SMTPat (UInt.from_vec (code_partial t (last (symbol_seq t)) depth))] =
+  rightmost_code_vec t depth
 
-val code_partial_next: (t: non_leaf) -> (i: nat) -> (depth: pos) -> Lemma
+unfold let canonical_common_cond (t: non_leaf) (i: nat) =
+  i < total_leaf_count t - 1 /\
+  code_len t (symbol_seq t).[i] <= code_len t (symbol_seq t).[i + 1]
+
+val code_partial_next: (t: non_leaf) -> (i: nat) -> Lemma
+  (requires canonical_common_cond t i)
+  (ensures
+    UInt.from_vec (code t (symbol_seq t).[i]) + 1 ==
+    UInt.from_vec (code_partial t (symbol_seq t).[i + 1] (code_len t (symbol_seq t).[i])))
+
+val non_rightmost_upper_bound: (t: non_leaf) -> (i: nat) -> Lemma
+  (requires i <= total_leaf_count t - 2)
+  (ensures
+    UInt.from_vec (code t (symbol_seq t).[i]) <
+    (pow2 (code_len t (symbol_seq t).[i])) - 1)
+  (decreases (height t))
+  [SMTPat (UInt.from_vec (code t (symbol_seq t).[i]))]
+
+val code_len_lt_aux: (t: non_leaf) -> (i: nat) -> Lemma
   (requires
     i < total_leaf_count t - 1 /\
-    depth == code_len t (symbol_seq t).[i] /\
-    depth == code_len t (symbol_seq t).[i + 1])
+    code_len t (symbol_seq t).[i] < code_len t (symbol_seq t).[i + 1])
+  (ensures i < total_leaf_count t - 2)
+  [SMTPat (code_len t (symbol_seq t).[i])]
+
+val code_len_upper_bound: (t: non_leaf) -> (i: nat) -> Lemma
+  (requires i < total_leaf_count t)
+  (ensures code_len t (symbol_seq t).[i] <= height t)
+  [SMTPat (code_len t (symbol_seq t).[i])]
+
+val code_upper_bound: (t: non_leaf) -> (i: nat) -> Lemma
+  (requires i < total_leaf_count t)
+  (ensures UInt.fits
+    (UInt.from_vec (code t (symbol_seq t).[i]))
+    (code_len t (symbol_seq t).[i]))
+
+#push-options "--fuel 0 --ifuel 0"
+let uint_t_code (t: non_leaf) (n: pos) (i: nat): Pure (UInt.uint_t n)
+  (requires n >= height t /\ i < Seq.length (symbol_seq t))
+  (ensures fun res ->
+    let s = (symbol_seq t).[i] in
+    res == UInt.from_vec (code t (symbol_seq t).[i]) /\
+    res < pow2 (code_len t s) /\
+    (i <= total_leaf_count t - 2 ==> res < pow2 (code_len t s) - 1)) =
+  let open Lib.UInt in
+  let s = (symbol_seq t).[i] in
+  let c = code t s in
+  code_upper_bound t i;
+  Math.pow2_le_compat (height t) (code_len t s);
+  if i <= total_leaf_count t - 2 then non_rightmost_upper_bound t i else ();
+  if n = code_len t s then
+    UInt.from_vec #n c
+  else begin
+    zero_prefix_vec (n - code_len t s) (code t s);
+    UInt.from_vec #n (BV.zero_vec #(n - code_len t s) @| c)
+  end
+#pop-options
+
+val code_next: (t: non_leaf) -> (n: pos{n >= height t}) -> (i: nat) -> Lemma
+  (requires canonical_common_cond t i)
   (ensures
-    UInt.from_vec #depth (code t (symbol_seq t).[i]) + 1 ==
-    UInt.from_vec #depth (code t (symbol_seq t).[i + 1]))
+    uint_t_code t n i < pow2 n - 1 /\
+    uint_t_code t n (i + 1) ==
+    UInt.shift_left
+      ((uint_t_code t n i) + 1)
+      (code_len t (symbol_seq t).[i + 1] - code_len t (symbol_seq t).[i]))
+  (decreases height t)
 
 unfold let tree_correspond
   (h0 h1: HS.mem) (t: root) (tree: B.buffer ct_data)
@@ -328,39 +405,64 @@ unfold let tree_correspond
     U16.v (t1.[i]).dad_or_len == Seq.length (code t i) /\
     U16.v (t1.[i]).freq_or_code == UInt.from_vec #(Seq.length (code t i)) (code t i))
 
-unfold let kraft_term (n: nat): rat = (1, pow2 n)
+// unfold let kraft_term (n: nat): rat = (1, pow2 n)
 
-let kraft_term_plus (n: pos): Lemma
-  (ensures kraft_term n +$ kraft_term n =$ kraft_term (n - 1))
-  [SMTPat (kraft_term n +$ kraft_term n)] = ()
+// let kraft_term_plus (n: pos): Lemma
+//   (ensures kraft_term n +$ kraft_term n =$ kraft_term (n - 1))
+//   [SMTPat (kraft_term n +$ kraft_term n)] = ()
 
-let rec term_times (l: pos) (n: nat): rat =
-  match n with
-  | 0 -> zero
-  | _ -> kraft_term l +$ term_times l (n - 1)
+// let rec term_times (l: pos) (n: nat): rat =
+//   match n with
+//   | 0 -> zero
+//   | _ -> kraft_term l +$ term_times l (n - 1)
 
-let rec kraft_sum (t: well_formed_tree): rat =
-  match t with
-  | Root _ l r -> kraft_sum l +$ kraft_sum r
-  | Internal _ _ l r -> kraft_sum l +$ kraft_sum r
-  | Leaf _ len _ -> kraft_term len  
+// let rec kraft_sum (t: well_formed_tree): rat =
+//   match t with
+//   | Root _ l r -> kraft_sum l +$ kraft_sum r
+//   | Internal _ _ l r -> kraft_sum l +$ kraft_sum r
+//   | Leaf _ len _ -> kraft_term len  
 
-val kraft_sum_non_root: (t: well_formed_tree) -> Lemma
-  (requires Root? t == false)
-  (ensures kraft_sum t =$ kraft_term (length t))
-  [SMTPat (kraft_sum t)]
+// #push-options "--z3refresh --z3rlimit 2048 --fuel 1 --ifuel 1 --z3seed 14"
+// let rec kraft_sum_non_root (t: well_formed_tree): Lemma
+//   (requires Root? t == false)
+//   (ensures kraft_sum t =$ kraft_term (length t))
+//   [SMTPat (kraft_sum t)] =
+//   match t with
+//   | Internal _ len l r ->
+//     calc (=$) {
+//       kraft_sum t;
+//       =={}
+//       kraft_sum l +$ kraft_sum r;
+//       =${
+//         kraft_sum_non_root l;
+//         kraft_sum_non_root r
+//       }
+//       kraft_term (len + 1) +$ kraft_term (len + 1);
+//     };
+//     calc (=$) {
+//       kraft_term (len + 1) +$ kraft_term (len + 1);
+//       =${
+//         assert_norm(len + 1 - 1 == len);
+//         kraft_term_plus (len + 1)
+//       }
+//       kraft_term len;
+//     }
+//   | Leaf _ len _ -> ()
+// #pop-options
 
-val kraft_sum_root: (t: root) -> Lemma
-  (ensures kraft_sum t =$ one)
-  [SMTPat (kraft_sum t)]
+// let kraft_sum_root (t: root): Lemma
+//   (ensures kraft_sum t =$ one)
+//   [SMTPat (kraft_sum t)] = 
+//   kraft_sum_non_root (left t);
+//   kraft_sum_non_root (right t)
 
-let rec kraft_sum_lc_seq (#t: root) (s: lc_seq t) (i: nat{i <= height t}):
-  Tot rat
-  (decreases (height t - i)) =
-  if i < height t then
-    (s.[i], pow2 i) +$ kraft_sum_lc_seq s (i + 1)
-  else
-    zero
+// let rec kraft_sum_lc_seq (#t: root) (s: lc_seq t) (i: nat{i <= height t}):
+//   Tot rat
+//   (decreases (height t - i)) =
+//   if i < height t then
+//     (s.[i], pow2 i) +$ kraft_sum_lc_seq s (i + 1)
+//   else
+//     zero
 
 let tree_context_valid (h: HS.mem) (c: CB.const_buffer tree_context) =
   CB.length c == 1 /\ CB.live h c /\
