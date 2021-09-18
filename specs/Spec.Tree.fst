@@ -287,6 +287,9 @@ let rec rightmost_code_vec t depth =
         (BV.ones_vec #depth))
     end
 
+let subtraction_cancel (a b: int): Lemma
+  (ensures a - b + b == a /\ a + b - b == a) = ()
+
 #set-options "--z3refresh --z3rlimit 2048 --fuel 1 --ifuel 1 --z3seed 14"
 let rec code_partial_next t i =
   match height t with
@@ -300,11 +303,8 @@ let rec code_partial_next t i =
     let one = BV.ones_vec #1 in
     let depth = code_len t ts.[i] in
     let depth' = depth - 1 in
-    calc (==) {
-      ((pow2 1) - 1) * pow2 depth';
-      =={assert_norm((pow2 1) - 1 == 1)}
-      pow2 depth';
-    };
+    assert_norm((pow2 1) - 1 == 1);
+    assert(((pow2 1) - 1) * pow2 depth' == pow2 depth');
     Math.pow2_double_mult depth';
 
     if depth = 1 then
@@ -323,21 +323,32 @@ let rec code_partial_next t i =
         pow2 depth' + (UInt.from_vec (code r rs.[i']) + 1);
         =={code_partial_next r i'}
         pow2 depth' + UInt.from_vec (code_partial r rs.[i' + 1] depth');
+        =={}
+        ((pow2 1) - 1) * (pow2 depth') + UInt.from_vec #depth' (code_partial r rs.[i' + 1] depth');
         =={one_prefix_vec 1 (code_partial r rs.[i' + 1] depth')}
         UInt.from_vec #depth (one @| code_partial r rs.[i' + 1] depth');
         =={}
         UInt.from_vec (code_partial t ts.[i + 1] depth);
       }
-    else
+    else begin
       calc (==) {
-        UInt.from_vec (code t ts.[i]) + 1;
+        code t ts.[i];
         =={}
-        UInt.from_vec #depth (zero @| code l ls.[i]) + 1;
+        zero @| code l ls.[i];
         =={symbol_seq_len_aux l}
-        UInt.from_vec #depth (zero @| code l (last ls)) + 1;
-        =={rightmost_code_val l depth'}
-        pow2 (code_len l (last ls));
+        zero @| code l (last ls);
+      };
+      calc (==) {
+        UInt.from_vec #depth (code t ts.[i]) + 1;
         =={}
+        UInt.from_vec #depth (zero @| code l (last ls)) + 1;
+        =={zero_prefix_vec 1 (code l (last ls))}
+        UInt.from_vec #depth' (code l (last ls)) + 1;
+        =={rightmost_code_val l depth'}
+        pow2 (code_len l (last ls)) - 1 + 1;
+        =={}
+        pow2 depth' - 1 + 1;
+        =={subtraction_cancel (pow2 depth') 1}
         pow2 depth';
         =={UInt.pow2_from_vec_lemma #depth 0}
         UInt.from_vec (BV.elem_vec #depth 0);
@@ -349,6 +360,7 @@ let rec code_partial_next t i =
         =={}
         UInt.from_vec (code_partial t ts.[i + 1] depth);
       }
+    end
 
 #push-options "--fuel 0 --ifuel 0"
 let total_leaf_count_aux (t: non_leaf) (i n: int): Lemma
@@ -452,13 +464,17 @@ let code_upper_bound t i =
   else
     rightmost_code_val t (code_len t s)
 
+#push-options "--z3seed 71"
 let total_leaf_count_left_aux (t: non_leaf) (i: nat): Lemma
   (requires i < total_leaf_count (left t))
   (ensures
     mem (symbol_seq t).[i] (symbol_seq (left t)) /\
     (Leaf? (left t) == false ==> 
       code t (symbol_seq t).[i] ==
-      BV.zero_vec #1 @| code (left t) (symbol_seq t).[i])) = ()
+      BV.zero_vec #1 @| code (left t) (symbol_seq t).[i])) =
+  assert(Leaf? (left t) == false ==>
+    code t (symbol_seq t).[i] ==
+    create 1 false @| code (left t) (symbol_seq t).[i])
 
 let total_leaf_count_right_aux (t: non_leaf) (i: nat): Lemma
   (requires i < total_leaf_count t /\ total_leaf_count (left t) <= i)
@@ -501,10 +517,9 @@ let uint_t_code_right (t: non_leaf) (n: pos{n >= height t}) (i: nat): Lemma
   (requires
     Leaf? (right t) == false /\
     i < total_leaf_count t /\ i >= total_leaf_count (left t))
-  (ensures 
-    uint_t_code t n i ==
-      pow2 (code_len (right t) (symbol_seq (right t)).[i - total_leaf_count (left t)]) +
-      uint_t_code (right t) n (i - total_leaf_count (left t))) =
+  (ensures uint_t_code t n i ==
+    pow2 (code_len (right t) (symbol_seq (right t)).[i - total_leaf_count (left t)]) +
+    uint_t_code (right t) n (i - total_leaf_count (left t))) =
   let s = (symbol_seq t).[i] in
   let (l, r) = (left t, right t) in
   let depth = code_len t s in
@@ -513,15 +528,15 @@ let uint_t_code_right (t: non_leaf) (n: pos{n >= height t}) (i: nat): Lemma
   symbol_seq_right_index t i;
   if n > depth then begin
     calc (==) {
-      UInt.from_vec #n (BV.zero_vec #(n - depth) @| (BV.ones_vec #1 @| code r s));
+      UInt.from_vec #n (BV.zero_vec #(n - depth) @| (BV.ones_vec #1 @| code r s)) <: int;
       =={zero_prefix_vec (n - depth) (BV.ones_vec #1 @| code r s)}
-      UInt.from_vec #depth (BV.ones_vec #1 @| code r s);
+      UInt.from_vec #depth (BV.ones_vec #1 @| code r s) <: int;
       =={one_prefix_vec 1 (code r s)}
-      pow2 (depth - 1) + UInt.from_vec (code r s);
+      pow2 (depth - 1) + UInt.from_vec (code r s) <: int;
     };
     zero_prefix_vec (n - depth + 1) (code r s)
   end else
-    ()
+    one_prefix_vec 1 (code r s)
 
 let pow2_code_len_aux (t: non_leaf) (i: nat): Lemma
   (requires
@@ -583,15 +598,15 @@ let code_next_aux (t: non_leaf) (n: pos{n >= height t}) (i: nat): Lemma
     leftmost_code_vec r (depth' - 1);
     rightmost_code_vec l (depth - 1);
     assert(UInt.from_vec (code r s') == 0);
-    if n = depth then
+    if n = depth then begin
       calc (==) {
         uint_t_code t n i;
-        =={}
+        =={zero_prefix_vec 1 (code l s)}
         UInt.from_vec (code l s);
         =={rightmost_code_vec l (depth - 1)}
         (pow2 (depth - 1)) - 1;
       }
-    else begin
+    end else begin
       zero_prefix_vec (n - depth) (code t s);
       zero_prefix_vec 1 (code l s);
       assert(uint_t_code t n i == (pow2 (depth - 1)) - 1)
@@ -636,11 +651,12 @@ let code_next_aux (t: non_leaf) (n: pos{n >= height t}) (i: nat): Lemma
   end
 #pop-options
 
-#set-options "--z3refresh --z3rlimit 65536 --fuel 0 --ifuel 0 --z3seed 23" // 10
+#set-options "--z3refresh --z3rlimit 2048 --fuel 0 --ifuel 0 --z3seed 10"
 let rec code_next t n i =
   let ts = symbol_seq t in let s = ts.[i] in let s' = ts.[i + 1] in
   let depth = code_len t s in let depth' = code_len t s' in
   let diff = depth' - depth in
+  assert_norm(heap_size == U32.add (U32.mul 2ul l_codes) 1ul);
   non_rightmost_upper_bound t i;
   if n > depth then begin
     Math.pow2_lt_compat n depth;
@@ -682,19 +698,44 @@ let rec code_next t n i =
       code_next r n i';
       uint_t_code_right t n (i + 1);
       uint_t_code_right t n i;
-      
-      non_rightmost_upper_bound r i';
-      Math.pow2_plus (depth - 1) diff;
-      Math.lemma_mult_lt_right (pow2 diff) (1 + uint_t_code r n i') (pow2 (depth - 1));
-      pow2_code_len_aux t i;
-      Math.pow2_lt_compat n (depth' - 1);
-      // (1 + uint_t_code r n i') * pow2 diff < pow2 (depth' - 1) < pow2 n
 
-      Math.pow2_lt_compat n (depth - 1);
+      calc (<) {
+        1 + uint_t_code r n i';
+        <{non_rightmost_upper_bound r i'}
+        1 + pow2 (code_len r s) - 1;
+        =={}
+        pow2 (code_len r s);
+        =={}
+        pow2 (depth - 1);
+      };
+      calc (<) {
+        (1 + uint_t_code r n i') * pow2 diff;
+        <{Math.lemma_mult_lt_right (pow2 diff) (1 + uint_t_code r n i') (pow2 (depth - 1))}
+        pow2 (depth - 1) * pow2 diff;
+        =={Math.pow2_plus (depth - 1) diff}
+        pow2 (depth' - 1);
+        <{Math.pow2_lt_compat n (depth' - 1)}
+        pow2 n;
+      };
+
+      calc (<) {
+        (1 + uint_t_code r n i') * pow2 diff;
+        <{Math.lemma_mult_lt_right (pow2 diff) (1 + uint_t_code r n i') (pow2 (depth - 1))}
+        pow2 (depth - 1) * pow2 diff;
+        =={Math.pow2_plus (depth - 1) diff}
+        pow2 (depth' - 1);
+        <{Math.pow2_lt_compat n (depth' - 1)}
+        pow2 n;
+      };
+      calc(==) {
+        uint_t_code r n (i' + 1);
+        =={code_next r n i'}
+        UInt.shift_left ((uint_t_code r n i') + 1) diff;
+        =={UInt.shift_left_value_lemma #n (1 + uint_t_code r n i') diff}
+        ((1 + uint_t_code r n i') * pow2 diff) % pow2 n;
+      };
       Math.modulo_lemma ((1 + uint_t_code r n i') * pow2 diff) (pow2 n);
-      UInt.shift_left_value_lemma #n (1 + uint_t_code r n i') diff;
-      // uint_t_code r n (i' + 1) == (1 + uint_t_code r n i') * pow2 diff
-      // assert(uint_t_code r n (i' + 1) == (1 + uint_t_code r n i') * pow2 diff);
+      assert(uint_t_code r n (i' + 1) == (1 + uint_t_code r n i') * pow2 diff);
 
       pow2_code_len_aux t i;
       Math.distributivity_add_left

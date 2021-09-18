@@ -97,7 +97,19 @@ let rec height (t: well_formed_tree): Tot nat =
 
 type tree_symbol (t: well_formed_tree) = s: nat{Seq.mem s (symbol_seq t)}
 
-let symbol_seq_aux (t: non_leaf) (s: tree_symbol t): Lemma
+let rec symbol_seq_length (t: well_formed_tree): Lemma
+  (ensures
+    (Leaf? t ==> Seq.length (symbol_seq t) == 1) /\
+    (Leaf? t == false ==> Seq.length (symbol_seq t) >= 2))
+  [SMTPat (symbol_seq t)] =
+  if Leaf? t then
+    ()
+  else begin
+    symbol_seq_length (left t);
+    symbol_seq_length (right t)
+  end
+
+let symbol_seq_disjoint (t: non_leaf) (s: tree_symbol t): Lemma
   (ensures
     disjoint (symbol_seq (left t)) (symbol_seq (right t)) /\
     (Seq.mem s (symbol_seq (left t)) \/ Seq.mem s (symbol_seq (right t))))
@@ -106,7 +118,9 @@ let symbol_seq_aux (t: non_leaf) (s: tree_symbol t): Lemma
     [SMTPat (Seq.mem s (symbol_seq (right t)))]]] =
     lemma_mem_append (symbol_seq (left t)) (symbol_seq (right t))
 
-let rec code_len (t: non_leaf) (s: tree_symbol t): Tot pos =
+let rec code_len (t: non_leaf) (s: tree_symbol t): Pure pos
+  (requires Seq.mem s (symbol_seq t))
+  (ensures fun _ -> True) =
   let l = left t in let r = right t in
   if Seq.mem s (symbol_seq l) then
     if Leaf? l then 1 else 1 + code_len l s
@@ -279,24 +293,6 @@ val code_height: (t: non_leaf) -> (s: tree_symbol t) -> Lemma
   (ensures Seq.length (code t s) <= height t)
   [SMTPat (Seq.length (code t s))]
 
-let rec canonical (t: well_formed_tree) =
-  if Leaf? t then
-    True
-  else
-    let l = left t in let r = right t in
-    let s = symbol_seq t in
-    (forall i j. // {:pattern
-      // (code_len t s.[i] < code_len t s.[j]) \/
-      // (code_len t s.[i] == code_len t s.[j] /\ s.[i] < s.[j])}
-      i < j ==>
-        code_len t s.[i] < code_len t s.[j] \/
-        (code_len t s.[i] == code_len t s.[j] /\ s.[i] < s.[j])) /\
-    canonical l /\ canonical r
-
-type canonical_tree = t: well_formed_tree{canonical t}
-
-type canonical_non_leaf = t: canonical_tree{Leaf? t == false}
-
 #set-options "--z3refresh --z3rlimit 256"
 val symbol_seq_len_aux: (t: non_leaf) -> Lemma
   (ensures Seq.length (symbol_seq t) == total_leaf_count t)
@@ -392,6 +388,144 @@ val code_next: (t: non_leaf) -> (n: pos{n >= height t}) -> (i: nat) -> Lemma
       (code_len t (symbol_seq t).[i + 1] - code_len t (symbol_seq t).[i]))
   (decreases height t)
 
+let rec code_begin (t: non_leaf) (n bl: pos): Pure nat
+  (requires n >= height t /\ bl <= height t)
+  (ensures fun _ -> True) =
+  if bl > 1 then
+    let c = leaf_count t (bl - 1) in
+    ((code_begin t n (bl - 1)) + c) * 2
+  else
+    0
+
+#set-options "--z3refresh --z3rlimit 512 --fuel 2 --ifuel 0 --z3seed 11"
+private let rec do_sub_symbol_seq
+  (t: non_leaf)
+  (h: nat{h <= height t})
+  (i: nat{i <= Seq.length (symbol_seq t)}):
+  Tot (res: seq (tree_symbol t){
+    let ss = symbol_seq t in
+    no_dup res /\
+    (forall j. code_len t res.[j] == h /\ Seq.mem res.[j] ss) /\
+    (forall j. j >= i ==> code_len t ss.[j] == h ==> Seq.mem ss.[j] res) /\
+    (forall j. {:pattern index_of ss res.[j]} i <= index_of ss res.[j]) /\
+    (forall i j. i < j ==> index_of ss res.[i] < index_of ss res.[j])
+  })
+  (decreases (Seq.length (symbol_seq t)) - i) =
+  let ss = symbol_seq t in
+  if i = Seq.length ss then
+    empty #(tree_symbol t)
+  else
+    let s = ss.[i] in
+    let xs = do_sub_symbol_seq t h (i + 1) in
+    let res = create 1 s @| xs in
+    if code_len t s = h then begin
+      assert(forall j. i < j ==> code_len t ss.[j] == h ==> mem ss.[j] xs);
+      lemma_mem_append (create 1 s) xs;
+      no_dup_index_of_cancel ss;
+      not_mem_disjoint s xs;
+      no_dup_append (create 1 s) xs;
+      assert(forall j. {:pattern res.[j] \/ xs.[j - 1]} j > 0 ==> res.[j] == xs.[j - 1]);
+      assert(forall j. j > 0 ==> i < index_of ss res.[j]);
+      assert(forall j k. j < k ==>
+        (j == 0 ==> index_of ss res.[j] < index_of ss res.[k]) /\
+        (j <> 0 ==> index_of ss res.[j] < index_of ss res.[k]));
+      res
+    end else
+      xs
+
+type sub_symbol_seq_t (t: non_leaf) (h: nat{h <= height t}) = (res: seq (tree_symbol t){
+  let s = symbol_seq t in
+  no_dup res /\
+  (forall j. code_len t res.[j] == h /\ Seq.mem res.[j] s) /\
+  (forall j. code_len t s.[j] == h ==> Seq.mem s.[j] res) /\
+  (forall i j. i < j ==>
+    index_of s res.[i] < index_of s res.[j])
+})
+
+unfold let sub_symbol_seq (t: non_leaf) (h:nat{h <= height t}): Tot (sub_symbol_seq_t t h) =
+  do_sub_symbol_seq t h 0
+
+let sub_symbol_seq_mem (t: non_leaf) (s: tree_symbol t): Lemma
+  (ensures mem s (sub_symbol_seq t (code_len t s)))
+  [SMTPat (sub_symbol_seq t (code_len t s))] = mem_index s (symbol_seq t)
+
+private let canonical_code_lt (t: non_leaf) (a b: tree_symbol t): Tot bool =
+  let l = code_len t a in
+  let l' = code_len t b in
+  l < l' || l = l' && a < b
+
+private let rec symbol_seq_sorted
+  (t: non_leaf)
+  (s: seq nat{forall i. mem s.[i] (symbol_seq t)}):
+  Tot bool
+  (decreases (Seq.length s)) =
+  if Seq.length s <= 1 then
+    true
+  else
+    canonical_code_lt t s.[0] s.[1] && symbol_seq_sorted t (tail s)
+
+let canonical (t: well_formed_tree) =
+  if Leaf? t then true else symbol_seq_sorted t (symbol_seq t)
+
+type canonical_tree = t: well_formed_tree{canonical t}
+
+type canonical_non_leaf = t: canonical_tree{Leaf? t == false}
+
+#push-options "--fuel 1 --ifuel 1"
+let rec symbol_seq_sorted_index
+  (t: canonical_non_leaf)
+  (s: seq nat{forall i. mem s.[i] (symbol_seq t)})
+  (i j: nat): Lemma
+  (requires i < j /\ j < Seq.length s /\ symbol_seq_sorted t s)
+  (ensures canonical_code_lt t s.[i] s.[j])
+  (decreases %[i; j - i])
+  [SMTPat (canonical_code_lt t s.[i] s.[j])] =
+  if i = 0 && j = 1 then
+    ()
+  else if i > 0 then
+    symbol_seq_sorted_index t (tail s) (i - 1) (j - 1)
+  else
+    symbol_seq_sorted_index t (tail s) 0 (j - 1)
+
+// #set-options "--z3refresh --z3rlimit 1024 --fuel 4 --ifuel 0 --z3seed 111 --query_stats"
+// let canonical_sub_symbol_seq_aux (t: canonical_non_leaf) (i: nat{i < Seq.length (symbol_seq t)}) (j: nat{j < Seq.length (symbol_seq t)}): Lemma
+//   (requires
+//     i < j /\ code_len t (symbol_seq t).[i] == code_len t (symbol_seq t).[j])
+//   (ensures (symbol_seq t).[i] < (symbol_seq t).[j]) =
+//   assert(i < j /\ code_len t (symbol_seq t).[i] == code_len t (symbol_seq t).[j]);
+//   assert(forall (k: nat{k < Seq.length (symbol_seq t)}) (l: nat{l < Seq.length (symbol_seq t)}).
+//     {:pattern ((symbol_seq t).[k] < (symbol_seq t).[l])}
+//     (k < l /\ code_len t (symbol_seq t).[k] == code_len t (symbol_seq t).[l]) ==>
+//       (symbol_seq t).[k] < (symbol_seq t).[l])
+
+// #set-options "--z3refresh --z3rlimit 1024 --fuel 2 --ifuel 0"
+// let canonical_sub_symbol_seq (t: canonical_non_leaf) (h: pos): Lemma
+//   (requires h <= height t)
+//   (ensures forall i j. i < j ==> (sub_symbol_seq t h).[i] < (sub_symbol_seq t h).[j]) =
+//   let s = symbol_seq t in
+//   let ss = sub_symbol_seq t h in
+//   assert(forall i. s.[index_of s ss.[i]] == ss.[i]);
+//   assert(forall i j. i < j ==>
+//     (index_of s ss.[i] < index_of s ss.[j] /\
+//     code_len t s.[index_of s ss.[i]] == code_len t s.[index_of s ss.[j]] /\
+//     s.[index_of s ss.[i]] < s.[index_of s ss.[j]]));
+//   admit();
+//   assert(forall i j. 
+//     (index_of s ss.[i] < index_of s ss.[j] /\
+//     code_len t s.[index_of s ss.[i]] == code_len t s.[index_of s ss.[j]]) ==>
+//     s.[index_of s ss.[i]] < s.[index_of s ss.[j]]);
+//   admit()
+
+// val canonical_symbol_next: (t: canonical_tree) -> (h: pos) -> (j: nat) -> (i: nat) -> Lemma
+//   (requires
+//     let ss = sub_symbol_seq t h in
+//     h <= height t /\ Seq.length ss > 0 /\
+//     ss.[j] < i)
+//   (ensures (sub_symbol_seq t h))
+
+let sym_order (t:non_leaf) (s: tree_symbol t) =
+  index_of (sub_symbol_seq t (code_len t s)) s
+
 unfold let tree_correspond
   (h0 h1: HS.mem) (t: root) (tree: B.buffer ct_data)
   (max_code: U32.t) =
@@ -400,69 +534,11 @@ unfold let tree_correspond
   let t1 = B.as_seq h1 tree in
   height t <= 16 /\
   max_code < B.length tree /\
+  well_formed t /\ canonical t /\
   (forall (i: nat{i < max_code /\ U16.v (t0.[i]).freq_or_code > 0}).
     mem i (symbol_seq t) /\
     U16.v (t1.[i]).dad_or_len == Seq.length (code t i) /\
     U16.v (t1.[i]).freq_or_code == UInt.from_vec #(Seq.length (code t i)) (code t i))
-
-// unfold let kraft_term (n: nat): rat = (1, pow2 n)
-
-// let kraft_term_plus (n: pos): Lemma
-//   (ensures kraft_term n +$ kraft_term n =$ kraft_term (n - 1))
-//   [SMTPat (kraft_term n +$ kraft_term n)] = ()
-
-// let rec term_times (l: pos) (n: nat): rat =
-//   match n with
-//   | 0 -> zero
-//   | _ -> kraft_term l +$ term_times l (n - 1)
-
-// let rec kraft_sum (t: well_formed_tree): rat =
-//   match t with
-//   | Root _ l r -> kraft_sum l +$ kraft_sum r
-//   | Internal _ _ l r -> kraft_sum l +$ kraft_sum r
-//   | Leaf _ len _ -> kraft_term len  
-
-// #push-options "--z3refresh --z3rlimit 2048 --fuel 1 --ifuel 1 --z3seed 14"
-// let rec kraft_sum_non_root (t: well_formed_tree): Lemma
-//   (requires Root? t == false)
-//   (ensures kraft_sum t =$ kraft_term (length t))
-//   [SMTPat (kraft_sum t)] =
-//   match t with
-//   | Internal _ len l r ->
-//     calc (=$) {
-//       kraft_sum t;
-//       =={}
-//       kraft_sum l +$ kraft_sum r;
-//       =${
-//         kraft_sum_non_root l;
-//         kraft_sum_non_root r
-//       }
-//       kraft_term (len + 1) +$ kraft_term (len + 1);
-//     };
-//     calc (=$) {
-//       kraft_term (len + 1) +$ kraft_term (len + 1);
-//       =${
-//         assert_norm(len + 1 - 1 == len);
-//         kraft_term_plus (len + 1)
-//       }
-//       kraft_term len;
-//     }
-//   | Leaf _ len _ -> ()
-// #pop-options
-
-// let kraft_sum_root (t: root): Lemma
-//   (ensures kraft_sum t =$ one)
-//   [SMTPat (kraft_sum t)] = 
-//   kraft_sum_non_root (left t);
-//   kraft_sum_non_root (right t)
-
-// let rec kraft_sum_lc_seq (#t: root) (s: lc_seq t) (i: nat{i <= height t}):
-//   Tot rat
-//   (decreases (height t - i)) =
-//   if i < height t then
-//     (s.[i], pow2 i) +$ kraft_sum_lc_seq s (i + 1)
-//   else
-//     zero
 
 let tree_context_valid (h: HS.mem) (c: CB.const_buffer tree_context) =
   CB.length c == 1 /\ CB.live h c /\
