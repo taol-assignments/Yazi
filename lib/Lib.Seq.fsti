@@ -27,6 +27,20 @@ let upd_count (#a: eqtype) (s1: Seq.seq a) (n: nat{n < Seq.length s1}) (x: a): L
   Seq.lemma_count_slice s1 n;
   Seq.lemma_count_slice (Seq.upd s1 n x) n
 
+let swap_equal (#a: eqtype) (s0 s1: Seq.seq a) (i j: nat): Lemma
+  (requires
+    i < Seq.length s0 /\ j < Seq.length s0 /\
+    Seq.length s0 == Seq.length s1 /\
+    s0.[i] == s1.[j] /\ s1.[i] == s0.[j] /\
+    (forall k. k <> i /\ k <> j ==> s0.[k] == s1.[k]))
+  (ensures Seq.equal (Seq.swap s0 i j) s1) =
+  let s0' = Seq.upd s0 j s0.[i] in
+  assert(forall k. k <> j ==> s0'.[k] == s0.[k]);
+  let s0'' = Seq.upd s0' i s0.[j] in
+  assert(s0'' == Seq.swap s0 i j);
+  assert(forall k. {:pattern s1.[k]} k <> i /\ k <> j ==>
+    s0''.[k] == s0.[k] /\ s0''.[k] == s1.[k])
+
 let rec count_neq (#a: eqtype) (s: Seq.seq a) (x: a): Lemma
   (requires forall i. Seq.index s i <> x)
   (ensures Seq.count x s == 0)
@@ -52,7 +66,7 @@ let rec count_create_cancel (#a: eqtype) (n: nat) (x: a): Lemma
     }
 
 let no_dup (#a: eqtype) (s: Seq.seq a) =
-  forall (x: a). {:pattern Seq.count x s} Seq.mem x s ==> Seq.count x s == 1
+  forall (x: a). {:pattern (Seq.count x s) \/ (Seq.mem x s)} Seq.mem x s ==> Seq.count x s == 1
 
 let disjoint (#a: eqtype) (s1 s2: Seq.seq a) =
   forall (x: a). {:pattern (Seq.mem x s1) \/ (Seq.mem x s2)}
@@ -165,3 +179,32 @@ let rec filter (#a: eqtype) (s: Seq.seq a) (f: a -> bool): Tot (res: Seq.seq a{
       create 1 h @| t
     end else
       filter (tail s) f
+
+#push-options "--z3refresh --fuel 0 --ifuel 0"
+let permutation_split (#t: eqtype) (a b: Seq.seq t) (i: nat) (j: nat{
+  j <= Seq.length a /\ j <= Seq.length b
+}): Lemma
+  (requires
+    i <= j /\
+    Seq.permutation t a b /\
+    Seq.permutation t (Seq.slice a 0 i) (Seq.slice b 0 i) /\
+    Seq.permutation t (Seq.slice a j (Seq.length a)) (Seq.slice b j (Seq.length b)))
+  (ensures Seq.permutation t (Seq.slice a i j) (Seq.slice b i j)) =
+  Seq.lemma_count_slice a j;
+  Seq.lemma_count_slice b j;
+  Seq.lemma_count_slice (Seq.slice a 0 j) i;
+  Seq.lemma_count_slice (Seq.slice b 0 j) i
+#pop-options
+
+let rec count_index (#t: eqtype) (s: Seq.seq t): Lemma
+  (ensures forall i. {:pattern (Seq.count s.[i] s)} Seq.count s.[i] s > 0)
+  (decreases Seq.length s) =
+  match Seq.length s with
+  | 0 -> ()
+  | _ ->
+    let open Seq in
+    count_index (Seq.tail s);
+    assert(forall (i: pos{i < Seq.length s}). (tail s).[i - 1] == s.[i]);
+    assert(forall i. s.[0] <> s.[i] ==>
+      Seq.count s.[i] s == Seq.count s.[i] (tail s) /\
+      Seq.count s.[i] (tail s) == Seq.count (tail s).[i - 1] (tail s))
