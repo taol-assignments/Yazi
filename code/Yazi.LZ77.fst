@@ -83,7 +83,7 @@ let insert_hash (ctx: lz77_context_p) (state: lz77_state_t) (i: U32.t):
   let head = (CB.index ctx 0ul).head in
   let prev = (CB.index ctx 0ul).prev in
   let w_mask = (CB.index ctx 0ul).w_mask in
-  let h0 = Ghost.hide (ST.get ()) in
+  let h0 = ST.get () in
   let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
   let h = hash ctx state i in
   
@@ -142,7 +142,7 @@ inline_for_extraction let read_buf
   (ensures fun h0 res h1 ->
     SS.read_buf_post h0 res h1 ss block_data window next_in window_size from size wrap) =
   let open U32 in
-  let h0 = Ghost.hide (ST.get()) in
+  let h0 = ST.get() in
   let avail_in = get_avail_in ss in
   let len = if avail_in >^ size then
     size
@@ -153,7 +153,7 @@ inline_for_extraction let read_buf
   let ulen = Ghost.hide (Seq.length block_data) in
     
   B.blit (CB.cast next_in') 0ul window from len;
-  let h1 = Ghost.hide (ST.get ()) in
+  let h1 = ST.get () in
   let buf' = CB.sub next_in' 0ul (Ghost.hide len) in
   if wrap = 1l then
     set_adler ss (Adler32.adler32 #ulen (Ghost.reveal block_data) (get_adler ss) buf' len)
@@ -168,7 +168,7 @@ inline_for_extraction let read_buf
   set_avail_in ss (avail_in -^ len);
   set_total_in ss (U32.add_underspec (get_total_in ss) len);
 
-  let h1 = Ghost.hide (ST.get ()) in
+  let h1 = ST.get () in
   let w0 = Ghost.hide (B.as_seq h0 window) in
   let w1 = Ghost.hide (B.as_seq h1 window) in
   let block_data' = Ghost.hide (Seq.append block_data (CB.as_seq h1 buf')) in
@@ -236,7 +236,7 @@ let rec slide_head
   if i <^ (CB.index ctx 0ul).h_size then begin
     slide_index head w_size i;
 
-    let h1 = Ghost.hide (ST.get ()) in
+    let h1 = ST.get () in
     let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
     assert(S.state_valid h1 ctx state);
     assert(forall (i: nat). {:pattern (B.as_seq h1 (B.gsub ctx'.window ctx'.w_size ctx'.w_size)).[i]}
@@ -296,7 +296,7 @@ let slide_hash ctx state =
     end
   else begin
     B.fill (CB.index ctx 0ul).head 0us h_size;
-    let h1 = Ghost.hide (ST.get ()) in
+    let h1 = ST.get () in
     assert(Seq.equal (Seq.slice (B.as_seq h1 head) 0 (v h_size)) (B.as_seq h1 head));
     assert(forall (i: nat). i < v h_size ==> U16.v (B.as_seq h1 head).[i] == 0)
   end;
@@ -321,7 +321,7 @@ let slide_window_buf
   
   let left = B.sub window 0ul w_size in
   let right = B.sub window w_size w_size in
-  let h0 = Ghost.hide (ST.get ()) in
+  let h0 = ST.get () in
   let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
   let w0 = Ghost.hide (B.as_seq h0 ctx'.window) in
   
@@ -336,7 +336,7 @@ let slide_window_buf
   else
     ();
   block_start *= I32.sub (!*block_start) (Cast.uint32_to_int32 w_size);
-  let h1 = Ghost.hide (ST.get ()) in
+  let h1 = ST.get () in
   let w1 = Ghost.hide (B.as_seq h1 ctx'.window) in
   let w_end0 = Ghost.hide (S.window_end (B.as_seq h0 state)) in
   let w_end1 = Ghost.hide (S.window_end (B.as_seq h1 state)) in
@@ -403,7 +403,7 @@ let rec do_fill_window
     S.do_fill_window_post h0 res h1 ss ctx ls next_in wrap avail_in block_data)
   (decreases avail_in) =
     let open U32 in
-    let h0 = Ghost.hide (ST.get ()) in
+    let h0 = ST.get () in
     let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
     let w_bits = Ghost.hide (U16.v ctx'.w_bits) in
     let w_size = Ghost.hide (v ctx'.w_size) in
@@ -435,7 +435,7 @@ let rec do_fill_window
 
 #set-options "--z3rlimit 65536 --fuel 0 --ifuel 0 --z3seed 13 --z3refresh"
 let fill_window ss ctx ls next_in wrap block_start block_data =
-  let h0 = Ghost.hide (ST.get ()) in
+  let h0 = ST.get () in
   let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
   let ls0 = Ghost.hide (B.as_seq h0 ls) in
   let open U32 in
@@ -568,18 +568,21 @@ let rec search_hash_chain
   (ensures fun h0 res h1 ->
     let open U32 in
     let (cur_match, chain_length', cont) = res in
-    let s' = B.as_seq h1 s in
     let w = B.as_seq h1 (B.get h1 (CB.as_mbuf ctx) 0).window in
-    let strstart = S.strstart s' in
+    let strstart = S.strstart (B.as_seq h1 s) in
+    let scan_end = U32.v scan_end in
+    let i = U32.v i in
     B.modifies B.loc_none h0 h1 /\
+    U32.v chain_length' <= U32.v chain_length /\
     (cont == true ==>
       v cur_match < strstart /\
       (forall (k: nat{k < S.min_match}).
         w.[v cur_match + k] == w.[strstart + k]) /\
-      U32.v chain_length' <= U32.v chain_length))
+      (forall (k: nat{k < S.min_match}).
+        w.[scan_end + k] == w.[scan_end - strstart + v cur_match + k])))
   (decreases U32.v chain_length) =
   let open U32 in
-  let h0 = Ghost.hide (ST.get ()) in
+  let h0 = ST.get () in
   let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
   let window = (CB.index ctx 0ul).window in
   let strstart = get_strstart s in
@@ -594,11 +597,20 @@ let rec search_hash_chain
     let d = Ghost.hide (v strstart - v i) in
     let s1' = Ghost.hide (B.as_seq h0 (B.gsub window strstart min_match)) in
     let s2' = Ghost.hide (B.as_seq h0 (B.gsub window i min_match)) in
-    let strstart' = Ghost.hide (U32.v strstart) in
+    let e1' = Ghost.hide (B.as_seq h0 (B.gsub window scan_end min_match)) in
+    let e2' = Ghost.hide (B.as_seq h0 (B.gsub window (scan_end -^ strstart +^ i) min_match)) in
+    let strstart' = Ghost.hide (v strstart) in
+    let scan_end' = Ghost.hide (v scan_end) in
     assert(forall (j: nat{j < S.min_match}).
-      s1'.[j] == s2'.[j] /\ s1'.[j] == w.[strstart' + j] /\ s2'.[j] == w.[v i + j]);
-    assert(forall (j: nat{j < S.min_match}). {:pattern (w.[v i + j] == w.[strstart' + j])}
-      w.[v i + j] == w.[strstart' + j]);
+      s1'.[j] == s2'.[j] /\
+      s1'.[j] == w.[strstart' + j] /\
+      s2'.[j] == w.[v i + j] /\
+      e1'.[j] == e2'.[j] /\
+      e1'.[j] == w.[scan_end' + j] /\
+      e2'.[j] == w.[scan_end' - strstart' + v i + j]);
+    assert(forall (j: nat{j < S.min_match}).
+      w.[v i + j] == w.[strstart' + j] /\
+      w.[scan_end' + j] == w.[scan_end' - strstart' + v i + j]);
     (i, chain_length, true)
   end else if chain_length >^ 1ul then begin
     let prev = (CB.index ctx 0ul).prev in
@@ -607,9 +619,9 @@ let rec search_hash_chain
     UInt.logand_mask #32 (v i) (U16.v ctx'.w_bits);
     let i' = prev.(i &^ w_mask') in
     let i'' = Cast.uint16_to_uint32 i' in
-    if i'' >^ limit then
+    if i'' >^ limit then begin
       search_hash_chain ctx s scan_end limit (chain_length -^ 1ul) i''
-    else
+    end else
       (0ul, 0ul, false)
   end else
     (0ul, 0ul, false)
@@ -653,7 +665,7 @@ let rec do_longest_match_slow
       (forall (i: nat{i < v bl}). w.[v cm + i] == w.[S.strstart s' + i])))
   (decreases U32.v chain_length) =
   let open U32 in
-  let h = Ghost.hide (ST.get ()) in
+  let h = ST.get () in
   let (cm, cl, cont) = search_hash_chain ctx s scan_end limit chain_length cur_match in
   if cont then begin
     let w_bits = (CB.index ctx 0ul).w_bits in
@@ -668,7 +680,7 @@ let rec do_longest_match_slow
     let l' = match_iteration sbuf mbuf max_offset in
     let l = min_match +^ l' in
 
-    let h = Ghost.hide (ST.get ()) in
+    let h = ST.get () in
     let w = Ghost.hide (B.as_seq h window) in
     assert(forall (i: nat{S.min_match <= i /\ i < S.min_match + v l'}).
       (B.as_seq h sbuf).[i - S.min_match] == (B.as_seq h mbuf).[i - S.min_match] /\
@@ -722,7 +734,7 @@ let do_longest_match_fast (ctx: lz77_context_p) (s: lz77_state_t) (cur_match: U3
   let sbuf = B.sub window strstart (Ghost.hide max_offset) in
   let mbuf = B.sub window cur_match (Ghost.hide max_offset) in
 
-  let h = Ghost.hide (ST.get ()) in
+  let h = ST.get () in
   let w = Ghost.hide (B.as_seq h window) in
   
   let l = match_iteration sbuf mbuf max_offset in
@@ -742,7 +754,7 @@ let longest_match ctx s cur_match =
   let w_size = (CB.index ctx 0ul).w_size in
   let limit = if strstart >^ w_size then strstart -^ w_size else 0ul in
 
-  let h0 = Ghost.hide (ST.get ()) in
+  let h0 = ST.get () in
   let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
 
   if CFlags.fastest then
