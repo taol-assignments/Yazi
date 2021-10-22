@@ -159,12 +159,12 @@ let get_strategy (state: lz77_state_t):
   state.(8ul)
 
 inline_for_extraction
-let get_max_chain_length (state: lz77_state_t):
+let get_max_fuel (state: lz77_state_t):
   ST.Stack U32.t
   (requires fun h -> B.live h state)
   (ensures fun h0 res h1 ->
     B.modifies B.loc_none h0 h1 /\
-    S.max_chain_length (B.as_seq h0 state) == U32.v res) =
+    S.max_fuel (B.as_seq h0 state) == U32.v res) =
   state.(9ul)
 
 inline_for_extraction

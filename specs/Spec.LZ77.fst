@@ -132,7 +132,7 @@ unfold let lookahead (s: lz77_state) = U32.v s.[5]
 unfold let insert (s: lz77_state) = U32.v s.[6]
 unfold let level (s: lz77_state) = U32.v s.[7]
 unfold let strategy (s: lz77_state) = U32.v s.[8]
-unfold let max_chain_length (s: lz77_state) = U32.v s.[9]
+unfold let max_fuel (s: lz77_state) = U32.v s.[9]
 unfold let max_lazy_match (s: lz77_state) = U32.v s.[10]
 unfold let good_match (s: lz77_state) = U32.v s.[11]
 unfold let nice_match (s: lz77_state) = U32.v s.[12]
@@ -151,8 +151,8 @@ unfold let insert_unchange (s0 s1: lz77_state) = insert s0 == insert s1
 
 unfold let level_unchange (s0 s1: lz77_state) = level s0 == level s1
 unfold let strategy_unchange (s0 s1: lz77_state) = strategy s0 == strategy s1
-unfold let max_chain_length_unchange (s0 s1: lz77_state) =
-  max_chain_length s0 == max_chain_length s1
+unfold let max_fuel_unchange (s0 s1: lz77_state) =
+  max_fuel s0 == max_fuel s1
 unfold let max_lazy_match_unchange (s0 s1: lz77_state) =
   max_lazy_match s0 == max_lazy_match s1
 unfold let good_match_unchange (s0 s1: lz77_state) =
@@ -163,7 +163,7 @@ unfold let nice_match_unchange (s0 s1: lz77_state) =
 unfold let deflate_params_unchange (s0 s1: lz77_state) =
   level_unchange s0 s1 /\
   strategy_unchange s0 s1 /\
-  max_chain_length_unchange s0 s1 /\
+  max_fuel_unchange s0 s1 /\
   max_lazy_match_unchange s0 s1 /\
   good_match_unchange s0 s1 /\
   nice_match_unchange s0 s1
@@ -185,7 +185,7 @@ let state_valid (h: HS.mem) (ctx: lz77_context_p) (s: lz77_state_t) =
   match_start s' <= 2 * U32.v ctx'.w_size - min_match /\
   prev_match s' < 2 * U32.v ctx'.w_size - min_match /\
   level s' <= 9 /\ strategy s' <= 4 /\
-  max_chain_length s' <= U32.v ctx'.w_size /\
+  max_fuel s' <= U32.v ctx'.w_size /\
   max_lazy_match s' <= max_match /\
   good_match s' <= max_match /\
   nice_match s' <= max_match)

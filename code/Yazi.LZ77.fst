@@ -543,7 +543,7 @@ unfold let slow_match_pre_cond
   (h: HS.mem)
   (ctx: lz77_context_p)
   (s: lz77_state_t)
-  (scan_end limit chain_length cur_match: U32.t) =
+  (scan_end limit fuel cur_match: U32.t) =
   let open U32 in
   let s' = B.as_seq h s in
   let ctx' = B.get h (CB.as_mbuf ctx) 0 in
@@ -553,7 +553,7 @@ unfold let slow_match_pre_cond
   S.strstart s' <= v scan_end /\
   (S.strstart s' >= v ctx'.w_size ==> v limit == S.strstart s' - v ctx'.w_size) /\
   (S.strstart s' < v ctx'.w_size ==> v limit == 0) /\
-  v chain_length >= 1
+  v fuel >= 1
 
 #set-options "--z3rlimit 32768 --fuel 0 --ifuel 0 --z3seed 13 --z3refresh"
 [@ (CPrologue "#ifndef FASTEST")
@@ -562,25 +562,25 @@ unfold let slow_match_pre_cond
 let rec search_hash_chain
   (ctx: lz77_context_p)
   (s: lz77_state_t)
-  (scan_end limit chain_length i: U32.t):
+  (scan_end limit fuel i: U32.t):
   ST.Stack (U32.t & U32.t & bool)
-  (requires fun h -> slow_match_pre_cond h ctx s scan_end limit chain_length i)
+  (requires fun h -> slow_match_pre_cond h ctx s scan_end limit fuel i)
   (ensures fun h0 res h1 ->
     let open U32 in
-    let (cur_match, chain_length', cont) = res in
+    let (cur_match, fuel', cont) = res in
     let w = B.as_seq h1 (B.get h1 (CB.as_mbuf ctx) 0).window in
     let strstart = S.strstart (B.as_seq h1 s) in
     let scan_end = U32.v scan_end in
     let i = U32.v i in
     B.modifies B.loc_none h0 h1 /\
-    U32.v chain_length' <= U32.v chain_length /\
+    U32.v fuel' <= U32.v fuel /\
     (cont == true ==>
       v cur_match < strstart /\
       (forall (k: nat{k < S.min_match}).
         w.[v cur_match + k] == w.[strstart + k]) /\
       (forall (k: nat{k < S.min_match}).
         w.[scan_end + k] == w.[scan_end - strstart + v cur_match + k])))
-  (decreases U32.v chain_length) =
+  (decreases U32.v fuel) =
   let open U32 in
   let h0 = ST.get () in
   let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
@@ -611,8 +611,8 @@ let rec search_hash_chain
     assert(forall (j: nat{j < S.min_match}).
       w.[v i + j] == w.[strstart' + j] /\
       w.[scan_end' + j] == w.[scan_end' - strstart' + v i + j]);
-    (i, chain_length, true)
-  end else if chain_length >^ 1ul then begin
+    (i, fuel, true)
+  end else if fuel >^ 1ul then begin
     let prev = (CB.index ctx 0ul).prev in
     let w_mask = (CB.index ctx 0ul).w_mask in
     [@inline_let] let w_mask' = Cast.uint16_to_uint32 w_mask in
@@ -620,7 +620,7 @@ let rec search_hash_chain
     let i' = prev.(i &^ w_mask') in
     let i'' = Cast.uint16_to_uint32 i' in
     if i'' >^ limit then begin
-      search_hash_chain ctx s scan_end limit (chain_length -^ 1ul) i''
+      search_hash_chain ctx s scan_end limit (fuel -^ 1ul) i''
     end else
       (0ul, 0ul, false)
   end else
@@ -632,17 +632,17 @@ let rec search_hash_chain
 let rec do_longest_match_slow
   (ctx: lz77_context_p)
   (s: lz77_state_t)
-  (nice_match scan_end limit chain_length cur_match best_len: U32.t):
+  (nice_match scan_end limit fuel cur_match best_len: U32.t):
   ST.Stack (U32.t & U32.t)
   (requires fun h ->
     let open U32 in
     let ctx' = B.get h (CB.as_mbuf ctx) 0 in
     let s' = B.as_seq h s in
     let w = B.as_seq h ctx'.window in
-    slow_match_pre_cond h ctx s scan_end limit chain_length cur_match /\
+    slow_match_pre_cond h ctx s scan_end limit fuel cur_match /\
     v best_len < v nice_match /\
     (S.prev_length s' >= S.good_match s' ==>
-      v chain_length <= UInt.shift_right (S.max_chain_length s') 2) /\
+      v fuel <= UInt.shift_right (S.max_fuel s') 2) /\
     (S.nice_match s' < S.lookahead s' ==> v nice_match == S.nice_match s') /\
     (S.nice_match s' >= S.lookahead s' ==> v nice_match == S.lookahead s') /\
     (v best_len > 0 ==>
@@ -663,10 +663,10 @@ let rec do_longest_match_slow
       v cm < S.strstart s' /\
       S.strstart s' + v bl <= S.window_end s' /\
       (forall (i: nat{i < v bl}). w.[v cm + i] == w.[S.strstart s' + i])))
-  (decreases U32.v chain_length) =
+  (decreases U32.v fuel) =
   let open U32 in
   let h = ST.get () in
-  let (cm, cl, cont) = search_hash_chain ctx s scan_end limit chain_length cur_match in
+  let (cm, cl, cont) = search_hash_chain ctx s scan_end limit fuel cur_match in
   if cont then begin
     let w_bits = (CB.index ctx 0ul).w_bits in
     let window = (CB.index ctx 0ul).window in
@@ -771,15 +771,15 @@ let longest_match ctx s cur_match =
     let nice_match = if nm <^ lookahead then nm else lookahead in
     let limit = if strstart >^ w_size then strstart -^ w_size else 0ul in
     let good_match = get_good_match s in
-    let mcl = get_max_chain_length s in
-    let chain_length = if prev_length >=^ good_match then mcl >>^ 2ul else mcl in
+    let mcl = get_max_fuel s in
+    let fuel = if prev_length >=^ good_match then mcl >>^ 2ul else mcl in
     let se1 = strstart +^ prev_length -^ (min_match -^ 1ul) in
     let se2 = strstart +^ lookahead -^ min_match in
     let scan_end = if se1 >^ se2 then se2 else se1 in
-    if chain_length >^ 0ul then
+    if fuel >^ 0ul then
       let (bl, cm) = do_longest_match_slow
         ctx s nice_match scan_end
-        limit chain_length cur_match 0ul in
+        limit fuel cur_match 0ul in
       if bl >^ prev_length then begin
         set_match_start (U16.v ctx'.w_bits) (v ctx'.w_size) s cm;
         bl
