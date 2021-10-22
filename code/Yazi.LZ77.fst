@@ -31,10 +31,17 @@ open Yazi.Stream.State
 #include <intrin.h>
 #endif
 
+#if !defined(__GNUC__) && !defined(__COMPCERT__)
 #include <string.h>
+#endif
+
 static inline uint32_t lz77_hash(uint16_t h_bits, const unsigned char *buf) {
   uint32_t n;
+#if defined __GNUC__ || defined __COMPCERT__
+  __builtin_memcpy(&n, buf, sizeof(n));
+#else
   memcpy(&n, buf, sizeof(n));
+#endif
   return (n * 0x1E35A7BD) >> (32 - h_bits);\n}")
   (CEpilogue "#define Yazi_LZ77_hash(ctx, i) lz77_hash((ctx)->h_bits, &((ctx)->window[i]))")]
 assume val hash:
@@ -524,7 +531,11 @@ let match_iteration (s m: B.buffer U8.t) (tail: U32.t):
   else
     l1
 
-[@ (CEpilogue "#define Yazi_LZ77_fast_compare(s1, s2, len) memcmp(s1, s2, (size_t)len)")]
+[@ (CEpilogue "#ifdef __GNUC__
+  #define Yazi_LZ77_fast_compare(s1, s2, len) __builtin_memcmp(s1, s2, len)
+#else
+  #define Yazi_LZ77_fast_compare(s1, s2, len) memcmp(s1, s2, (size_t)len)
+#endif")]
 assume val fast_compare: 
     s1: B.buffer U8.t
   -> s2: B.buffer U8.t
