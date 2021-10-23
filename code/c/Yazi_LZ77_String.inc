@@ -21,14 +21,7 @@ do {                    \
   }                     \
 } while (0)
 
-#define do_cmp_end(s, m, l) \
-do {                        \
-  if (*(s) == *(m)) {       \
-    return (l) + 1U;        \
-  } else {                  \
-    return l;               \
-  }                         \
-} while (0)
+#define do_cmp_end(s, m, l) return *(s) == *(m) ? (l) + 1U : l
 
 static inline uint32_t do_ctz_compare_4(uint8_t *s, uint8_t *m) {
 #if defined __GNUC__ || defined __COMPCERT__
