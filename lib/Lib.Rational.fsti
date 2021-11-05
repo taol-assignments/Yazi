@@ -110,7 +110,7 @@ let plus_non_zero_l (a b: rat): Lemma
   (requires zero <$ a)
   (ensures b <$ a +$ b) = ()
 
-#set-options "--z3refresh --z3rlimit 512 --fuel 0 --ifuel 0"
+#set-options "--z3refresh --z3rlimit 1024 --fuel 0 --ifuel 0 --z3seed 12"
 val plus_assoc: a: rat -> b: rat -> c: rat -> Lemma
   (ensures (a +$ b) +$ c =$ a +$ (b +$ c))
   [SMTPatOr [[SMTPat ((a +$ b) +$ c)]; [SMTPat (a +$ (b +$ c))]]]
@@ -143,12 +143,14 @@ val distributivity_add_left: a: rat -> b: rat -> c: rat -> Lemma
 let mul_eq_l (a b a': rat): Lemma
   (requires a =$ a')
   (ensures a *$ b =$ a' *$ b)
-  [SMTPat (a =$ a'); SMTPat (a' *$ b)] = ()
+  [SMTPat (a =$ a'); SMTPat (a' *$ b)] =
+  assert_norm(a *$ b =$ a' *$ b)
 
 let mul_eq_r (a b b': rat): Lemma
   (requires b =$ b')
   (ensures a *$ b =$ a *$ b')
-  [SMTPat (b =$ b'); SMTPat (a *$ b')] = ()
+  [SMTPat (b =$ b'); SMTPat (a *$ b')] =
+  assert_norm(a *$ b =$ a *$ b')
 
 let of_int (a: int): rat = (a, 1)
 

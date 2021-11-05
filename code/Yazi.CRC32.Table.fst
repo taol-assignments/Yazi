@@ -6,6 +6,8 @@ module CB = LowStar.ConstBuffer
 module CRC32 = Yazi.CRC32.Impl
 module Ghost = FStar.Ghost
 module HS = FStar.HyperStack
+module IB = LowStar.ImmutableBuffer
+module List = FStar.List.Tot
 module M = LowStar.Modifies
 module Math = FStar.Math.Lemmas
 module Seq = FStar.Seq
@@ -14,6 +16,7 @@ module U32 = FStar.UInt32
 open FStar.Tactics
 open Lib.Seq
 open Lib.UInt
+open Lib.List
 open LowStar.BufferOps
 open Spec.CRC32
 
@@ -74,7 +77,7 @@ let poly_mod_head_zero (d: U32.t): Lemma
   (requires UInt.nth (U32.v d) 31 == false)
   (ensures poly_mod_correct 1 d (U32.shift_right d 1ul)) = ()
 
-let bv_one_aux (#n: nat{n > 0}) (v: BV.bv_t n): Lemma
+let bv_one_aux (#n: pos) (v: BV.bv_t n): Lemma
   (requires forall i.
     (i < n - 1 ==> Seq.index v i == false) /\
     (i == n - 1 ==> Seq.index v i == true))
@@ -83,7 +86,7 @@ let bv_one_aux (#n: nat{n > 0}) (v: BV.bv_t n): Lemma
   | 1 -> ()
   | _ -> assert(Seq.equal (Seq.slice v 0 (n - 1)) (BV.zero_vec #(n - 1)))
 
-let logand_aux (#n: nat{n > 0}) (d: UInt.uint_t n): Lemma
+let logand_aux (#n: pos) (d: UInt.uint_t n): Lemma
   (requires UInt.logand d 1 <> 1)
   (ensures UInt.nth d (n - 1) == false) =
   let res = UInt.logand d 1 in
@@ -136,7 +139,7 @@ private let cell_xor (d: U32.t): Tot (res:U32.t{poly_mod_correct 1 d res}) =
     d'
   end
 
-let cell_xor_app (nzeros: nat{nzeros > 0}) (d res: U32.t): Lemma
+let cell_xor_app (nzeros: pos) (d res: U32.t): Lemma
   (requires poly_mod_correct nzeros d res)
   (ensures poly_mod_correct (nzeros + 1) d (cell_xor res)) =
   let open U32 in
@@ -169,7 +172,7 @@ private let rec calc_cell (m: Ghost.erased U32.t) (i: U32.t{U32.v i <= 7}) (d: U
   else
     calc_cell m (i -^ 1ul) (cell_xor d)
 
-#set-options "--fuel 0 --ifuel 0"
+#set-options "--fuel 1 --ifuel 1"
 private let rec gen_8bit_table
   (i: U32.t{U32.v i <= 255})
   (buf: table_buf):
@@ -182,7 +185,7 @@ private let rec gen_8bit_table
   if i <^ 255ul then gen_8bit_table (i +^ 1ul) buf else ()
 
 private let rec gen_large_table
-  (nzeros: Ghost.erased nat{nzeros > 0})
+  (nzeros: Ghost.erased pos)
   (i: U32.t{U32.v i <= 255})
   (t8 tp buf: table_buf):
   ST.Stack unit

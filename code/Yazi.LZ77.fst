@@ -394,7 +394,7 @@ let slide_window
   end else
     more
 
-#set-options "--z3rlimit 32768 --fuel 0 --ifuel 0 --z3seed 7 --z3refresh"
+#set-options "--z3rlimit 2048 --fuel 0 --ifuel 0 --z3seed 7 --z3refresh"
 [@@ CInline ]
 let rec do_fill_window
   (ss:stream_state_t)
@@ -440,7 +440,7 @@ let rec do_fill_window
     else
       block_data'
 
-#set-options "--z3rlimit 65536 --fuel 0 --ifuel 0 --z3seed 13 --z3refresh"
+#set-options "--z3rlimit 256 --fuel 0 --ifuel 0 --z3seed 13 --z3refresh"
 let fill_window ss ctx ls next_in wrap block_start block_data =
   let h0 = ST.get () in
   let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
@@ -532,7 +532,7 @@ let match_iteration (s m: B.buffer U8.t) (tail: U32.t):
     l1
 
 [@ (CEpilogue "#ifdef __GNUC__
-  #define Yazi_LZ77_fast_compare(s1, s2, len) __builtin_memcmp(s1, s2, len)
+  #define Yazi_LZ77_fast_compare(s1, s2, len) __builtin_memcmp(s1, s2, (__SIZE_TYPE__)len)
 #else
   #define Yazi_LZ77_fast_compare(s1, s2, len) memcmp(s1, s2, (size_t)len)
 #endif")]
@@ -566,14 +566,12 @@ unfold let slow_match_pre_cond
   (S.strstart s' < v ctx'.w_size ==> v limit == 0) /\
   v fuel >= 1
 
-#set-options "--z3rlimit 32768 --fuel 0 --ifuel 0 --z3seed 13 --z3refresh"
+#set-options "--z3rlimit 4096 --fuel 0 --ifuel 0 --z3seed 13 --z3refresh"
 [@ (CPrologue "#ifndef FASTEST")
    (CEpilogue "#endif")
    CInline]
 let rec search_hash_chain
-  (ctx: lz77_context_p)
-  (s: lz77_state_t)
-  (scan_end limit fuel i: U32.t):
+  (ctx: lz77_context_p) (s: lz77_state_t) (scan_end limit fuel i: U32.t):
   ST.Stack (U32.t & U32.t & bool)
   (requires fun h -> slow_match_pre_cond h ctx s scan_end limit fuel i)
   (ensures fun h0 res h1 ->
@@ -587,10 +585,7 @@ let rec search_hash_chain
     U32.v fuel' <= U32.v fuel /\
     (cont == true ==>
       v cur_match < strstart /\
-      (forall (k: nat{k < S.min_match}).
-        w.[v cur_match + k] == w.[strstart + k]) /\
-      (forall (k: nat{k < S.min_match}).
-        w.[scan_end + k] == w.[scan_end - strstart + v cur_match + k])))
+      (forall (k: nat{k < S.min_match}). w.[v cur_match + k] == w.[strstart + k])))
   (decreases U32.v fuel) =
   let open U32 in
   let h0 = ST.get () in
@@ -619,9 +614,7 @@ let rec search_hash_chain
       e1'.[j] == e2'.[j] /\
       e1'.[j] == w.[scan_end' + j] /\
       e2'.[j] == w.[scan_end' - strstart' + v i + j]);
-    assert(forall (j: nat{j < S.min_match}).
-      w.[v i + j] == w.[strstart' + j] /\
-      w.[scan_end' + j] == w.[scan_end' - strstart' + v i + j]);
+    assert(forall (j: nat{j < S.min_match}). w.[v i + j] == w.[strstart' + j]);
     (i, fuel, true)
   end else if fuel >^ 1ul then begin
     let prev = (CB.index ctx 0ul).prev in

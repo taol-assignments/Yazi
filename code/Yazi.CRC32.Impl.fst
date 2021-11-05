@@ -13,12 +13,9 @@ open LowStar.BufferOps
 open Spec.CRC32
 
 private unfold let do_pre_cond
-  (h: HS.mem)
-  (tg: table_group)
-  (p: crc32_current_state)
-  (d: crc32_init_state)
-  (i: nat)
-  (size: nat{size > 0}) =
+  (h: HS.mem) (tg: table_group)
+  (p: crc32_current_state) (d: crc32_init_state)
+  (i: nat) (size: pos) =
   let slen' = U32.v p.slen in
   B.live h tg /\
   B.live h p.stream /\
@@ -46,14 +43,10 @@ private unfold let do_pre_cond
   table_group_correct_pre h tg
 
 private unfold let do_post_cond
-  (h0 h1: HS.mem)
-  (tg: table_group)
-  (p: crc32_current_state)
-  (d: crc32_init_state)
+  (h0 h1: HS.mem) (tg: table_group)
+  (p: crc32_current_state) (d: crc32_init_state)
   (res: (U32.t & (B.buffer U8.t) & Ghost.erased (Seq.seq U8.t)))
-  (i: nat)
-  (size: nat{size > 0})
-  (next_size: option nat) =
+  (i: nat) (size: pos) (next_size: option nat) =
   let i' = match next_size with
     | None -> i + size
     | Some ns -> if ns > 0 then d.blen % ns else d.blen
@@ -73,10 +66,7 @@ private unfold let do_post_cond
   
   crc32_matched (d.dlen + i') data' crc' false
 
-private unfold let u8_padding
-  (b: U8.t)
-  (n: nat{n > 0}):
-  Tot (BV.bv_t (32 + 8 * n)) =
+private unfold let u8_padding (b: U8.t) (n: pos): Tot (BV.bv_t (32 + 8 * n)) =
   (BV.zero_vec #24) @| (UInt.to_vec (U8.v b)) @| BV.zero_vec #(8 * n)
 
 #set-options "--z3rlimit 120 --z3seed 13 --fuel 0 --ifuel 0"
@@ -508,7 +498,7 @@ let crc32_impl tg crc len buf d =
 #set-options "--fuel 0 --ifuel 0"
 inline_for_extraction
 let rec do_gf2_matrix_times
-  (nzeros: Ghost.erased nat{nzeros > 0})
+  (nzeros: Ghost.erased pos)
   (vec': Ghost.erased U32.t)
   (buf: matrix_buf)
   (i: U32.t{0 < U32.v i /\ U32.v i < 32})
@@ -574,9 +564,7 @@ let gf2_matrix_times nzeros buf vec =
 
 inline_for_extraction
 let rec do_gf2_matrix_square
-  (nzeros: Ghost.erased nat{nzeros > 0})
-  (b0 b1: matrix_buf)
-  (i: U32.t{U32.v i < 32}):
+  (nzeros: Ghost.erased pos) (b0 b1: matrix_buf) (i: U32.t{U32.v i < 32}):
   ST.Stack unit
   (decreases 31 - U32.v i)
   (requires fun h ->
@@ -612,3 +600,147 @@ let rec do_gf2_matrix_square
   if i <^ 31ul then do_gf2_matrix_square nzeros b0 b1 (i +^ 1ul) else ()
 
 let gf2_matrix_square nzeros b0 b1 = do_gf2_matrix_square nzeros b0 b1 0ul
+
+let combine_len_aux
+  (init_len post_len: UInt.uint_t 64) (cur_len next_len: U64.t) (i: U32.t): Lemma
+  (requires
+    U64.v cur_len * (pow2 (U32.v i)) + post_len == (init_len <: int) /\
+    U64.v next_len == U64.v cur_len / 2)
+  (ensures (
+    let i = U32.v i in
+    let cur_len = U64.v cur_len in
+    let next_len = U64.v next_len in
+    (cur_len % 2 == 1 ==>
+      next_len * pow2 (i + 1) + pow2 i + post_len == (init_len <: int) /\
+      pow2 i + post_len < pow2 64) /\
+    (cur_len % 2 == 0 ==>
+      next_len * pow2 (i + 1) + post_len == (init_len <: int)))) =
+  Math.pow2_plus (U32.v i) 1
+
+#push-options "--z3refresh --z3rlimit 2048 --z3seed 11 --fuel 0 --ifuel 0"
+let rec do_crc32_combine
+  (nzeros: Ghost.erased pos)
+  (init_len: Ghost.erased (UInt.uint_t 64){init_len > 0})
+  (post_len: Ghost.erased (UInt.uint_t 64))
+  (cur_len: U64.t)
+  (init_crc: Ghost.erased U32.t) (crc i: U32.t)
+  (odd even: matrix_buf):
+  ST.Stack (matrix_times_product (init_len * 8) init_crc)
+  (requires fun h ->
+    let cur_len = U64.v cur_len in
+    let i = U32.v i in
+    B.live h odd /\ B.live h even /\ B.disjoint odd even /\
+    Ghost.reveal nzeros == pow2 (i + 3) /\
+    i <= 64 /\
+    is_matrix_buf h nzeros odd /\
+    cur_len * (pow2 i) + post_len == (init_len <: int) /\
+    (Ghost.reveal post_len > 0 ==>
+      UInt.to_vec (U32.v crc) ==
+      poly_mod (zero_vec_l (post_len * 8) (UInt.to_vec (U32.v init_crc)))) /\
+    (Ghost.reveal post_len == 0 ==> crc == Ghost.reveal init_crc))
+  (ensures fun h0 crc' h1 ->
+    B.modifies (B.loc_buffer odd `B.loc_union` B.loc_buffer even) h0 h1)
+  (decreases 64 - U32.v i) =
+  let open U64 in
+  let vi = Ghost.hide (U32.v i) in
+  let vcrc = Ghost.hide (UInt.to_vec (U32.v crc)) in
+  let vinit_crc = Ghost.hide (UInt.to_vec (U32.v init_crc)) in
+  
+  if cur_len =^ 0UL || U32.eq i 64ul then begin
+    assert(Seq.equal
+      (bit_sum (zero_vec_l (init_len * 8) vinit_crc) 31)
+      (zero_vec_l (init_len * 8) vinit_crc));
+    crc
+  end else begin    
+    gf2_matrix_square (Ghost.reveal nzeros) odd even;
+    let next_len = cur_len /^ 2UL in
+    
+    Math.pow2_plus (vi + 3) 1;
+    assert(nzeros * 2 == pow2 (vi + 4));
+    combine_len_aux init_len post_len cur_len next_len i;
+    if (cur_len %^ 2UL) =^ 1UL then begin
+      let crc' = gf2_matrix_times nzeros odd crc in
+      let next_post_len: Ghost.erased (UInt.uint_t 64) =
+        Ghost.hide (post_len + pow2 vi)
+      in
+      if post_len > 0 then
+        calc (==) {
+          UInt.to_vec (U32.v crc');
+          =={
+            assert(Seq.equal
+              (bit_sum (zero_vec_l nzeros vcrc) 31)
+              (zero_vec_l nzeros vcrc))
+          }
+          poly_mod (zero_vec_l nzeros vcrc);
+          =={}
+          poly_mod (zero_vec_l nzeros (
+            poly_mod (zero_vec_l (post_len * 8) vinit_crc)
+          ));
+          =={
+            poly_mod_zero_prefix (zero_vec_l (post_len * 8) vinit_crc) nzeros
+          }
+          poly_mod (zero_vec_l nzeros (zero_vec_l (post_len * 8) vinit_crc));
+          =={zero_vec_l_app vinit_crc (post_len * 8) nzeros}
+          poly_mod (zero_vec_l (nzeros + post_len * 8) vinit_crc);
+          =={
+            calc (==) {
+              nzeros + post_len * 8;
+              =={}
+              pow2 (vi + 3) + post_len * 8;
+              ={Math.pow2_plus vi 3}
+              (pow2 vi) * pow2 3 + post_len * 8;
+              =={assert_norm(pow2 3 == 8)}
+              (post_len + pow2 vi) * 8;
+              =={}
+              next_post_len * 8;
+            }
+          }
+          poly_mod (zero_vec_l (next_post_len * 8) (UInt.to_vec (U32.v init_crc)));
+        }
+      else
+        calc (==) {
+          UInt.to_vec (U32.v crc');
+          =={
+            assert(Seq.equal
+              (bit_sum (zero_vec_l nzeros vcrc) 31)
+              (zero_vec_l nzeros vcrc))
+          }
+          poly_mod (zero_vec_l nzeros vcrc);
+          =={}
+          poly_mod (zero_vec_l (pow2 (vi + 3)) vcrc);
+          =={
+            Math.pow2_plus vi 3;
+            assert_norm(pow2 3 == 8)
+          }
+          poly_mod (zero_vec_l (next_post_len * 8) vinit_crc);
+        };
+      do_crc32_combine
+        (nzeros * 2) init_len next_post_len next_len
+        init_crc crc' (U32.add i 1ul) even odd
+    end else
+      do_crc32_combine
+        (nzeros * 2) init_len post_len next_len
+        init_crc crc (U32.add i 1ul) even odd
+  end
+
+assume val init_magic_matrix: m: matrix_buf -> ST.Stack unit
+  (requires fun h -> B.live h m)
+  (ensures fun h0 _ h1 -> B.modifies (B.loc_buffer m) h0 h1 /\ is_matrix_buf h1 8 m)
+
+let crc32_combine_impl s1 s2 crc1 crc2 length =
+  let open U64 in
+  if length =^ 0UL then
+    crc1
+  else begin
+    ST.push_frame ();
+    let odd = B.alloca 0ul 32ul in
+    let even = B.alloca 0ul 32ul in
+    init_magic_matrix odd;
+
+    assert_norm(pow2 3 == 8);
+    let crc1' = do_crc32_combine 8 (v length) 0 length crc1 crc1 0ul odd even in
+    crc32_matched_append (Seq.length s1) (v length) s1 s2 crc1 crc2 crc1';
+    
+    ST.pop_frame ();
+    U32.logxor crc1' crc2
+  end

@@ -95,10 +95,10 @@ val crc32_impl:
     B.(modifies loc_none h0 h1) /\
     Spec.crc32_matched (d.dlen + U32.v len) (Seq.append d.data (B.as_seq h1 buf)) res true)
 
-private type matrix_buf = m: B.buffer U32.t{B.length m == 32}
+private type matrix_buf = B.lbuffer U32.t 32
 
 val gf2_matrix_times:
-    nzeros: Ghost.erased nat{nzeros > 0}
+    nzeros: Ghost.erased pos
   -> buf: matrix_buf
   -> vec: U32.t
   -> ST.Stack (Spec.matrix_times_product nzeros vec)
@@ -108,7 +108,7 @@ val gf2_matrix_times:
 [@ (CPrologue
   "uint32_t crc32_combine64(uint32_t crc1, uint32_t crc2, uint64_t len2);uint32_t crc32_combine(uint32_t crc1, uint32_t crc2, uint32_t len2);")]
 val gf2_matrix_square:
-    nzeros: Ghost.erased nat{nzeros > 0}
+    nzeros: Ghost.erased pos
   -> b0: matrix_buf
   -> b1: matrix_buf
   -> ST.Stack unit
@@ -117,3 +117,18 @@ val gf2_matrix_square:
     let open FStar.Mul in
     B.modifies (B.loc_buffer b1) h0 h1 /\
     Spec.is_matrix_buf h1 (nzeros * 2) b1)
+
+val crc32_combine_impl:
+    s1: Ghost.erased (Seq.seq U8.t)
+  -> s2: Ghost.erased (Seq.seq U8.t)
+  -> crc1: U32.t
+  -> crc2: U32.t
+  -> length: U64.t
+  -> ST.Stack U32.t
+    (requires fun h ->
+      Spec.crc32_matched (Seq.length s1) s1 crc1 true /\
+      Spec.crc32_matched (Seq.length s2) s2 crc2 true /\
+      U64.v length == Seq.length s2)
+    (ensures fun h0 res h1 ->
+      B.(modifies loc_none h0 h1) /\
+      Spec.crc32_matched (Seq.length s1 + Seq.length s2) (Seq.append s1 s2) res true)

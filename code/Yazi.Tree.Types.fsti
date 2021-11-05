@@ -4,6 +4,7 @@ module B = LowStar.Buffer
 module CB = LowStar.ConstBuffer
 module Seq = FStar.Seq
 module ST = FStar.HyperStack.ST
+module SK = Spec.Kraft
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
 module U8 = FStar.UInt8
@@ -49,33 +50,6 @@ type tree_len_t = tl: Ghost.erased nat{tl <= U32.v heap_size}
 
 type tree_depth_t = B.lbuffer U8.t (2 * U32.v l_codes + 1)
 
-// noextract
-// type cmp_spec_t =
-//     tree_len: nat 
-//   -> tree: Seq.seq ct_data{Seq.length tree == tree_len}
-//   -> depth: Seq.seq U8.t{Seq.length depth == 2 * U32.v l_codes + 1}
-//   -> i: U32.t
-//   -> j: U32.t
-//   -> Pure bool
-//   (requires (
-//     let open U32 in
-//     v i < tree_len /\ v i < Seq.length depth /\
-//     v j < tree_len /\ v j < Seq.length depth))
-//   (ensures fun _ -> True)
-
-// type cmp_impl (spec: cmp_spec_t) =
-//     tree_len: tree_len_t
-//   -> tree: B.lbuffer ct_data (Ghost.reveal tree_len)
-//   -> depth: tree_depth_t
-//   -> n: U32.t
-//   -> m: U32.t
-//   -> ST.Stack bool
-//   (requires fun h ->
-//     U32.v n < tree_len /\ U32.v m < tree_len /\ B.live h tree /\ B.live h depth)
-//   (ensures fun h0 res h1 ->
-//     B.modifies B.loc_none h0 h1 /\
-//     (res == true <==> spec tree_len (B.as_seq h1 tree) (B.as_seq h1 depth) n m))
-
 type heap_index_t (hl: heap_len_t) = i: U32.t{
   0 < U32.v i /\ U32.v i <= U32.v hl
 }
@@ -85,13 +59,10 @@ type heap_internal_index_t (hl: heap_len_t) = i: U32.t{
 }
 
 noeq type sort_ctx_t = {
-  // cmp_spec: Ghost.erased cmp_spec_t;
-  // cmp: cmp_impl cmp_spec;
-  
   heap: tree_heap_t;
   tree_len: tree_len_t;
   tree: B.buffer ct_data;
-
+  forest: Ghost.erased (Seq.seq SK.tree);
   depth: tree_depth_t;
 }
 

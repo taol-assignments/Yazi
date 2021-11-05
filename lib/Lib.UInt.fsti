@@ -114,7 +114,6 @@ let zero_prefix_vec (n: pos) (v: Seq.seq bool): Lemma
   (requires Seq.length v > 0)
   (ensures UInt.from_vec #(n + Seq.length v) (Seq.append (BV.zero_vec #n) v) ==
     UInt.from_vec #(Seq.length v) v) =
-  // [SMTPat (UInt.from_vec #(n + Seq.length v) (Seq.append (BV.zero_vec #n) v))] =
   let l = Seq.length v in
   let zero = BV.zero_vec #n in
   UInt.append_lemma #n #l zero v
@@ -123,7 +122,39 @@ let one_prefix_vec (n: pos) (v: Seq.seq bool): Lemma
   (requires Seq.length v > 0)
   (ensures UInt.from_vec #(n + Seq.length v) (Seq.append (BV.ones_vec #n) v) ==
     ((pow2 n) - 1) * pow2 (Seq.length v) + UInt.from_vec #(Seq.length v) v) =
-  // [SMTPat (UInt.from_vec #(n + Seq.length v) (Seq.append (BV.ones_vec #n) v))] =
   let l = Seq.length v in
   let one = BV.ones_vec #n in
   UInt.append_lemma #n #l one v
+
+let rec pow2_mask (n: pos): Lemma
+  (ensures Seq.equal (UInt.to_vec #n ((pow2 n) - 1)) (BV.ones_vec #n)) =
+  match n with
+  | 1 -> ()
+  | _ -> pow2_mask (n - 1)
+
+#push-options "--fuel 1 --ifuel 1"
+let rec pow2_logxor (#n: pos) (v: UInt.uint_t n): Lemma
+  (requires Seq.equal
+    (UInt.to_vec (UInt.logxor v ((pow2 n) - 1)))
+    (BV.ones_vec #n))
+  (ensures v == 0) =
+  match n with
+  | 1 -> ()
+  | _ -> pow2_logxor #(n - 1) (v / 2)
+
+// let rec logxor_vec_zero (#n: pos) (a b: BV.bv_t n): Lemma
+//   (requires Seq.equal (BV.logxor_vec a b) b)
+//   (ensures Seq.equal a (BV.zero_vec #n)) =
+//   let open Lib.Seq in
+//   match n with
+//   | 1 -> ()
+//   | _ ->
+//     assert(forall i. i > 0 ==> a.[i] = (Seq.tail a).[i - 1]);
+//     assert(forall i. i > 0 ==> b.[i] = (Seq.tail b).[i - 1]);
+//     logxor_vec_zero #(n - 1) (Seq.tail a) (Seq.tail b)
+
+// let logxor_zero (#n: pos) (a b: UInt.uint_t n): Lemma
+//   (requires UInt.logxor a b == b)
+//   (ensures a == 0) =
+//   logxor_vec_zero (UInt.to_vec a) (UInt.to_vec b);
+//   assert(UInt.from_vec (UInt.to_vec a) == 0)

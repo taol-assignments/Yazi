@@ -218,7 +218,7 @@ crc32_table_gen: dist/Makefile.basic
 	   -I $(KREMLIN_HOME)/include \
 	   -I $(KREMLIN_HOME)/kremlib/dist/minimal \
 	   code/c/Yazi_CRC32_Table_Codegen.c dist/Yazi_CRC32_Table.c dist/Yazi_CRC32_Impl.c\
-	   -o ./dist/crc32_table_gen
+	   -g -o ./dist/crc32_table_gen
 	./dist/crc32_table_gen > ./dist/Yazi_CRC32_Impl_Table.inc
 	sed -i \
           '/crc32_combine64/c\#include "Yazi_CRC32_Impl_Table.inc"' \
