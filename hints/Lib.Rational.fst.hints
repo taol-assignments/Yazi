@@ -1,5 +1,5 @@
 [
-  "_\u0011¶\u0001ŠnýýÇ\u0005\u000fê˜ê†‚",
+  ".öØ \u0013)é¾·Q±È¼})Ó",
   [
     [
       "Lib.Rational.eq_refl",
@@ -14,7 +14,7 @@
         "primitive_Prims.op_Equality", "projection_inverse_BoxBool_proj_0"
       ],
       0,
-      "c4685e272ae8335884f4fc6a54581316"
+      "71f16afaa20f459414346332c9b6361d"
     ],
     [
       "Lib.Rational.eq_sym",
@@ -29,7 +29,7 @@
         "primitive_Prims.op_Equality", "primitive_Prims.op_Multiply"
       ],
       0,
-      "7e114fa176334c3302678271899dc457"
+      "47a03692576450c40f9a8b66702398b1"
     ],
     [
       "Lib.Rational.eq_trans",
@@ -56,7 +56,7 @@
         "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "866c30cd97ec06bfd6c74f85c103520b"
+      "5de6c0726b96ca16f05dcff9aca62175"
     ],
     [
       "Lib.Rational.eq_req",
@@ -71,7 +71,7 @@
         "primitive_Prims.op_Equality", "projection_inverse_BoxBool_proj_0"
       ],
       0,
-      "7a2e8f915f7349756ecc15ed6842f174"
+      "5213d68e5fe029a074ce7d6115416826"
     ],
     [
       "Lib.Rational.le_eq",
@@ -95,7 +95,7 @@
         "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "faa28dcca0fdc3d8acb03bd4e1257889"
+      "df1eb78beb40472ecc7a8183d591e782"
     ],
     [
       "Lib.Rational.le_refl",
@@ -103,12 +103,12 @@
       2,
       1,
       [
-        "@query", "b2t_def", "equation_Lib.Rational.op_Less_Equals_Dollar",
+        "@query", "equation_Lib.Rational.op_Less_Equals_Dollar",
         "primitive_Prims.op_LessThanOrEqual",
         "projection_inverse_BoxBool_proj_0"
       ],
       0,
-      "124c8d33f636e9d4b49e8ceb4cf56b47"
+      "e96e7d8cc844785d1b4cc2b3e0e978a5"
     ],
     [
       "Lib.Rational.le_antisym",
@@ -126,7 +126,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "1d971980c7a3b1f5d4aba7afe73b1e53"
+      "77c34d2b0e9790d6dbd8340b8f53edf2"
     ],
     [
       "Lib.Rational.le_trans",
@@ -134,7 +134,7 @@
       2,
       1,
       [
-        "@MaxIFuel_assumption", "@query", "b2t_def",
+        "@MaxIFuel_assumption", "@query",
         "equation_FStar.Pervasives.Native.fst",
         "equation_FStar.Pervasives.Native.snd",
         "equation_Lib.Rational.op_Less_Equals_Dollar",
@@ -149,7 +149,7 @@
         "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "9b6e6851300b5c46a047b8707e4129a4"
+      "609166e173788e3f43f7b3c86f6ac74f"
     ],
     [
       "Lib.Rational.lt_eq_l",
@@ -173,7 +173,7 @@
         "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "2b15fabee344e5cd1fbd49a888b1ac97"
+      "e01a21d2fb7afa75e6055f413173b18e"
     ],
     [
       "Lib.Rational.lt_eq_r",
@@ -197,7 +197,7 @@
         "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "251806f0bcc8d9462df5cdcb29675831"
+      "f0f9b439f2cc49fdefa9943c29108647"
     ],
     [
       "Lib.Rational.lt_not_eq",
@@ -219,7 +219,7 @@
         "refinement_kinding_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "87c4cbb84b444093e59b596e7e56c921"
+      "3f165f6fbed1a0043f6b0efb77a2add9"
     ],
     [
       "Lib.Rational.lt_trans",
@@ -241,7 +241,7 @@
         "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "7789a24e77360b71d95931cd6eee38cd"
+      "3a909c13f05fb3508ac2dd002b11865b"
     ],
     [
       "Lib.Rational.lt_le_trans",
@@ -265,7 +265,7 @@
         "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "b6b065d5672edba0dfaee11d0d9a74dd"
+      "c09908899a036fed5017eb1fd024ba4d"
     ],
     [
       "Lib.Rational.op_Plus_Dollar",
@@ -286,7 +286,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "0dea07a77ef9e071c178f407aaa32191"
+      "21effafbc72be220aa22c0ccd81ef088"
     ],
     [
       "Lib.Rational.plus_eq_l",
@@ -313,7 +313,7 @@
         "projection_inverse_FStar.Pervasives.Native.Mktuple2__2"
       ],
       0,
-      "8d794510a237ad0f240485cb40616f51"
+      "c5041c4c5d379f4443f04b6f38ca2a87"
     ],
     [
       "Lib.Rational.plus_eq_r",
@@ -326,9 +326,7 @@
         "equation_FStar.Pervasives.Native.fst",
         "equation_FStar.Pervasives.Native.snd",
         "equation_Lib.Rational.op_Equals_Dollar",
-        "equation_Lib.Rational.op_Plus_Dollar", "equation_Lib.Rational.rat",
-        "equation_Prims.pos",
-        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple2",
+        "equation_Lib.Rational.op_Plus_Dollar", "equation_Prims.pos",
         "function_token_typing_Prims.__cache_version_number__",
         "primitive_Prims.op_Addition", "primitive_Prims.op_Equality",
         "primitive_Prims.op_Multiply",
@@ -340,7 +338,7 @@
         "projection_inverse_FStar.Pervasives.Native.Mktuple2__2"
       ],
       0,
-      "f039597aa60101b26b94ca784f900c17"
+      "3bc23b6abc9588fa0f82ba86658f7642"
     ],
     [
       "Lib.Rational.plus_comm",
@@ -357,7 +355,7 @@
         "primitive_Prims.op_Multiply", "projection_inverse_BoxBool_proj_0"
       ],
       0,
-      "4e4ef57177f63f1bb7ee102a308f908a"
+      "95efcdc5e4c04f75fb4409dd53f830b2"
     ],
     [
       "Lib.Rational.plus_zero_l",
@@ -388,7 +386,7 @@
         "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "c965759c15fa06cefce4a3b82ddbb102"
+      "149eece3dc89a1523b288972f11147ce"
     ],
     [
       "Lib.Rational.plus_zero_r",
@@ -400,6 +398,7 @@
         "data_typing_intro_FStar.Pervasives.Native.Mktuple2@tok",
         "equation_FStar.Pervasives.Native.fst",
         "equation_FStar.Pervasives.Native.snd",
+        "equation_Lib.Rational.op_Equals_Dollar",
         "equation_Lib.Rational.op_Plus_Dollar", "equation_Lib.Rational.rat",
         "equation_Prims.eqtype", "equation_Prims.pos",
         "fuel_guarded_inversion_FStar.Pervasives.Native.tuple2",
@@ -417,7 +416,7 @@
         "typing_Lib.Rational.op_Plus_Dollar"
       ],
       0,
-      "15341dc62323caf76d6038617a6c1cfc"
+      "c03292668ac7ff077e2c628438014792"
     ],
     [
       "Lib.Rational.plus_non_zero_l",
@@ -448,28 +447,53 @@
         "typing_Lib.Rational.op_Plus_Dollar"
       ],
       0,
-      "f31a6becd8136aaad1b686c0a071748f"
+      "2ec7e1a2fe7a522b6dcc47ebe0312c2e"
+    ],
+    [
+      "Lib.Rational.plus_assoc",
+      1,
+      0,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "equation_FStar.Pervasives.Native.fst",
+        "equation_FStar.Pervasives.Native.snd",
+        "equation_Lib.Rational.op_Equals_Dollar",
+        "equation_Lib.Rational.op_Plus_Dollar", "equation_Lib.Rational.rat",
+        "equation_Prims.pos",
+        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple2",
+        "function_token_typing_Prims.__cache_version_number__",
+        "int_inversion", "int_typing", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_Multiply",
+        "proj_equation_FStar.Pervasives.Native.Mktuple2__1",
+        "proj_equation_FStar.Pervasives.Native.Mktuple2__2",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_FStar.Pervasives.Native.Mktuple2__1",
+        "projection_inverse_FStar.Pervasives.Native.Mktuple2__2"
+      ],
+      0,
+      "d2a7a4adac689e761042ba65f29eeb9d"
     ],
     [
       "Lib.Rational.op_Star_Dollar",
       1,
-      2,
-      1,
+      0,
+      0,
       [
         "@MaxIFuel_assumption", "@query",
-        "Prims_pretyping_ae567c2fb75be05905677af440075565",
-        "data_elim_FStar.Pervasives.Native.Mktuple2",
         "equation_FStar.Pervasives.Native.snd", "equation_Lib.Rational.rat",
-        "equation_Prims.pos",
-        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple2",
-        "function_token_typing_Prims.__cache_version_number__",
-        "primitive_Prims.op_Multiply",
-        "proj_equation_FStar.Pervasives.Native.Mktuple2__2",
+        "equation_Prims.eqtype", "equation_Prims.pos",
+        "function_token_typing_Prims.int", "primitive_Prims.op_Multiply",
         "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "refinement_kinding_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "8c2692f3a767a08a02eb30adbf86da54"
+      "80a05adea209c582c8cef5c7e69a1b2b"
     ],
     [
       "Lib.Rational.common_factor_cancel",
@@ -500,7 +524,7 @@
         "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "e10be8d0049f29c663cd858ecdb8ced2"
+      "58a4352c90e9a8405424b1160c019706"
     ],
     [
       "Lib.Rational.mul_zero_l",
@@ -521,7 +545,7 @@
         "projection_inverse_FStar.Pervasives.Native.Mktuple2__2"
       ],
       0,
-      "d705cb779a0482ae878d12751ca0f015"
+      "65c3c8ad4ff9fcaee95f5b2ebb82f4cf"
     ],
     [
       "Lib.Rational.mul_zero_r",
@@ -542,7 +566,7 @@
         "projection_inverse_FStar.Pervasives.Native.Mktuple2__2"
       ],
       0,
-      "b6b855dbd54950b66ef508c521f4125f"
+      "d7a815d07e32acfb4e97158cbe6dfc43"
     ],
     [
       "Lib.Rational.mul_comm",
@@ -559,7 +583,7 @@
         "projection_inverse_BoxBool_proj_0"
       ],
       0,
-      "9d3cd7fb0989b99365e0f63cfe5a0a01"
+      "43852475478eb35463a1041f0ac45861"
     ],
     [
       "Lib.Rational.mul_assoc",
@@ -576,7 +600,35 @@
         "equation_Prims.pos",
         "fuel_guarded_inversion_FStar.Pervasives.Native.tuple2",
         "function_token_typing_Prims.__cache_version_number__",
-        "lemma_Lib.Rational.mul_comm", "primitive_Prims.op_Equality",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_Multiply",
+        "proj_equation_FStar.Pervasives.Native.Mktuple2__1",
+        "proj_equation_FStar.Pervasives.Native.Mktuple2__2",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_FStar.Pervasives.Native.Mktuple2__1",
+        "projection_inverse_FStar.Pervasives.Native.Mktuple2__2"
+      ],
+      0,
+      "12441d0157505adb481bd47bdcfe2c59"
+    ],
+    [
+      "Lib.Rational.distributivity_add_left",
+      1,
+      0,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "equation_FStar.Pervasives.Native.fst",
+        "equation_FStar.Pervasives.Native.snd",
+        "equation_Lib.Rational.op_Equals_Dollar",
+        "equation_Lib.Rational.op_Plus_Dollar",
+        "equation_Lib.Rational.op_Star_Dollar", "equation_Lib.Rational.rat",
+        "equation_Prims.eqtype", "equation_Prims.pos",
+        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple2",
+        "function_token_typing_Prims.__cache_version_number__",
+        "function_token_typing_Prims.int", "lemma_Lib.Rational.eq_trans",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_Equality",
         "primitive_Prims.op_Multiply",
         "proj_equation_FStar.Pervasives.Native.Mktuple2__1",
         "proj_equation_FStar.Pervasives.Native.Mktuple2__2",
@@ -584,10 +636,13 @@
         "projection_inverse_BoxInt_proj_0",
         "projection_inverse_FStar.Pervasives.Native.Mktuple2__1",
         "projection_inverse_FStar.Pervasives.Native.Mktuple2__2",
-        "typing_Lib.Rational.op_Star_Dollar"
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "refinement_kinding_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "typing_FStar.Pervasives.Native.snd"
       ],
       0,
-      "c02e4c48952a318fa9cfd941aa6c2e4d"
+      "5dff4713da304091bb2d09fcfac67fd5"
     ],
     [
       "Lib.Rational.mul_eq_l",
@@ -610,7 +665,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "4db99aac0e8be0007a2b6868e46ae6f9"
+      "06f07c1015b1343a1e4c4c3ef52de9d7"
     ],
     [
       "Lib.Rational.mul_eq_r",
@@ -633,7 +688,7 @@
         "projection_inverse_BoxInt_proj_0"
       ],
       0,
-      "5092a687fdf9e38effa782550c3a29d9"
+      "a1f0c4befcae30e87be4e58a0e4eb2b4"
     ],
     [
       "Lib.Rational.sigma",
@@ -658,7 +713,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "c6dca49f9c12b53b21b290303eb7af79"
+      "ed67c8aadc4fcf15b1a10c0e65139543"
     ],
     [
       "Lib.Rational.sigma_mul_distributivity",
@@ -682,7 +737,7 @@
         "refinement_kinding_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "e30da3f07db533cbd21875f0dfeb4540"
+      "fbd5262f415d165c06aee96d443e6f16"
     ],
     [
       "Lib.Rational.sigma_mul_distributivity",
@@ -734,7 +789,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "323eac7d111d3f7c7b9143ab0ae9473c"
+      "a6daa33ec06d3003096696d17678b758"
     ],
     [
       "Lib.Rational.sigma_split",
@@ -751,7 +806,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "10885a9f65d613e5ccbdcbe165f4010a"
+      "7d3e5f630b4ab22da0c9f10a5fc8adec"
     ],
     [
       "Lib.Rational.sigma_split",
@@ -794,7 +849,7 @@
         "unit_inversion", "unit_typing", "well-founded-ordering-on-nat"
       ],
       0,
-      "f039fe4872ab0f1dc31a5c7c3d012a69"
+      "cbbf6002c6da61c1f1e4b720cab4e5ef"
     ],
     [
       "Lib.Rational.sigma_gt_zero",
@@ -809,7 +864,7 @@
         "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c"
       ],
       0,
-      "fd87c850a8cf1811526f84bd34e9a4a3"
+      "6fe17e05cc4b2bc2c9e196cdd9264af0"
     ],
     [
       "Lib.Rational.sigma_gt_zero",
@@ -829,7 +884,6 @@
         "data_typing_intro_FStar.Pervasives.Native.Mktuple2@tok",
         "equation_FStar.Pervasives.Native.fst",
         "equation_FStar.Pervasives.Native.snd",
-        "equation_Lib.Rational.op_Equals_Dollar",
         "equation_Lib.Rational.op_Less_Dollar",
         "equation_Lib.Rational.op_Plus_Dollar", "equation_Lib.Rational.rat",
         "equation_Prims.eqtype", "equation_Prims.l_Forall",
@@ -859,15 +913,13 @@
         "refinement_interpretation_Tm_refine_edccc421660c61e3591d98071500d795",
         "refinement_kinding_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
         "token_correspondence_Lib.Rational.sigma.fuel_instrumented",
-        "typing_FStar.Pervasives.Native.__proj__Mktuple2__item___2",
-        "typing_FStar.Pervasives.Native.fst",
         "typing_FStar.Pervasives.Native.snd",
         "typing_Lib.Rational.op_Less_Dollar",
         "typing_Lib.Rational.op_Plus_Dollar", "typing_Lib.Rational.sigma",
         "well-founded-ordering-on-nat"
       ],
       0,
-      "3fc1f1c5ce2b0708d2e61479b0107812"
+      "dec4e4097cab597b97b35e96e1f01a8b"
     ],
     [
       "Lib.Rational.plus_non_zero_r",
@@ -897,7 +949,7 @@
         "typing_Lib.Rational.op_Plus_Dollar"
       ],
       0,
-      "81a159664283aa0c61a11d5ae26c084d"
+      "7ec1f33d1b969afc6bbdf28d718d460d"
     ],
     [
       "Lib.Rational.sigma_pos_lt",
@@ -923,7 +975,7 @@
         "typing_Lib.Rational.op_Plus_Dollar", "typing_Lib.Rational.sigma"
       ],
       0,
-      "976c221250cdf19b0f23cc12e4a64130"
+      "13ca3e228956e36bdbf072e9902e31fb"
     ],
     [
       "Lib.Rational.sigma_extensionality",
@@ -940,7 +992,7 @@
         "refinement_interpretation_Tm_refine_c0cc49387d420e9016a9714483fe830e"
       ],
       0,
-      "564b3e36bd3a58743d0e72f4ea86b60d"
+      "b286c3aeb1c1603cc20062141d8c5dd6"
     ],
     [
       "Lib.Rational.sigma_extensionality",
@@ -987,7 +1039,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "77482680bcddc9fd0ee4f6e4231f87cf"
+      "134e80a42f99b024de8842c74b94576a"
     ],
     [
       "Lib.Rational.pow2_subtraction",
@@ -1017,7 +1069,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "981585afaca06eb4153153258b9cf5c6"
+      "c85dde9be1f27a22f25b09a5346a010d"
     ]
   ]
 ]

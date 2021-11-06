@@ -1,5 +1,5 @@
 [
-  "õ‡\u0016$\u0016I•ùDq‰ˆ4g%.",
+  "Ò8÷¬ÿÒulÚßßÈˇ˙”2",
   [
     [
       "Yazi.CRC32.Impl.unfold_table_group_ghost",
@@ -35,7 +35,7 @@
         "typing_LowStar.Monotonic.Buffer.len"
       ],
       0,
-      "c044635f52d54f588cae58416719089e"
+      "6cdc7b142c96703d38eb6a8c114c20ad"
     ],
     [
       "Yazi.CRC32.Impl.unfold_table_group",
@@ -67,6 +67,7 @@
         "lemma_FStar.Ghost.reveal_hide", "lemma_FStar.Map.lemma_ContainsDom",
         "lemma_FStar.UInt32.vu_inv",
         "lemma_LowStar.Monotonic.Buffer.len_gsub",
+        "lemma_LowStar.Monotonic.Buffer.length_null_1",
         "lemma_LowStar.Monotonic.Buffer.modifies_refl",
         "primitive_Prims.op_Addition", "primitive_Prims.op_AmpAmp",
         "primitive_Prims.op_LessThanOrEqual",
@@ -79,6 +80,7 @@
         "refinement_interpretation_Tm_refine_05e15190c946858f68c69156f585f95a",
         "refinement_interpretation_Tm_refine_0ea1fba779ad5718e28476faeef94d56",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_4fa8e2dd96f8bb1e23e6574326e9e019",
         "refinement_interpretation_Tm_refine_d16a51bd284cbc1ab6577446a1baa77f",
         "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
         "refinement_interpretation_Tm_refine_fd646b70472f87560eac2fae6ac3b65f",
@@ -89,10 +91,11 @@
         "typing_FStar.UInt32.uint_to_t", "typing_FStar.UInt32.v",
         "typing_LowStar.Buffer.trivial_preorder",
         "typing_LowStar.Monotonic.Buffer.len",
-        "typing_LowStar.Monotonic.Buffer.loc_none"
+        "typing_LowStar.Monotonic.Buffer.loc_none",
+        "typing_LowStar.Monotonic.Buffer.mgsub"
       ],
       0,
-      "fa6c0c393fedd3fdca8b88823d372989"
+      "eff5fbd8f140337162442b0a365b65e8"
     ],
     [
       "Yazi.CRC32.Impl.crc32_pre_cond",
@@ -101,7 +104,7 @@
       1,
       [ "@query" ],
       0,
-      "b6e900c22c539fd9ab01443350ea1301"
+      "e6447055c6875dc13fd16ee268ff1638"
     ],
     [
       "Yazi.CRC32.Impl.crc32_impl",
@@ -131,32 +134,47 @@
         "typing_Yazi.CRC32.Impl.__proj__Mkcrc32_init_state__item__dlen"
       ],
       0,
-      "cdcc7b40e57b23fc50348716420d67c5"
+      "029e6de156482d875c4870d36699203f"
     ],
     [
-      "Yazi.CRC32.Impl.gf2_matrix_times",
+      "Yazi.CRC32.Impl.crc32_combine64",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "lemma_FStar.Seq.Base.lemma_len_append",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_FStar.Ghost.reveal", "typing_FStar.Seq.Base.length",
+        "typing_FStar.Seq.Base.seq", "typing_FStar.UInt8.t"
+      ],
+      0,
+      "c74884cd2ed6b321714f6756561329ea"
+    ],
+    [
+      "Yazi.CRC32.Impl.crc32_combine",
       1,
       2,
       1,
       [
         "@MaxIFuel_assumption", "@query",
-        "refinement_interpretation_Tm_refine_898e73b6a1f3d8fc62f6f9b2dad23dac"
+        "equation_FStar.Int.Cast.uint32_to_uint64", "equation_Prims.eqtype",
+        "equation_Prims.nat", "lemma_FStar.Seq.Base.lemma_len_append",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_b2acce92fc7ecb62fc8304654d92f749",
+        "refinement_interpretation_Tm_refine_d15a9766d4c1ec94d1574f05b54a618b",
+        "refinement_interpretation_Tm_refine_e6f997e22ce4fe827d267ff661638ad5",
+        "typing_FStar.Ghost.reveal",
+        "typing_FStar.Int.Cast.uint32_to_uint64",
+        "typing_FStar.Seq.Base.length", "typing_FStar.Seq.Base.seq",
+        "typing_FStar.UInt8.t"
       ],
       0,
-      "47dd875aa7c7c697870c74ae81afa325"
-    ],
-    [
-      "Yazi.CRC32.Impl.gf2_matrix_square",
-      1,
-      2,
-      1,
-      [
-        "@MaxIFuel_assumption", "@query", "primitive_Prims.op_Multiply",
-        "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_898e73b6a1f3d8fc62f6f9b2dad23dac"
-      ],
-      0,
-      "4b5879e55fe34b91bfbf86fd990003b2"
+      "f86ecb51725634da4213775349c372a2"
     ]
   ]
 ]

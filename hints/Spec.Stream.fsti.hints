@@ -13,7 +13,7 @@
         "refinement_interpretation_Tm_refine_f0a0dce560aab3bc95dcee0815938e6c"
       ],
       0,
-      "e31a0d3baa7bd3f71f1b86259b40f0e3"
+      "85316f295f748a6f31c4a8d0b793bd91"
     ],
     [
       "Spec.Stream.total_in",
@@ -27,7 +27,7 @@
         "refinement_interpretation_Tm_refine_f0a0dce560aab3bc95dcee0815938e6c"
       ],
       0,
-      "ba62cec938fada17596ede4092260dbc"
+      "9acdcda94e86cb772620f8d7ef9c3e4e"
     ],
     [
       "Spec.Stream.avail_out",
@@ -41,7 +41,7 @@
         "refinement_interpretation_Tm_refine_f0a0dce560aab3bc95dcee0815938e6c"
       ],
       0,
-      "68cb09f4fb4e332391b8706ea4d1acbe"
+      "3d5f0ce89a633d9fe5dffbbc60447168"
     ],
     [
       "Spec.Stream.total_out",
@@ -55,7 +55,7 @@
         "refinement_interpretation_Tm_refine_f0a0dce560aab3bc95dcee0815938e6c"
       ],
       0,
-      "d568aee1b86db123bd84d6b07b8769a3"
+      "768993cdcda60e13964cdb8a68405682"
     ],
     [
       "Spec.Stream.adler",
@@ -69,7 +69,7 @@
         "refinement_interpretation_Tm_refine_f0a0dce560aab3bc95dcee0815938e6c"
       ],
       0,
-      "29b8c9a44adb2d54a553fa3a663faa3f"
+      "92f0a5eaa9bb7aab63076a7c7798c7f0"
     ],
     [
       "Spec.Stream.avail_in_unchange",
@@ -83,7 +83,7 @@
         "refinement_interpretation_Tm_refine_f0a0dce560aab3bc95dcee0815938e6c"
       ],
       0,
-      "240e119f605a68a6a2d8dc080e2dd812"
+      "81a8d73ec57c76c28809a1cb88143219"
     ],
     [
       "Spec.Stream.total_in_unchange",
@@ -97,7 +97,7 @@
         "refinement_interpretation_Tm_refine_f0a0dce560aab3bc95dcee0815938e6c"
       ],
       0,
-      "3a0fa86495ab52cb7b0542266e62e6cc"
+      "85a451ac460bde6b552f72f1e82259a2"
     ],
     [
       "Spec.Stream.avail_out_unchange",
@@ -111,7 +111,7 @@
         "refinement_interpretation_Tm_refine_f0a0dce560aab3bc95dcee0815938e6c"
       ],
       0,
-      "fb1a2f647d39c48a8479e7e5625d673c"
+      "1d7a74da59e8a98807f1e044d03aff2e"
     ],
     [
       "Spec.Stream.total_out_unchange",
@@ -125,7 +125,7 @@
         "refinement_interpretation_Tm_refine_f0a0dce560aab3bc95dcee0815938e6c"
       ],
       0,
-      "f1bf983f9ce9404de98d54fa24f4ab56"
+      "085e6bbfa7246bb8456afb32c5d7994b"
     ],
     [
       "Spec.Stream.adler_unchange",
@@ -139,7 +139,7 @@
         "refinement_interpretation_Tm_refine_f0a0dce560aab3bc95dcee0815938e6c"
       ],
       0,
-      "04dcd83d78071300255898ad2fac0b81"
+      "5fa8507ce48ce00937e57cae31f21acd"
     ],
     [
       "Spec.Stream.adler_valid",
@@ -158,7 +158,7 @@
         "typing_LowStar.Monotonic.Buffer.len"
       ],
       0,
-      "167691eb3c37d183ac83207ea2cc2c36"
+      "8d055f0bd1475aaa25bdd914f407c6a9"
     ],
     [
       "Spec.Stream.next_in_valid",
@@ -181,7 +181,7 @@
         "typing_LowStar.Monotonic.Buffer.len"
       ],
       0,
-      "18773ee55540ed4b2fbab1ba44a192b9"
+      "e4c794f750c2133aaeb6b2c9165371c3"
     ],
     [
       "Spec.Stream.next_out_valid",
@@ -206,7 +206,7 @@
         "typing_LowStar.Monotonic.Buffer.mbuffer"
       ],
       0,
-      "77415ed356998116d10de7336fef06b7"
+      "e12f0a3ead7f6cdbc285dda11b26c75d"
     ],
     [
       "Spec.Stream.stream_valid",
@@ -222,7 +222,7 @@
         "refinement_interpretation_Tm_refine_573cfed777dae20cc82e8fef9622857e"
       ],
       0,
-      "08a0dba5df7e9d2ffe4cf95f978d9782"
+      "b0a256a8ed2fa3042e3689868d828cfd"
     ],
     [
       "Spec.Stream.read_buf_size",
@@ -240,7 +240,7 @@
         "typing_FStar.UInt32.t", "typing_LowStar.Buffer.trivial_preorder"
       ],
       0,
-      "0b608321a441d427103dc84eb08cdf3c"
+      "1521451c7792e7a2000272df5a60176c"
     ],
     [
       "Spec.Stream.read_buf_pre",
@@ -267,7 +267,7 @@
         "typing_FStar.UInt8.t", "typing_LowStar.Buffer.trivial_preorder"
       ],
       0,
-      "b4566764de110906d69ed6e3fb746c25"
+      "5569bd9b0135a5ce21009baac3723f09"
     ],
     [
       "Spec.Stream.read_buf_post",
@@ -313,7 +313,7 @@
         "typing_LowStar.Monotonic.Buffer.g_is_null"
       ],
       0,
-      "2c594f01a224e55835ee56a1bf274217"
+      "1482aed97ece3d38ff9682d76d10a203"
     ]
   ]
 ]
