@@ -2,8 +2,10 @@ module Yazi.CRC32.Impl
 module B = LowStar.Buffer
 module BV = FStar.BitVector
 module Cast = FStar.Int.Cast
+module List = FStar.List.Tot
 module Math = FStar.Math.Lemmas
 module U32 = FStar.UInt32
+module U64 = FStar.UInt64
 module UInt = FStar.UInt
 
 open FStar.Mul
@@ -340,7 +342,7 @@ inline_for_extraction let do4
 
   (crc', B.sub p.stream 4ul (p.slen -^ 4ul), Ghost.hide (p.consumed @| seq_32bit))
 
-inline_for_extraction let rec iteration_4
+let rec iteration_4
   (tg: table_group)
   (p: crc32_current_state)
   (d: Ghost.erased crc32_init_state)
@@ -540,7 +542,10 @@ let rec do_gf2_matrix_times
   else
     sum'
 
-let gf2_matrix_times nzeros buf vec =
+let gf2_matrix_times (nzeros: Ghost.erased pos) (buf: matrix_buf) (vec: U32.t):
+  ST.Stack (Spec.matrix_times_product nzeros vec)
+  (requires fun h -> Spec.is_matrix_buf h nzeros buf)
+  (ensures fun h0 res h1 -> B.(modifies loc_none h0 h1)) =
   let open U32 in
   let vec' = Ghost.hide (zero_vec_l nzeros (UInt.to_vec (v vec))) in
   let ext = Ghost.hide (bit_extract #(nzeros + 32) vec' 0) in
@@ -558,8 +563,8 @@ let gf2_matrix_times nzeros buf vec =
     poly_mod_zero #(nzeros + 32) (bit_extract #(nzeros + 32) vec' 0);
     assert(Seq.equal (UInt.to_vec (v 0ul)) (poly_mod #(nzeros + 32) current));
     0ul
-  end in
-
+  end
+  in
   do_gf2_matrix_times nzeros vec buf 1ul (vec >>^ 1ul) sum
 
 inline_for_extraction
@@ -599,7 +604,12 @@ let rec do_gf2_matrix_square
   b1.(i) <- r;
   if i <^ 31ul then do_gf2_matrix_square nzeros b0 b1 (i +^ 1ul) else ()
 
-let gf2_matrix_square nzeros b0 b1 = do_gf2_matrix_square nzeros b0 b1 0ul
+let gf2_matrix_square (nzeros: Ghost.erased pos) (b0: matrix_buf) (b1: matrix_buf):
+  ST.Stack unit
+  (requires fun h -> B.live h b1 /\ B.disjoint b0 b1 /\ Spec.is_matrix_buf h nzeros b0)
+  (ensures fun h0 _ h1 ->
+     B.modifies (B.loc_buffer b1) h0 h1 /\ Spec.is_matrix_buf h1 (nzeros * 2) b1) =
+  do_gf2_matrix_square nzeros b0 b1 0ul
 
 let combine_len_aux
   (init_len post_len: UInt.uint_t 64) (cur_len next_len: U64.t) (i: U32.t): Lemma
@@ -723,11 +733,13 @@ let rec do_crc32_combine
         init_crc crc (U32.add i 1ul) even odd
   end
 
+[@ (CPrologue "#if 0")
+   (CEpilogue "#endif")]
 assume val init_magic_matrix: m: matrix_buf -> ST.Stack unit
   (requires fun h -> B.live h m)
   (ensures fun h0 _ h1 -> B.modifies (B.loc_buffer m) h0 h1 /\ is_matrix_buf h1 8 m)
 
-let crc32_combine_impl s1 s2 crc1 crc2 length =
+let crc32_combine64 s1 s2 crc1 crc2 length =
   let open U64 in
   if length =^ 0UL then
     crc1
@@ -744,3 +756,274 @@ let crc32_combine_impl s1 s2 crc1 crc2 length =
     ST.pop_frame ();
     U32.logxor crc1' crc2
   end
+
+(**** CRC-32 Table Generation Functions. ****)
+#set-options "--z3rlimit 120 --z3seed 1"
+inline_for_extraction
+private let poly_mask (i: U32.t{(U32.v i) < 32}) (p: U32.t{
+  let p' = U32.v p in
+  let i' = U32.v i in
+  forall j. {:pattern UInt.nth p' j}
+    (j >= i' ==> UInt.nth p' j == false) /\
+    (j < i' ==> UInt.nth p' j == Seq.index gf2_polynomial32 j)
+}): Tot (res: U32.t{
+  let res' = U32.v res in
+  let i' = U32.v i in
+  forall j. {:pattern UInt.nth res' j}
+    (j > i' ==> UInt.nth res' j == false) /\
+    (j <= i' ==> UInt.nth res' j == Seq.index gf2_polynomial32 j)
+}) =
+  if i = 0ul || i = 1ul || i = 2ul || i = 4ul || i = 5ul || i = 7ul || i = 8ul ||
+  i = 10ul || i = 11ul || i = 12ul || i = 16ul || i = 22ul || i = 23ul || i = 26ul then
+  begin
+    let open U32 in
+    let shift = 31ul -^ i in
+    let mask = 1ul <<^ shift in
+    let res = p |^ mask in
+    
+    mask_logor_status #32 (v shift) (v mask) (v p);
+    assert(forall j. {:pattern UInt.nth (UInt.logor (v p) (v mask)) j}
+      j <> (32 - 1 - v shift) ==>
+      UInt.nth (UInt.logor (v p) (v mask)) j == UInt.nth (v p) j);
+    assert_norm(Seq.index gf2_polynomial32 (v i) == true);
+    res
+  end else
+    p
+
+[@ (CPrologue "#ifdef YAZI_CRC32_TABLE_GEN")
+   (CEpilogue "#endif")]
+private let rec calc_polynomial (i: U32.t{U32.v i < 32}) (p: U32.t{
+  let i' = U32.v i in
+  let p' = U32.v p in
+  forall j. {:pattern UInt.nth p' j}
+    (j >= i' ==> UInt.nth p' j == false) /\
+    (j < i' ==> UInt.nth p' j == Seq.index gf2_polynomial32 j)
+}): Tot crc32_polynomial (decreases U32.v (U32.sub 32ul i)) =
+  let open U32 in
+  let p' = poly_mask i p in
+  if i = 31ul then p' else calc_polynomial (i +^ 1ul) p'
+
+#set-options "--ifuel 64 --fuel 64"
+inline_for_extraction
+let gen_polynomial _: Tot crc32_polynomial =
+  let open FStar.Tactics in
+  assert(forall i. UInt.nth (U32.v 0ul) i == false) by (
+    let _ = forall_intro () in
+    norm [simplify]);
+
+  calc_polynomial 0ul 0ul
+#reset-options
+
+let poly_mod_head_zero (d: U32.t): Lemma
+  (requires UInt.nth (U32.v d) 31 == false)
+  (ensures poly_mod_correct 1 d (U32.shift_right d 1ul)) = ()
+
+let bv_one_aux (#n: pos) (v: BV.bv_t n): Lemma
+  (requires forall i.
+    (i < n - 1 ==> Seq.index v i == false) /\
+    (i == n - 1 ==> Seq.index v i == true))
+  (ensures UInt.from_vec v == 1) =
+  match n with
+  | 1 -> ()
+  | _ -> assert(Seq.equal (Seq.slice v 0 (n - 1)) (BV.zero_vec #(n - 1)))
+
+let logand_aux (#n: pos) (d: UInt.uint_t n): Lemma
+  (requires UInt.logand d 1 <> 1)
+  (ensures UInt.nth d (n - 1) == false) =
+  let res = UInt.logand d 1 in
+  uint_one_vec #n 1;
+  assert(forall i. i < n - 1 ==> UInt.nth res i == false);
+  if UInt.nth d (n - 1) then begin
+    assert(UInt.nth res (n - 1) == true);
+    bv_one_aux (UInt.to_vec res)
+  end else
+    ()
+
+let poly_xor_aux (d: U32.t) (p: crc32_polynomial): Lemma
+  (ensures forall i. {:pattern UInt.nth (U32.v (U32.logxor d p)) i}
+    UInt.nth (U32.v (U32.logxor d p)) i ==
+    Seq.index (poly_xor (UInt.to_vec (U32.v d))) i) = ()
+
+#set-options "--z3rlimit 200 --z3seed 1 --fuel 1 --ifuel 1"
+let poly_xor_poly_mod (d: U32.t) (p: crc32_polynomial): Lemma
+  (requires UInt.nth (U32.v d) 31 == true)
+  (ensures
+    poly_mod (zero_vec_l 1 (UInt.to_vec (U32.v d))) ==
+    poly_xor (UInt.to_vec (U32.v (U32.shift_right d 1ul)))) =
+  let open U32 in
+  let d' = UInt.to_vec (U32.v d) in
+  let d'' = zero_vec_l 1 d' in
+  let d''' = UInt.to_vec (U32.v (d >>^ 1ul)) in
+  assert(Seq.last d'' == true);
+  assert(Seq.index d'' 0 == false);
+  assert(forall i. i > 1 ==> Seq.index d'' i == UInt.nth (v d) (i - 1));
+  assert(Seq.equal (poly_mod d'') (poly_xor #32 (unsnoc d'')));
+  assert(forall i. i <= 31 ==> Seq.index d''' i == Seq.index d'' i);
+  assert(Seq.equal d''' (unsnoc d''))
+
+inline_for_extraction
+private let cell_xor (d: U32.t): Tot (res:U32.t{poly_mod_correct 1 d res}) =
+  let open U32 in
+  let p = gen_polynomial () in
+  let d' = d >>^ 1ul in
+  if (d &^ 1ul) = 1ul then begin
+    assert(UInt.logand (v d) 1 == 1);
+    assert(UInt.nth (v d) 31 == true);
+    let res = d' ^^ p in
+    poly_xor_aux d' p;
+    poly_xor_poly_mod d p;
+    res
+  end else begin
+    assert(UInt.logand (v d) 1 <> 1);
+    logand_aux (v d);
+    poly_mod_head_zero d;
+    d'
+  end
+
+let cell_xor_app (nzeros: pos) (d res: U32.t): Lemma
+  (requires poly_mod_correct nzeros d res)
+  (ensures poly_mod_correct (nzeros + 1) d (cell_xor res)) =
+  let open U32 in
+  let d' = UInt.to_vec (v d) in
+  let d'' = zero_vec_l nzeros d' in
+  let res' = UInt.to_vec (U32.v res) in
+  calc (==) {
+    UInt.to_vec (U32.v (cell_xor res));
+    =={poly_mod_correct_eq 1 res (cell_xor res)}
+    poly_mod (zero_vec_l 1 res');
+    =={poly_mod_correct_eq nzeros d res}
+    poly_mod (zero_vec_l 1 (poly_mod d''));
+    =={poly_mod_zero_prefix d'' 1}
+    poly_mod (zero_vec_l 1 d'');
+    =={zero_vec_l_app d' nzeros 1}
+    poly_mod (zero_vec_l (nzeros + 1) d');
+  }
+
+[@ (CPrologue "#ifdef YAZI_CRC32_TABLE_GEN")
+   (CEpilogue "#endif")]
+private let rec calc_cell (m: Ghost.erased U32.t) (i: U32.t{U32.v i <= 7}) (d: U32.t{
+  let open U32 in
+  (v i < 7 ==> poly_mod_correct (v (7ul -^ i)) m d) /\
+  (v i == 7 ==> (v d) == (v m))
+}): Tot (res:U32.t{
+  poly_mod_correct 8 m res
+}) (decreases U32.v i) =
+  let open U32 in
+  if i <^ 7ul then cell_xor_app (v (7ul -^ i)) m d else ();
+  if i = 0ul then
+    cell_xor d
+  else
+    calc_cell m (i -^ 1ul) (cell_xor d)
+
+#set-options "--fuel 1 --ifuel 1"
+[@ (CPrologue "#ifdef YAZI_CRC32_TABLE_GEN")
+   (CEpilogue "#endif")]
+private let rec gen_8bit_table
+  (i: U32.t{U32.v i <= 255}) (buf: table_buf): ST.Stack unit
+  (decreases 255 - U32.v i)
+  (requires fun h -> sub_table_correct (U32.v i) 8 h buf)
+  (ensures fun h0 _ h1 -> B.modifies (B.loc_buffer buf) h0 h1 /\ table_correct 8 h1 buf) =
+  let open U32 in
+  buf.(i) <- calc_cell i 7ul i;
+  if i <^ 255ul then gen_8bit_table (i +^ 1ul) buf else ()
+
+// let rec gen_8bit_table_tot (i: nat{i <= 1}) (l: list U32.t{
+//   List.length l == i /\
+//   (forall j. poly_mod_correct 4 (U32.uint_to_t j) (List.index l j))
+// }): Tot (res: list U32.t{
+//   List.length res == 1 /\
+//   (forall j. poly_mod_correct 8 (U32.uint_to_t j) (List.index res j))
+// })
+// (decreases 1 - i) =
+//   let i' = U32.uint_to_t i in
+//   let c = calc_cell i' 7ul i' in
+//   let l' = List.snoc (l, c) in
+//   // assert(forall j. j < List.length l ==> List.index l j == List.index l' j);
+//   admit();
+//   if i < 1 then begin
+//     gen_8bit_table_tot (i + 1) (List.snoc (l, c))
+//   end else
+//     (List.snoc (l, c))
+
+// let test = B.gcmalloc_of_list HS.root (normalize (gen_8bit_table_tot 0 []))
+
+[@ (CPrologue "#ifdef YAZI_CRC32_TABLE_GEN")
+   (CEpilogue "#endif")]
+private let rec gen_large_table
+  (nzeros: Ghost.erased pos)
+  (i: U32.t{U32.v i <= 255})
+  (t8 tp buf: table_buf):
+  ST.Stack unit
+    (decreases 255 - U32.v i)
+    (requires fun h ->
+      B.disjoint buf t8 /\
+      B.disjoint buf tp /\
+      table_correct 8 h t8 /\
+      table_correct nzeros h tp /\
+      sub_table_correct (U32.v i) (nzeros + 8) h buf /\
+      B.live h t8 /\ B.live h tp)
+    (ensures fun h0 _ h1 -> 
+      B.modifies (B.loc_buffer buf) h0 h1 /\ table_correct (nzeros + 8) h1 buf) =
+    let open U32 in
+    let p = B.index tp i in
+    let j = p &^ 0xFFul in
+    UInt.logand_le (v p) (v 0xFFul);
+    let p' = B.index t8 j in
+    let p'' = p >>^ 8ul in
+    poly_mod_correct_eq nzeros i p;
+    poly_mod_correct_eq 8 j p';
+    large_table_val_aux i nzeros p p' p'';
+    buf.(i) <- p' ^^ p'';
+    if i <^ 255ul then gen_large_table nzeros (i +^ 1ul) t8 tp buf else ()
+
+let gen_crc32_table t8 t16 t24 t32 =
+  gen_8bit_table 0ul t8;
+  gen_large_table 8 0ul t8 t8 t16;
+  gen_large_table 16 0ul t8 t16 t24;
+  gen_large_table 24 0ul t8 t24 t32
+
+#set-options "--fuel 1 --ifuel 1"
+[@ (CPrologue "#ifdef YAZI_CRC32_TABLE_GEN")
+   (CEpilogue "#endif")]
+let rec gf2_matrix_init
+  (p: U32.t{UInt.to_vec (U32.v p) == gf2_polynomial32})
+  (i: U32.t{U32.v i < 32})
+  (buf: matrix_buf):
+  ST.Stack unit
+  (decreases 32 - U32.v i)
+  (requires fun h -> is_sub_matrix_buf h (U32.v i) 1 buf)
+  (ensures fun h0 _ h1 -> B.modifies (B.loc_buffer buf) h0 h1 /\ is_matrix_buf h1 1 buf) =
+  let open U32 in
+  if i = 0ul then
+    let m = Ghost.hide (ones_vec_r 1 (BV.zero_vec #32)) in
+    calc (==) {
+      poly_mod #33 m;
+      =={assert(Seq.last m == true)}
+      unsnoc (m -@ poly 33);
+      =={assert(Seq.equal (unsnoc (m -@ poly 33)) gf2_polynomial32)}
+      UInt.to_vec (v p);
+    };
+    buf.(i) <- p
+  else begin
+    let pattern = Ghost.hide (magic_matrix_pattern 1 (U32.v i)) in
+    let elem = 1ul <<^ (i -^ 1ul) in 
+    one_shift_left (i -^ 1ul);
+    assert(Seq.equal (poly_mod #33 pattern) (unsnoc pattern));
+    assert(forall (j: nat{j < 32}). Seq.index (unsnoc pattern) j == UInt.nth (v elem) j);
+    assert(Seq.equal (UInt.to_vec (v elem)) (poly_mod #33 pattern));
+    buf.(i) <- 1ul <<^ (i -^ 1ul)
+  end;
+  if i <^ 31ul then gf2_matrix_init p (i +^ 1ul) buf else ()
+
+#set-options "--fuel 0 --ifuel 0"
+let gen_matrix_table buf =
+  ST.push_frame();
+  let t = B.alloca 0ul 32ul in
+  let p = gen_polynomial () in
+  assert(Seq.equal (UInt.to_vec (U32.v p)) gf2_polynomial32);
+  gf2_matrix_init p 0ul t;
+
+  gf2_matrix_square 1 t buf;
+  gf2_matrix_square 2 buf t;
+  gf2_matrix_square 4 t buf;
+  ST.pop_frame()

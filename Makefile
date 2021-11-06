@@ -182,7 +182,7 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	  -warn-error @4@5@18 \
 	  -drop LowStar.ConstBuffer,C.Loops,Spec.*,Prims,Lib.*\
 	  -no-prefix Yazi.Adler32 \
-	  -no-prefix Yazi.CRC32_Table \
+	  -no-prefix Yazi.CRC32_Impl \
 	  -no-prefix Yazi.Util \
 	  -no-prefix Yazi.CFlags \
 	  -no-prefix Yazi.Types \
@@ -217,11 +217,12 @@ crc32_table_gen: dist/Makefile.basic
 	cc -I ./dist \
 	   -I $(KREMLIN_HOME)/include \
 	   -I $(KREMLIN_HOME)/kremlib/dist/minimal \
-	   code/c/Yazi_CRC32_Table_Codegen.c dist/Yazi_CRC32_Table.c dist/Yazi_CRC32_Impl.c\
+	   -D YAZI_CRC32_TABLE_GEN \
+	   code/c/Yazi_CRC32_Table_Codegen.c dist/Yazi_CRC32_Impl.c\
 	   -g -o ./dist/crc32_table_gen
 	./dist/crc32_table_gen > ./dist/Yazi_CRC32_Impl_Table.inc
 	sed -i \
-          '/crc32_combine64/c\#include "Yazi_CRC32_Impl_Table.inc"' \
+          '/Yazi_CRC32_Impl.h/c\#include "Yazi_CRC32_Impl_Table.inc"' \
 	  dist/Yazi_CRC32_Impl.c
 	rm ./dist/crc32_table_gen
 
