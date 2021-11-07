@@ -14,8 +14,9 @@ module ST = FStar.HyperStack.ST
 
 private type matrix_buf = B.lbuffer U32.t 32
 
-[@ (CPrologue "#ifndef YAZI_CRC32_TABLE_GEN")
-   (CEpilogue "#endif")]
+[@ (CPrologue "#ifndef YAZI_CRC32_TABLE_GEN
+uint32_t crc32_z(uint32_t crc, const unsigned char *buf, size_t len);")
+  (CEpilogue "#endif")]
 val crc32:
     data: Ghost.erased (Seq.seq U8.t)
   -> crc: U32.t
