@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include "Yazi_CRC32_Impl.h"
+#include "Yazi_CRC32.h"
 
 int main(int argc, const char **argv) {
   uint32_t table[4][256];
@@ -11,9 +11,13 @@ int main(int argc, const char **argv) {
 
   printf(
     "#ifndef __GNUC__\n"
+    "#include <stddef.h>\n"
     "#include <string.h>\n"
+    "#else\n"
+    "typedef __SIZE_TYPE__ size_t;\n"
     "#endif\n"
-    "#include \"Yazi_CRC32_Impl.h\"\n\n"
+    "#include \"Yazi_CRC32.h\"\n"
+    "#include \"Yazi_CRC32_Z.inc\"\n\n"
     "static uint32_t crc32_table[4][256] = {\n");
   
   for (int i = 0; i < 4; i++) {
@@ -36,7 +40,7 @@ int main(int argc, const char **argv) {
 
   printf(
     "\n};\n\n"
-    "static uint32_t magic_matrix[32] = {");
+    "static const uint32_t magic_matrix[32] = {");
 
   for (int i = 0; i < 32; i++) {
     if (i % 5 == 0) {
@@ -47,6 +51,9 @@ int main(int argc, const char **argv) {
 
   printf(
     "\n};\n\n"
+    "static inline const uint32_t *get_crc32_table(uint32_t i) {\n"
+    "  return crc32_table[i];\n"
+    "}\n\n"
     "static inline void init_magic_matrix(uint32_t *m) {\n");
   
   printf(

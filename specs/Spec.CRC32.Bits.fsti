@@ -2,6 +2,7 @@ module Spec.CRC32.Bits
 
 module B = LowStar.Buffer
 module BV = FStar.BitVector
+module CB = LowStar.ConstBuffer
 module HS = FStar.HyperStack
 module Math = FStar.Math.Lib
 module U8 = FStar.UInt8
@@ -195,11 +196,12 @@ let poly_mod_correct_eq (nzeros: pos) (d res: U32.t): Lemma
   assert(forall i. UInt.nth (v res) i == (UInt.to_vec (v res)).[i]);
   assert(Seq.equal (poly_mod (zero_vec_l nzeros (UInt.to_vec (U32.v d)))) (UInt.to_vec (v res)))
 
-type table_buf = B.lbuffer U32.t 256
+type table_buf = buf: CB.const_buffer U32.t{CB.length buf == 256}
 
 let sub_table_correct (j: nat{j <= 256}) (nzeros: pos) (h: HS.mem) (buf: table_buf) =
-  B.live h buf /\
-  (forall i. i < j ==> poly_mod_correct nzeros (U32.uint_to_t i) ((B.as_seq h buf).[i]))
+  CB.live h buf /\
+  (forall i. i < j ==>
+    poly_mod_correct nzeros (U32.uint_to_t i) ((B.as_seq h (CB.as_mbuf buf)).[i]))
 
 let table_correct (nzeros: pos) (h: HS.mem) (buf: table_buf) =
   sub_table_correct 256 nzeros h buf
