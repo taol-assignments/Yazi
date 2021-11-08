@@ -141,20 +141,3 @@ let rec pow2_logxor (#n: pos) (v: UInt.uint_t n): Lemma
   match n with
   | 1 -> ()
   | _ -> pow2_logxor #(n - 1) (v / 2)
-
-// let rec logxor_vec_zero (#n: pos) (a b: BV.bv_t n): Lemma
-//   (requires Seq.equal (BV.logxor_vec a b) b)
-//   (ensures Seq.equal a (BV.zero_vec #n)) =
-//   let open Lib.Seq in
-//   match n with
-//   | 1 -> ()
-//   | _ ->
-//     assert(forall i. i > 0 ==> a.[i] = (Seq.tail a).[i - 1]);
-//     assert(forall i. i > 0 ==> b.[i] = (Seq.tail b).[i - 1]);
-//     logxor_vec_zero #(n - 1) (Seq.tail a) (Seq.tail b)
-
-// let logxor_zero (#n: pos) (a b: UInt.uint_t n): Lemma
-//   (requires UInt.logxor a b == b)
-//   (ensures a == 0) =
-//   logxor_vec_zero (UInt.to_vec a) (UInt.to_vec b);
-//   assert(UInt.from_vec (UInt.to_vec a) == 0)

@@ -51,7 +51,7 @@ let do_pre_cond
   slen' % size == 0 /\
   slen' == d.blen - i /\
   
-  (let base' = B.as_seq h (CB.as_mbuf d.base) in
+  (let base' = CB.as_seq h d.base in
   let pending = Seq.slice base' i d.blen in
   let consumed = Seq.slice base' 0 i in
   Seq.equal (B.as_seq h (CB.as_mbuf p.stream)) pending /\
@@ -70,14 +70,14 @@ let do_post_cond
     | None -> i + size
     | Some ns -> if ns > 0 then d.blen % ns else d.blen
   in
-  let base' = B.as_seq h1 (CB.as_mbuf d.base) in
+  let base' = CB.as_seq h1 d.base in
   let (crc', buf', data') = res in
   B.(modifies loc_none h0 h1) /\
   
   CB.live h1 buf' /\ CB.length buf' == d.blen - i' /\
 
   CB.length buf' == d.blen - i' /\
-  Seq.equal (B.as_seq h1 (CB.as_mbuf buf')) (Seq.slice base' i' d.blen) /\
+  Seq.equal (CB.as_seq h1 buf') (Seq.slice base' i' d.blen) /\
   Seq.equal data' (d.data @| (Seq.slice base' 0 i')) /\
   
   crc32_matched (d.dlen + i') data' crc' false
@@ -464,8 +464,6 @@ let rec iteration_32
 type it_tuple = (U32.t & (CB.const_buffer U8.t) & U32.t & Ghost.erased (Seq.seq U8.t))
 
 #set-options "--fuel 0 --ifuel 0"
-[@ (CPrologue "#ifndef YAZI_CRC32_TABLE_GEN")
-   (CEpilogue "#endif")]
 let crc32 data' crc buf len =
   let open U32 in
   ST.push_frame ();
@@ -692,6 +690,7 @@ let rec do_crc32_combine
     Math.pow2_plus (vi + 3) 1;
     assert(nzeros * 2 == pow2 (vi + 4));
     combine_len_aux init_len post_len cur_len next_len i;
+    let t1 = odd in let t2 = even in
     if (cur_len %^ 2UL) =^ 1UL then begin
       let crc' = gf2_matrix_times nzeros odd crc in
       let next_post_len: Ghost.erased (UInt.uint_t 64) =
@@ -750,11 +749,11 @@ let rec do_crc32_combine
         };
       do_crc32_combine
         (nzeros * 2) init_len next_post_len next_len
-        init_crc crc' (U32.add i 1ul) even odd
+        init_crc crc' (U32.add i 1ul) t2 t1
     end else
       do_crc32_combine
         (nzeros * 2) init_len post_len next_len
-        init_crc crc (U32.add i 1ul) even odd
+        init_crc crc (U32.add i 1ul) t2 t1
   end
 
 [@ (CPrologue "#if 0")
