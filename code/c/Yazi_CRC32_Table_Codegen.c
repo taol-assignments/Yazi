@@ -30,7 +30,7 @@ int main(int argc, const char **argv) {
       if (j % 5 == 0) {
 	printf("\n    ");
       }
-      printf("%uu, ", table[i][j]);
+      printf("0x%.8xu, ", table[i][j]);
     }
     printf("\n  }");
     if (i != 3) {
@@ -46,7 +46,7 @@ int main(int argc, const char **argv) {
     if (i % 5 == 0) {
       printf("\n  ");
     }
-    printf("%uu, ", matrix[i]);
+    printf("0x%.8xu, ", matrix[i]);
   }
 
   printf(
