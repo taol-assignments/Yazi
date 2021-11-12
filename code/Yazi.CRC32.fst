@@ -189,7 +189,8 @@ inline_for_extraction let do1
 
 #set-options "--z3rlimit 200 --ifuel 0 --fuel 0 --z3seed 7"
 [@ (CPrologue "#ifndef YAZI_CRC32_TABLE_GEN")
-   (CEpilogue "#endif")]
+   (CEpilogue "#endif")
+   CInline]
 let rec iteration_1
   (p: current_state)
   (d: Ghost.erased init_state)
@@ -360,7 +361,8 @@ inline_for_extraction let do4
   (crc', CB.sub p.stream 4ul (p.slen -^ 4ul), Ghost.hide (p.consumed @| seq_32bit))
 
 [@ (CPrologue "#ifndef YAZI_CRC32_TABLE_GEN")
-   (CEpilogue "#endif")]
+   (CEpilogue "#endif")
+   CInline]
 let rec iteration_4
   (p: current_state)
   (d: Ghost.erased init_state)
@@ -438,7 +440,8 @@ inline_for_extraction let do32
   (c1, b1, d1)
 
 [@ (CPrologue "#ifndef YAZI_CRC32_TABLE_GEN")
-   (CEpilogue "#endif")]
+   (CEpilogue "#endif")
+   CInline]
 let rec iteration_32
   (p: current_state)
   (d: Ghost.erased init_state)
@@ -520,6 +523,7 @@ let crc32 data' crc buf len =
   c2 ^^ 0xFFFFFFFFul
 
 #set-options "--fuel 0 --ifuel 0"
+[@ CInline ]
 inline_for_extraction
 let rec do_gf2_matrix_times
   (nzeros: Ghost.erased pos)
@@ -564,6 +568,7 @@ let rec do_gf2_matrix_times
   else
     sum'
 
+[@ CInline ]
 let gf2_matrix_times (nzeros: Ghost.erased pos) (buf: matrix_buf) (vec: U32.t):
   ST.Stack (Spec.matrix_times_product nzeros vec)
   (requires fun h -> Spec.is_matrix_buf h nzeros buf)
@@ -589,7 +594,7 @@ let gf2_matrix_times (nzeros: Ghost.erased pos) (buf: matrix_buf) (vec: U32.t):
   in
   do_gf2_matrix_times nzeros vec buf 1ul (vec >>^ 1ul) sum
 
-inline_for_extraction
+[@ CInline ]
 let rec do_gf2_matrix_square
   (nzeros: Ghost.erased pos) (b0 b1: matrix_buf) (i: U32.t{U32.v i < 32}):
   ST.Stack unit
@@ -626,6 +631,7 @@ let rec do_gf2_matrix_square
   b1.(i) <- r;
   if i <^ 31ul then do_gf2_matrix_square nzeros b0 b1 (i +^ 1ul) else ()
 
+[@ CInline ]
 let gf2_matrix_square (nzeros: Ghost.erased pos) (b0: matrix_buf) (b1: matrix_buf):
   ST.Stack unit
   (requires fun h -> B.live h b1 /\ B.disjoint b0 b1 /\ Spec.is_matrix_buf h nzeros b0)
@@ -650,6 +656,7 @@ let combine_len_aux
   Math.pow2_plus (U32.v i) 1
 
 #push-options "--z3refresh --z3rlimit 2048 --z3seed 11 --fuel 0 --ifuel 0"
+[@ CInline ]
 let rec do_crc32_combine
   (nzeros: Ghost.erased pos)
   (init_len: Ghost.erased (UInt.uint_t 64){init_len > 0})
@@ -932,7 +939,7 @@ private let rec calc_cell (m: Ghost.erased U32.t) (i: U32.t{U32.v i <= 7}) (d: U
   poly_mod_correct 8 m res
 }) (decreases U32.v i) =
   let open U32 in
-  if i <^ 7ul then cell_xor_app (v (7ul -^ i)) m d else ();
+  if i <^ 7ul then cell_xor_app (v (7ul -^ i)) m d;
   if i = 0ul then
     cell_xor d
   else
@@ -970,16 +977,16 @@ private let rec gen_large_table
       B.modifies (B.loc_buffer buf) h0 h1 /\
       table_correct (nzeros + 8) h1 (CB.of_buffer buf)) =
     let open U32 in
-    let p = B.index tp i in
+    let p = tp.(i) in
     let j = p &^ 0xFFul in
     UInt.logand_le (v p) (v 0xFFul);
-    let p' = B.index t8 j in
+    let p' = t8.(j) in
     let p'' = p >>^ 8ul in
     poly_mod_correct_eq nzeros i p;
     poly_mod_correct_eq 8 j p';
     large_table_val_aux i nzeros p p' p'';
     buf.(i) <- p' ^^ p'';
-    if i <^ 255ul then gen_large_table nzeros (i +^ 1ul) t8 tp buf else ()
+    if i <^ 255ul then gen_large_table nzeros (i +^ 1ul) t8 tp buf
 
 let gen_crc32_table t8 t16 t24 t32 =
   gen_8bit_table 0ul t8;
@@ -1018,7 +1025,7 @@ let rec gf2_matrix_init
     assert(Seq.equal (UInt.to_vec (v elem)) (poly_mod #33 pattern));
     buf.(i) <- 1ul <<^ (i -^ 1ul)
   end;
-  if i <^ 31ul then gf2_matrix_init p (i +^ 1ul) buf else ()
+  if i <^ 31ul then gf2_matrix_init p (i +^ 1ul) buf
 
 #set-options "--fuel 0 --ifuel 0"
 let gen_matrix_table buf =

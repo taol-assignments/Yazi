@@ -10,12 +10,15 @@ int main(int argc, const char **argv) {
   gen_matrix_table(matrix);
 
   printf(
-    "#ifndef __GNUC__\n"
+    "#if !defined __GNUC__ && !defined __COMPCERT__\n"
     "#include <stddef.h>\n"
     "#include <string.h>\n"
-    "#else\n"
+    "#endif\n\n"
+    "#ifdef __GNUC__\n"
     "typedef __SIZE_TYPE__ size_t;\n"
-    "#endif\n"
+    "#elif defined __COMPCERT__\n"
+    "typedef unsigned long size_t;\n"
+    "#endif\n\n"
     "#include \"Yazi_CRC32.h\"\n"
     "#include \"Yazi_CRC32_Z.inc\"\n\n"
     "static const uint32_t crc32_table[4][256] = {\n");
@@ -59,6 +62,9 @@ int main(int argc, const char **argv) {
   printf(
     "#ifdef __GNUC__\n"
     "  __builtin_memcpy(m, magic_matrix, sizeof(magic_matrix));\n"
+    "#elif defined __COMPCERT__\n"
+    "  __builtin_memcpy_aligned(\n"
+    "    m, magic_matrix, sizeof(magic_matrix), __alignof__(uint32_t));\n"
     "#else\n"
     "  memcpy(m, magic_matrix, sizeof(magic_matrix));\n"
     "#endif\n"
