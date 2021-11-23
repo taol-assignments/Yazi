@@ -1,5 +1,5 @@
 [
-  "SÈöö\u0002„”·~AÎ∂aS“%",
+  "ˇ\u0013-ëç÷å\u007f˙ˆ¨”Ëƒ˜Ù",
   [
     [
       "Spec.Kraft.tree",
@@ -8,12 +8,14 @@
       1,
       [
         "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
-        "equation_Prims.nat", "function_token_typing_Prims.int",
+        "equation_Prims.nat", "equation_Prims.pos",
+        "function_token_typing_Prims.int",
         "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "haseqTm_refine_774ba3f728d91ead8ef40be66c9802e5",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "c491988a03ad638f1e9e1ecea07fe730"
+      "51dc57da6ef5ae1fa3421106a5ccfd9a"
     ],
     [
       "Spec.Kraft.__proj__Node__item__left",
@@ -25,7 +27,19 @@
         "refinement_interpretation_Tm_refine_3e74d404dc9d5560fa29642007e950d5"
       ],
       0,
-      "f6669d5020557a41c0a425a864cf8b8a"
+      "cc16e06b2430d06fd282ec7820a75155"
+    ],
+    [
+      "Spec.Kraft.__proj__Node__item__freq",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "refinement_interpretation_Tm_refine_3e74d404dc9d5560fa29642007e950d5"
+      ],
+      0,
+      "03a58a2c37672c3db83dd1f19b076edf"
     ],
     [
       "Spec.Kraft.__proj__Node__item__right",
@@ -37,7 +51,7 @@
         "refinement_interpretation_Tm_refine_3e74d404dc9d5560fa29642007e950d5"
       ],
       0,
-      "03f20d7b1617b51b367b57c17da9ddd4"
+      "22a6180309749a89dda5cd40d2d41523"
     ],
     [
       "Spec.Kraft.__proj__Leaf__item__symbol",
@@ -49,7 +63,19 @@
         "refinement_interpretation_Tm_refine_c59688c4744fb6753a5dcf40509c6d4b"
       ],
       0,
-      "68cab7e6eb859e7cfe9fc68de027a55a"
+      "7e992bc8be8db316be8b6c4f2f8725e2"
+    ],
+    [
+      "Spec.Kraft.__proj__Leaf__item__freq",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "refinement_interpretation_Tm_refine_c59688c4744fb6753a5dcf40509c6d4b"
+      ],
+      0,
+      "ab412fa49e100c341a4c55d1d143e40b"
     ],
     [
       "Spec.Kraft.left",
@@ -64,7 +90,7 @@
         "refinement_interpretation_Tm_refine_c9875debe5efd98af3d62bdece9985a4"
       ],
       0,
-      "351a94edc04671f6e6ea018d272f4c54"
+      "8f76848025faf14e12d6a9d27f4667aa"
     ],
     [
       "Spec.Kraft.right",
@@ -79,7 +105,117 @@
         "refinement_interpretation_Tm_refine_c9875debe5efd98af3d62bdece9985a4"
       ],
       0,
-      "0389938de1201ccfee6b40b56f1c660b"
+      "c99771b06f3e641b9fc1777955f1a1ef"
+    ],
+    [
+      "Spec.Kraft.freq",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "disc_equation_Spec.Kraft.Leaf",
+        "disc_equation_Spec.Kraft.Node",
+        "fuel_guarded_inversion_Spec.Kraft.tree",
+        "projection_inverse_BoxBool_proj_0"
+      ],
+      0,
+      "97661ba6e3b9ea0ddefe02ffcda5d0bf"
+    ],
+    [
+      "Spec.Kraft.symbols",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Spec.Kraft_pretyping_b1ab1322699fe5565c0319e993911c58",
+        "binder_x_b1ab1322699fe5565c0319e993911c58_0",
+        "disc_equation_Spec.Kraft.Leaf", "disc_equation_Spec.Kraft.Node",
+        "fuel_guarded_inversion_Spec.Kraft.tree",
+        "projection_inverse_BoxBool_proj_0",
+        "subterm_ordering_Spec.Kraft.Node"
+      ],
+      0,
+      "c59258009fdd3014f0ceff9bb0b33147"
+    ],
+    [
+      "Spec.Kraft.tree_symbol",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "3edfefb1eb74ae9fb9f61391e217aebe"
+    ],
+    [
+      "Spec.Kraft.code_length",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.symbols.fuel_instrumented", "@query",
+        "Spec.Kraft_pretyping_b1ab1322699fe5565c0319e993911c58",
+        "binder_x_b1ab1322699fe5565c0319e993911c58_0",
+        "binder_x_c6ea1238d323bbe2fe1cfc216c155231_1", "bool_inversion",
+        "constructor_distinct_Spec.Kraft.Node",
+        "equation_FStar.Seq.Base.op_At_Bar",
+        "equation_FStar.Seq.Properties.mem", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Kraft.tree_symbol",
+        "equation_with_fuel_Spec.Kraft.symbols.fuel_instrumented",
+        "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "primitive_Prims.op_GreaterThan",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_Spec.Kraft.Node_freq",
+        "projection_inverse_Spec.Kraft.Node_left",
+        "projection_inverse_Spec.Kraft.Node_right",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_cf935f3d83234d95616802f824c7c66d",
+        "subterm_ordering_Spec.Kraft.Node"
+      ],
+      0,
+      "1c1d0c98c3721b269ed1dc1330ae66f8"
+    ],
+    [
+      "Spec.Kraft.code_freq",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.symbols.fuel_instrumented", "@query",
+        "Spec.Kraft_pretyping_b1ab1322699fe5565c0319e993911c58",
+        "binder_x_b1ab1322699fe5565c0319e993911c58_0",
+        "binder_x_c6ea1238d323bbe2fe1cfc216c155231_1", "bool_inversion",
+        "constructor_distinct_Spec.Kraft.Node",
+        "disc_equation_Spec.Kraft.Leaf", "disc_equation_Spec.Kraft.Node",
+        "equation_FStar.Seq.Base.op_At_Bar",
+        "equation_FStar.Seq.Properties.mem", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Kraft.tree_symbol",
+        "equation_with_fuel_Spec.Kraft.symbols.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Kraft.tree",
+        "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_inversion",
+        "primitive_Prims.op_GreaterThan",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_Spec.Kraft.Node_freq",
+        "projection_inverse_Spec.Kraft.Node_left",
+        "projection_inverse_Spec.Kraft.Node_right",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_cf935f3d83234d95616802f824c7c66d",
+        "subterm_ordering_Spec.Kraft.Node"
+      ],
+      0,
+      "6ba9a9c2340a0ce3b55d993a9b3fde44"
     ],
     [
       "Spec.Kraft.height",
@@ -97,7 +233,766 @@
         "subterm_ordering_Spec.Kraft.Node"
       ],
       0,
-      "c54b6c7893e069556bc53b2ccdaef6c4"
+      "b0baa76ccbae7202fdf4d9de872e9d71"
+    ],
+    [
+      "Spec.Kraft.freq_pred",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Spec.Kraft_pretyping_b1ab1322699fe5565c0319e993911c58",
+        "binder_x_b1ab1322699fe5565c0319e993911c58_0",
+        "subterm_ordering_Spec.Kraft.Node"
+      ],
+      0,
+      "1cfec99efa27c22cb0260d18860dfb0b"
+    ],
+    [
+      "Spec.Kraft.wf_tree",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "9d3b51d5bf35733c0890175f6b9c31c0"
+    ],
+    [
+      "Spec.Kraft.avg_len",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Spec.Kraft_pretyping_b1ab1322699fe5565c0319e993911c58",
+        "binder_x_b1ab1322699fe5565c0319e993911c58_0",
+        "disc_equation_Spec.Kraft.Leaf", "disc_equation_Spec.Kraft.Node",
+        "equation_Prims.nat", "equation_Prims.pos",
+        "fuel_guarded_inversion_Spec.Kraft.tree",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "subterm_ordering_Spec.Kraft.Node"
+      ],
+      0,
+      "218a1f07696a2cdadb22b6c532a8024d"
+    ],
+    [
+      "Spec.Kraft.optimal_tree",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "ea02fc77db36b109e9adad87554469b9"
+    ],
+    [
+      "Spec.Kraft.merge",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "data_elim_Spec.Kraft.Leaf",
+        "data_elim_Spec.Kraft.Node", "equation_Prims.pos",
+        "fuel_guarded_inversion_Spec.Kraft.tree",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
+      ],
+      0,
+      "6563e280fc3e0721068da1d6a4f5aed4"
+    ],
+    [
+      "Spec.Kraft.subst_pre_cond",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "3330c1a497d8c8ffcf029fe2b5849ee7"
+    ],
+    [
+      "Spec.Kraft.subst",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_FStar.Seq.Properties.count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.code_freq.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.freq_pred.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.code_freq.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.freq_pred.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.symbols.fuel_instrumented", "@query",
+        "binder_x_2409dc4d2433c730415ee41404ac3409_2",
+        "binder_x_2409dc4d2433c730415ee41404ac3409_3",
+        "binder_x_6b4fb659a0ad315bc34054f7a7930a11_1",
+        "binder_x_b76bdb91daa1db363bb8c3b213d25815_0",
+        "constructor_distinct_Spec.Kraft.Node",
+        "data_elim_FStar.Pervasives.Native.Mktuple2",
+        "disc_equation_Spec.Kraft.Leaf", "disc_equation_Spec.Kraft.Node",
+        "equation_FStar.Seq.Base.op_At_Bar",
+        "equation_FStar.Seq.Properties.mem", "equation_Lib.Seq.disjoint",
+        "equation_Prims.eqtype", "equation_Prims.nat", "equation_Prims.pos",
+        "equation_Spec.Kraft.tree_symbol", "equation_Spec.Kraft.wf_tree",
+        "equation_with_fuel_Spec.Kraft.code_freq.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.freq_pred.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.symbols.fuel_instrumented",
+        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple2",
+        "fuel_guarded_inversion_Spec.Kraft.tree",
+        "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_inversion",
+        "l_and-interp", "lemma_Lib.Seq.no_dup_append_",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_GreaterThan",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_FStar.Pervasives.Native.Mktuple2__1",
+        "projection_inverse_Spec.Kraft.Node_left",
+        "projection_inverse_Spec.Kraft.Node_right",
+        "refinement_interpretation_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_cf935f3d83234d95616802f824c7c66d",
+        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "subterm_ordering_Spec.Kraft.Node",
+        "token_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "typing_FStar.Seq.Properties.count", "typing_Spec.Kraft.symbols"
+      ],
+      0,
+      "463e95e9db4d420b0b76eb06b3653e67"
+    ],
+    [
+      "Spec.Kraft.lemma_merge_subst",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_FStar.Seq.Properties.count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.code_freq.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.freq_pred.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.subst.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.code_freq.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.freq_pred.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.subst.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.symbols.fuel_instrumented", "@query",
+        "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Prims_pretyping_f537159ed795b314b4e58c260361ae86",
+        "Spec.Kraft_pretyping_b1ab1322699fe5565c0319e993911c58", "b2t_def",
+        "bool_inversion", "bool_typing",
+        "constructor_distinct_Spec.Kraft.Node",
+        "data_elim_FStar.Pervasives.Native.Mktuple2",
+        "data_elim_Spec.Kraft.Leaf", "data_elim_Spec.Kraft.Node",
+        "data_typing_intro_Spec.Kraft.Node@tok", "eq2-interp",
+        "equation_FStar.Seq.Base.op_At_Bar",
+        "equation_FStar.Seq.Properties.mem", "equation_Lib.Seq.disjoint",
+        "equation_Lib.Seq.no_dup", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Prims.pos", "equation_Prims.squash",
+        "equation_Spec.Kraft.tree_symbol", "equation_Spec.Kraft.wf_tree",
+        "equation_with_fuel_Spec.Kraft.code_freq.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.freq_pred.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.subst.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.symbols.fuel_instrumented",
+        "fuel_guarded_inversion_FStar.Pervasives.Native.tuple2",
+        "fuel_guarded_inversion_Spec.Kraft.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_inversion",
+        "int_typing", "l_and-interp", "lemma_Lib.Seq.disjoint_comm",
+        "lemma_Lib.Seq.no_dup_append", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_GreaterThan", "primitive_Prims.op_disEquality",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_FStar.Pervasives.Native.Mktuple2__1",
+        "projection_inverse_Spec.Kraft.Node_freq",
+        "projection_inverse_Spec.Kraft.Node_left",
+        "projection_inverse_Spec.Kraft.Node_right",
+        "refinement_interpretation_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "refinement_interpretation_Tm_refine_77ca7750ad8c9de6cd8d960a7890fe43",
+        "refinement_interpretation_Tm_refine_cf935f3d83234d95616802f824c7c66d",
+        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "token_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "typing_FStar.Seq.Properties.count",
+        "typing_FStar.Seq.Properties.mem", "typing_Spec.Kraft.subst"
+      ],
+      0,
+      "f01512c5a8ac919bb6b8216ca60f0165"
+    ],
+    [
+      "Spec.Kraft.min_freq_2",
+      1,
+      0,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "1433764b018d9b4bd5894d61b650d9d9"
+    ],
+    [
+      "Spec.Kraft.min_freq_2",
+      2,
+      0,
+      0,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "binder_x_ada201a7f3653d9515f3e9a12ac1f51d_0",
+        "constructor_distinct_Tm_unit", "equation_FStar.Seq.Properties.tail",
+        "equation_Prims.eqtype", "equation_Prims.nat", "equation_Prims.pos",
+        "equation_Spec.Kraft.wf_tree", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_inversion",
+        "int_typing", "l_quant_interp_60dc33abfd041de4e00ba5506953a2da",
+        "lemma_FStar.Seq.Base.lemma_index_slice",
+        "lemma_FStar.Seq.Base.lemma_len_slice",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_LessThan",
+        "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_FStar.Pervasives.Native.Mktuple2__1",
+        "projection_inverse_FStar.Pervasives.Native.Mktuple2__2",
+        "refinement_interpretation_Tm_refine_35a0739c434508f48d0bb1d5cd5df9e8",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_523089e38c21496e423102f072c560bb",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_76def8f9c7b78c20c31c605e11d2c1b3",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "refinement_interpretation_Tm_refine_7df7c0f2782e0cb5a9631c8faddd3596",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_interpretation_Tm_refine_8c1a39d0f8d27d4cf3bcd7232016f318",
+        "refinement_interpretation_Tm_refine_b180cdec125653a437aed35b6a7a1036",
+        "refinement_interpretation_Tm_refine_d3d07693cd71377864ef84dc97d10ec1",
+        "refinement_interpretation_Tm_refine_f3f65d9032578b5656aac9ceed29318b",
+        "refinement_kinding_Tm_refine_227138d9051185ac322c700717da5e94",
+        "typing_FStar.Seq.Base.length", "typing_Spec.Kraft.min_freq_2",
+        "well-founded-ordering-on-nat"
+      ],
+      0,
+      "141e33b6ee2f6065794150f1ab7dfbeb"
+    ],
+    [
+      "Spec.Kraft.forest_symbols",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "equation_FStar.Seq.Properties.tail", "equation_Prims.nat",
+        "equation_Spec.Kraft.wf_tree", "int_inversion", "int_typing",
+        "lemma_FStar.Seq.Base.lemma_len_slice",
+        "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_kinding_Tm_refine_227138d9051185ac322c700717da5e94",
+        "typing_FStar.Seq.Base.length", "well-founded-ordering-on-nat"
+      ],
+      0,
+      "77bf3159e63a524299b682179b1bb676"
+    ],
+    [
+      "Spec.Kraft.wf_forest",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "1c9060236923f585429e7beac228dc86"
+    ],
+    [
+      "Spec.Kraft.forest_avg_len",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "binder_x_bd8b77f1e1f4b195ef6943592ffb4c40_0",
+        "equation_FStar.Seq.Properties.tail", "equation_Prims.nat",
+        "equation_Spec.Kraft.wf_tree", "int_inversion", "int_typing",
+        "lemma_FStar.Seq.Base.lemma_len_slice",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_167ef714932ec832fb671890fc3eee6c",
+        "refinement_interpretation_Tm_refine_321e26df23a2f407d1cfe6c9ab2cf671",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_kinding_Tm_refine_227138d9051185ac322c700717da5e94",
+        "typing_FStar.Seq.Base.length", "typing_FStar.Seq.Properties.tail",
+        "well-founded-ordering-on-nat"
+      ],
+      0,
+      "0494c25343fd30f6ff15d4bf14f53db0"
+    ],
+    [
+      "Spec.Kraft.forest_symbols_begin",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "binder_x_bd8b77f1e1f4b195ef6943592ffb4c40_0",
+        "equation_FStar.Seq.Properties.tail", "equation_Prims.nat",
+        "equation_Spec.Kraft.wf_tree", "int_inversion", "int_typing",
+        "lemma_FStar.Seq.Base.lemma_len_slice",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_18db4413de3826dc99025d83a2cd1551",
+        "refinement_interpretation_Tm_refine_321e26df23a2f407d1cfe6c9ab2cf671",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_kinding_Tm_refine_227138d9051185ac322c700717da5e94",
+        "typing_FStar.Seq.Base.length", "well-founded-ordering-on-nat"
+      ],
+      0,
+      "93c024e31ca2207d065e03601527340d"
+    ],
+    [
+      "Spec.Kraft.lemma_forest_symbols_begin",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_e0f525f83ca35a4de7eddadd38be3e57"
+      ],
+      0,
+      "d735f4d5f90430a803dee17178147122"
+    ],
+    [
+      "Spec.Kraft.lemma_forest_symbols_begin",
+      2,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.forest_symbols_begin.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.forest_symbols_begin.fuel_instrumented",
+        "@query", "binder_x_bd8b77f1e1f4b195ef6943592ffb4c40_0",
+        "equation_FStar.Seq.Base.op_At_Bar",
+        "equation_FStar.Seq.Properties.last",
+        "equation_FStar.Seq.Properties.tail", "equation_Prims.nat",
+        "equation_Spec.Kraft.wf_tree",
+        "equation_with_fuel_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.forest_symbols_begin.fuel_instrumented",
+        "int_inversion", "int_typing",
+        "lemma_FStar.Seq.Base.lemma_index_slice",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "lemma_FStar.Seq.Base.lemma_len_slice",
+        "lemma_FStar.Seq.Properties.slice_is_empty",
+        "lemma_Lib.Seq.append_empty_seq_r", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_167ef714932ec832fb671890fc3eee6c",
+        "refinement_interpretation_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_interpretation_Tm_refine_321e26df23a2f407d1cfe6c9ab2cf671",
+        "refinement_interpretation_Tm_refine_35a0739c434508f48d0bb1d5cd5df9e8",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_interpretation_Tm_refine_8c1a39d0f8d27d4cf3bcd7232016f318",
+        "refinement_interpretation_Tm_refine_b361ba8089a6e963921008d537e799a1",
+        "refinement_interpretation_Tm_refine_b913a3f691ca99086652e0a655e72f17",
+        "refinement_interpretation_Tm_refine_d3d07693cd71377864ef84dc97d10ec1",
+        "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
+        "refinement_kinding_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "token_correspondence_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "typing_FStar.Seq.Base.empty", "typing_FStar.Seq.Base.index",
+        "typing_FStar.Seq.Base.length", "typing_FStar.Seq.Properties.last",
+        "typing_FStar.Seq.Properties.tail",
+        "typing_Spec.Kraft.forest_symbols", "typing_Spec.Kraft.symbols",
+        "well-founded-ordering-on-nat"
+      ],
+      0,
+      "4aa14745845c0f8b52e8b1cba5676f01"
+    ],
+    [
+      "Spec.Kraft.lemma_forest_symbols_index",
+      1,
+      1,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.nat",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_LessThanOrEqual",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
+      ],
+      0,
+      "9d8f6fddf344a2880a9be5297043183e"
+    ],
+    [
+      "Spec.Kraft.lemma_forest_symbols_index",
+      2,
+      1,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.forest_symbols_begin.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.forest_symbols_begin.fuel_instrumented",
+        "@query", "binder_x_3522a27cea8c071e48370d522425eb2d_1",
+        "binder_x_bd8b77f1e1f4b195ef6943592ffb4c40_0",
+        "equation_FStar.Seq.Base.op_At_Bar",
+        "equation_FStar.Seq.Properties.tail", "equation_Prims.nat",
+        "equation_Spec.Kraft.wf_tree",
+        "equation_with_fuel_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.forest_symbols_begin.fuel_instrumented",
+        "int_inversion", "int_typing", "lemma_FStar.Seq.Base.lemma_eq_elim",
+        "lemma_FStar.Seq.Base.lemma_eq_intro",
+        "lemma_FStar.Seq.Base.lemma_index_app1",
+        "lemma_FStar.Seq.Base.lemma_index_app2",
+        "lemma_FStar.Seq.Base.lemma_index_slice",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "lemma_FStar.Seq.Base.lemma_len_slice",
+        "lemma_FStar.Seq.Properties.slice_slice",
+        "primitive_Prims.op_Addition", "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_167ef714932ec832fb671890fc3eee6c",
+        "refinement_interpretation_Tm_refine_18db4413de3826dc99025d83a2cd1551",
+        "refinement_interpretation_Tm_refine_1ba8fd8bb363097813064c67740b2de5",
+        "refinement_interpretation_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_interpretation_Tm_refine_321e26df23a2f407d1cfe6c9ab2cf671",
+        "refinement_interpretation_Tm_refine_35a0739c434508f48d0bb1d5cd5df9e8",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_interpretation_Tm_refine_8c1a39d0f8d27d4cf3bcd7232016f318",
+        "refinement_interpretation_Tm_refine_ac201cf927190d39c033967b63cb957b",
+        "refinement_interpretation_Tm_refine_c04f5f9b5622f145dceb58fe49a10b19",
+        "refinement_interpretation_Tm_refine_d3d07693cd71377864ef84dc97d10ec1",
+        "refinement_interpretation_Tm_refine_d5dea7309792b1ca50c2555949e62c33",
+        "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
+        "refinement_kinding_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "token_correspondence_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "token_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "typing_FStar.Seq.Base.index", "typing_FStar.Seq.Base.length",
+        "typing_FStar.Seq.Base.op_At_Bar",
+        "typing_FStar.Seq.Properties.tail",
+        "typing_Spec.Kraft.forest_symbols",
+        "typing_Spec.Kraft.forest_symbols_begin",
+        "typing_Spec.Kraft.symbols", "well-founded-ordering-on-nat"
+      ],
+      0,
+      "bf6d5959a3edde7cfaf4dcc8ab23d21b"
+    ],
+    [
+      "Spec.Kraft.lemma_forest_symbols_unsnoc_1",
+      1,
+      2,
+      1,
+      [ "@query" ],
+      0,
+      "f36af3062ce2772532c5f41fae4f2443"
+    ],
+    [
+      "Spec.Kraft.lemma_forest_symbols_unsnoc_1",
+      2,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "@query", "binder_x_7ac30828c8b0bc41af2856d21b268848_0",
+        "equation_FStar.Seq.Base.op_At_Bar",
+        "equation_FStar.Seq.Properties.last",
+        "equation_FStar.Seq.Properties.tail", "equation_Lib.Seq.unsnoc",
+        "equation_Prims.eqtype", "equation_Prims.nat",
+        "equation_Spec.Kraft.wf_forest", "equation_Spec.Kraft.wf_tree",
+        "equation_with_fuel_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_inversion",
+        "int_typing", "lemma_FStar.Seq.Base.lemma_eq_elim",
+        "lemma_FStar.Seq.Base.lemma_eq_intro",
+        "lemma_FStar.Seq.Base.lemma_index_app2",
+        "lemma_FStar.Seq.Base.lemma_index_slice",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "lemma_FStar.Seq.Base.lemma_len_slice",
+        "lemma_FStar.Seq.Properties.slice_is_empty",
+        "lemma_FStar.Seq.Properties.slice_slice",
+        "lemma_Lib.Seq.append_empty_seq_r", "lemma_Lib.Seq.no_dup_append_",
+        "lemma_Lib.Seq.slice_empty", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_167ef714932ec832fb671890fc3eee6c",
+        "refinement_interpretation_Tm_refine_1ba8fd8bb363097813064c67740b2de5",
+        "refinement_interpretation_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_interpretation_Tm_refine_35a0739c434508f48d0bb1d5cd5df9e8",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_61b7ce9370fddf2bb00feff3ec954e65",
+        "refinement_interpretation_Tm_refine_66c295d7af1e06519b2acbac7793e3d2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_interpretation_Tm_refine_ac201cf927190d39c033967b63cb957b",
+        "refinement_interpretation_Tm_refine_b361ba8089a6e963921008d537e799a1",
+        "refinement_interpretation_Tm_refine_b5b6140a50978431a4ffd4468f3e2e2f",
+        "refinement_interpretation_Tm_refine_b913a3f691ca99086652e0a655e72f17",
+        "refinement_interpretation_Tm_refine_baccfb1e5254e5dd8bb1d9bfc6798543",
+        "refinement_interpretation_Tm_refine_d24cb54460fe42a6984286984d5fc98d",
+        "refinement_interpretation_Tm_refine_d3d07693cd71377864ef84dc97d10ec1",
+        "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
+        "refinement_interpretation_Tm_refine_da5a003864f1954c7a19bbb49276e833",
+        "refinement_kinding_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "token_correspondence_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "typing_FStar.Seq.Base.empty", "typing_FStar.Seq.Base.index",
+        "typing_FStar.Seq.Base.length", "typing_FStar.Seq.Properties.tail",
+        "typing_Lib.Seq.unsnoc", "typing_Spec.Kraft.forest_symbols",
+        "typing_Spec.Kraft.symbols", "well-founded-ordering-on-nat"
+      ],
+      0,
+      "f3267585d874280795e8ee22f0646770"
+    ],
+    [
+      "Spec.Kraft.lemma_forest_symbols_unsnoc_2",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "f249b0bddc3cf844664c89e9bb539b8b"
+    ],
+    [
+      "Spec.Kraft.lemma_forest_symbols_unsnoc_2",
+      2,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_FStar.Seq.Properties.count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "binder_x_7ac30828c8b0bc41af2856d21b268848_0",
+        "equation_FStar.Seq.Base.op_At_Bar",
+        "equation_FStar.Seq.Properties.last",
+        "equation_FStar.Seq.Properties.mem",
+        "equation_FStar.Seq.Properties.tail", "equation_Lib.Seq.no_dup",
+        "equation_Lib.Seq.unsnoc", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Kraft.wf_forest",
+        "equation_Spec.Kraft.wf_tree",
+        "equation_with_fuel_FStar.Seq.Properties.count.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "function_token_typing_Prims.__cache_version_number__",
+        "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_inversion",
+        "int_typing", "lemma_FStar.Seq.Base.lemma_len_slice",
+        "lemma_Lib.Seq.no_dup_append_", "primitive_Prims.op_Equality",
+        "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_167ef714932ec832fb671890fc3eee6c",
+        "refinement_interpretation_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_interpretation_Tm_refine_b5b6140a50978431a4ffd4468f3e2e2f",
+        "refinement_interpretation_Tm_refine_b913a3f691ca99086652e0a655e72f17",
+        "refinement_interpretation_Tm_refine_baccfb1e5254e5dd8bb1d9bfc6798543",
+        "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
+        "refinement_interpretation_Tm_refine_da5a003864f1954c7a19bbb49276e833",
+        "refinement_kinding_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "token_correspondence_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "typing_FStar.Seq.Base.empty", "typing_FStar.Seq.Base.index",
+        "typing_FStar.Seq.Base.length", "typing_FStar.Seq.Properties.last",
+        "typing_Lib.Seq.unsnoc", "typing_Spec.Kraft.forest_symbols",
+        "typing_Spec.Kraft.symbols", "well-founded-ordering-on-nat"
+      ],
+      0,
+      "499f0ed226d36af803e4908907303a79"
+    ],
+    [
+      "Spec.Kraft.lemma_wf_forest_symbols_disjoint",
+      1,
+      2,
+      2,
+      [
+        "@MaxIFuel_assumption", "@query", "b2t_def", "equation_Prims.eqtype",
+        "equation_Prims.l_and", "equation_Prims.nat",
+        "equation_Prims.squash", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "l_and-interp",
+        "primitive_Prims.op_LessThan", "projection_inverse_BoxBool_proj_0",
+        "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "d1556beb2c3b5055dc974e2f2ed35a07"
+    ],
+    [
+      "Spec.Kraft.lemma_wf_forest_symbols_disjoint",
+      2,
+      2,
+      2,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_FStar.Seq.Properties.count.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.forest_symbols_begin.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.forest_symbols_begin.fuel_instrumented",
+        "@query", "Prims_pretyping_ae567c2fb75be05905677af440075565",
+        "Spec.Kraft_pretyping_b1ab1322699fe5565c0319e993911c58", "b2t_def",
+        "binder_x_7dd05433630cb14e0b202866ececdb18_0",
+        "binder_x_bb4e1c9af0265270f8e7a5f250f730e2_1",
+        "binder_x_bb4e1c9af0265270f8e7a5f250f730e2_2", "bool_inversion",
+        "data_elim_Spec.Kraft.Leaf", "data_elim_Spec.Kraft.Node",
+        "equation_FStar.Seq.Base.op_At_Bar",
+        "equation_FStar.Seq.Properties.last",
+        "equation_FStar.Seq.Properties.mem",
+        "equation_FStar.Seq.Properties.tail", "equation_Lib.Seq.disjoint",
+        "equation_Lib.Seq.no_dup", "equation_Prims.eqtype",
+        "equation_Prims.l_and", "equation_Prims.nat",
+        "equation_Prims.squash", "equation_Spec.Kraft.wf_forest",
+        "equation_Spec.Kraft.wf_tree",
+        "equation_with_fuel_FStar.Seq.Properties.count.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.forest_symbols_begin.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.symbols.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Kraft.tree",
+        "function_token_typing_Prims.__cache_version_number__",
+        "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_inversion",
+        "int_typing", "l_and-interp",
+        "lemma_FStar.Seq.Base.lemma_create_len",
+        "lemma_FStar.Seq.Base.lemma_index_slice",
+        "lemma_FStar.Seq.Base.lemma_len_append",
+        "lemma_FStar.Seq.Base.lemma_len_slice",
+        "lemma_Lib.Seq.disjoint_comm", "lemma_Lib.Seq.no_dup_append_",
+        "lemma_Lib.Seq.slice_empty", "primitive_Prims.op_Addition",
+        "primitive_Prims.op_Equality", "primitive_Prims.op_GreaterThan",
+        "primitive_Prims.op_LessThan", "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_167ef714932ec832fb671890fc3eee6c",
+        "refinement_interpretation_Tm_refine_1fcd381862e9837329f7131f11bc00bd",
+        "refinement_interpretation_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c",
+        "refinement_interpretation_Tm_refine_321e26df23a2f407d1cfe6c9ab2cf671",
+        "refinement_interpretation_Tm_refine_35a0739c434508f48d0bb1d5cd5df9e8",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_42877a4106e410f9c36485a91e1df995",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_81407705a0828c2c1b1976675443f647",
+        "refinement_interpretation_Tm_refine_8c1a39d0f8d27d4cf3bcd7232016f318",
+        "refinement_interpretation_Tm_refine_d1cdd5893601df1236a36ee037e6e4d1",
+        "refinement_interpretation_Tm_refine_d3d07693cd71377864ef84dc97d10ec1",
+        "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
+        "refinement_interpretation_Tm_refine_da5a003864f1954c7a19bbb49276e833",
+        "refinement_interpretation_Tm_refine_fce0a500e82a222f15f02d9ad6ccdb5e",
+        "refinement_kinding_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "token_correspondence_Spec.Kraft.forest_symbols.fuel_instrumented",
+        "token_correspondence_Spec.Kraft.forest_symbols_begin.fuel_instrumented",
+        "token_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "typing_FStar.Seq.Base.index", "typing_FStar.Seq.Base.length",
+        "typing_FStar.Seq.Base.slice", "typing_FStar.Seq.Properties.mem",
+        "typing_FStar.Seq.Properties.tail",
+        "typing_Spec.Kraft.forest_symbols",
+        "typing_Spec.Kraft.forest_symbols_begin", "unit_inversion",
+        "unit_typing", "well-founded-ordering-on-nat"
+      ],
+      0,
+      "14b6ae1b0b27656e369dd686c96e31b2"
+    ],
+    [
+      "Spec.Kraft.forest_reduce",
+      1,
+      2,
+      2,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Kraft.symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.symbols.fuel_instrumented", "@query",
+        "constructor_distinct_Spec.Kraft.Node",
+        "equation_FStar.Seq.Base.op_At_Bar",
+        "equation_FStar.Seq.Properties.permutation", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Kraft.wf_tree",
+        "equation_with_fuel_Spec.Kraft.symbols.fuel_instrumented",
+        "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2", "int_inversion",
+        "lemma_Lib.Seq.disjoint_comm", "lemma_Lib.Seq.no_dup_append",
+        "primitive_Prims.op_LessThan", "primitive_Prims.op_Subtraction",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_FStar.Pervasives.Native.Mktuple2__1",
+        "projection_inverse_FStar.Pervasives.Native.Mktuple2__2",
+        "projection_inverse_Spec.Kraft.Node_freq",
+        "projection_inverse_Spec.Kraft.Node_left",
+        "projection_inverse_Spec.Kraft.Node_right",
+        "refinement_interpretation_Tm_refine_227138d9051185ac322c700717da5e94",
+        "refinement_interpretation_Tm_refine_23af664dc31da50bd595e4a4da60f6fd",
+        "refinement_interpretation_Tm_refine_4032815f27ab4a3f1d51893505835fb2",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_8914705869112f9fecd3ec08fb6d6174",
+        "refinement_interpretation_Tm_refine_a50d39b96d627d5815002344928c6f30",
+        "refinement_interpretation_Tm_refine_f3f65d9032578b5656aac9ceed29318b",
+        "refinement_interpretation_Tm_refine_f9f04b4f07e14a982616a50738d08f3a",
+        "refinement_kinding_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "typing_Spec.Kraft.symbols"
+      ],
+      0,
+      "1bf1f73ea96e59034306c34641214dea"
     ],
     [
       "Spec.Kraft.leaf_count",
@@ -113,7 +1008,7 @@
         "subterm_ordering_Spec.Kraft.Node"
       ],
       0,
-      "552c9a1bb42ef57dfe9e13c98dd8c5a1"
+      "6292191197d00e212f01fb9daec1816c"
     ],
     [
       "Spec.Kraft.bit_length",
@@ -132,7 +1027,36 @@
         "subterm_ordering_Spec.Kraft.Node"
       ],
       0,
-      "40ba7be6016129567242791bc173523e"
+      "b4b33bb11a2f61eef860ba3d66417386"
+    ],
+    [
+      "Spec.Kraft.lemma_leaf_count_height",
+      1,
+      2,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Kraft.height.fuel_instrumented",
+        "@fuel_correspondence_Spec.Kraft.leaf_count.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.height.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Kraft.leaf_count.fuel_instrumented",
+        "@query", "Spec.Kraft_pretyping_b1ab1322699fe5565c0319e993911c58",
+        "binder_x_b1ab1322699fe5565c0319e993911c58_0",
+        "constructor_distinct_Spec.Kraft.Node",
+        "disc_equation_Spec.Kraft.Node", "equation_Prims.pos",
+        "equation_with_fuel_Spec.Kraft.height.fuel_instrumented",
+        "equation_with_fuel_Spec.Kraft.leaf_count.fuel_instrumented",
+        "fuel_guarded_inversion_Spec.Kraft.tree",
+        "primitive_Prims.op_Addition", "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_Spec.Kraft.Node_freq",
+        "projection_inverse_Spec.Kraft.Node_left",
+        "projection_inverse_Spec.Kraft.Node_right",
+        "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "subterm_ordering_Spec.Kraft.Node", "typing_Spec.Kraft.leaf_count"
+      ],
+      0,
+      "ac88a51e31a5e33d20c0ef92203c4385"
     ],
     [
       "Spec.Kraft.kraft_sum",
@@ -149,7 +1073,7 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "d07c3388267e74107d387c629d7f4870"
+      "39eedefeabd08af5c4a653f7fe0c6cbf"
     ],
     [
       "Spec.Kraft.sym_seq",
@@ -163,7 +1087,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "2510b49de3391b291e31e1c6ac188a03"
+      "c2e785d46b7dd6d93c3d78b18ba02d34"
     ],
     [
       "Spec.Kraft.kraft_sorted",
@@ -188,7 +1112,7 @@
         "typing_FStar.Seq.Base.length", "well-founded-ordering-on-nat"
       ],
       0,
-      "10b778df33c547ee0c4fa21d92939cb9"
+      "3b1052db859533065c50cefc8e99c974"
     ],
     [
       "Spec.Kraft.kraft_cond",
@@ -197,7 +1121,7 @@
       1,
       [ "@query" ],
       0,
-      "f939dbf31051438695efbe3bf9d2da25"
+      "a3a53f4afacf92407b98853ea9ebe105"
     ],
     [
       "Spec.Kraft.lemma_kraft_sorted",
@@ -212,7 +1136,7 @@
         "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c"
       ],
       0,
-      "3474cd334b9755b079ff05e32734356f"
+      "13cd942633d8ffc020c35b86c86f6115"
     ],
     [
       "Spec.Kraft.do_kraft_code",
@@ -237,7 +1161,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "ae4601ccf6912f01d7b460199a2a272f"
+      "b0b92c2ba5332dd02c2a9c30c25755e7"
     ],
     [
       "Spec.Kraft.kraft_code",
@@ -254,7 +1178,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "f98b8ece1200d0bf1104285d0b466196"
+      "4993990e3d8915ef437814cbd6bd8f24"
     ],
     [
       "Spec.Kraft.lemma_kraft_code_upper_bound",
@@ -268,7 +1192,7 @@
         "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c"
       ],
       0,
-      "f899fc2c94d0269299db2ff480fd6170"
+      "b8fb7c2ceba183ef79088e881a9842a0"
     ],
     [
       "Spec.Kraft.lemma_kraft_code_next",
@@ -291,7 +1215,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "d543f9916c128aa3633415c803e0d700"
+      "ed427fe594766bd9546fdefa34e9d0f7"
     ],
     [
       "Spec.Kraft.kraft_code_uint",
@@ -329,7 +1253,7 @@
         "typing_FStar.Seq.Base.index", "typing_Prims.pow2"
       ],
       0,
-      "276942f9a2c0777ce7507919c19374e4"
+      "c3b5b133ffd3b7fbd5d7687f6956cbbd"
     ],
     [
       "Spec.Kraft.prefix",
@@ -353,7 +1277,7 @@
         "typing_FStar.UInt.to_vec"
       ],
       0,
-      "17fc6e44e7743209a1f829b4e17d407e"
+      "5ca11fd98caf820aa9dba7f832fbbc74"
     ]
   ]
 ]
