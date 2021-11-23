@@ -15,6 +15,19 @@ let unsnoc (#a: Type) (s: Seq.seq a{
 }) =
   Seq.slice s 0 (Seq.length s - 1)
 
+let remove (#a: Type) (s: Seq.seq a) (i: nat{i < Seq.length s}): Tot (res: Seq.seq a{
+  Seq.length res == Seq.length s - 1 /\
+  (forall j. j < i ==> s.[j] == res.[j]) /\
+  (forall j. i < j ==> s.[j] == res.[j - 1])
+}) =
+  let open Seq in
+  if i = 0 then
+    slice s 1 (length s)
+  else if i = length s - 1 then
+    slice s 0 (length s - 1)
+  else
+    slice s 0 i `append` slice s (i + 1) (length s)
+
 let upd_count (#a: eqtype) (s1: Seq.seq a) (n: nat{n < Seq.length s1}) (x: a): Lemma
   (ensures 
     (x <> Seq.index s1 n ==>
@@ -111,6 +124,34 @@ let no_dup_append' (#a: eqtype) (s1 s2: Seq.seq a): Lemma
     Seq.append_empty_l s2
   | _ ->
     Seq.lemma_append_count s1 s2
+
+#push-options "--z3rlimit 128 --fuel 1 --ifuel 1"
+let rec no_dup_slice (#a: eqtype) (s: Seq.seq a) (i j: nat): Lemma
+  (requires no_dup s /\ i <= j /\ j <= Seq.length s)
+  (ensures (
+    let open Seq in
+    let l = length s in
+    no_dup (slice s 0 i) /\
+    no_dup (slice s i j) /\
+    no_dup (slice s j l) /\
+    disjoint (slice s 0 i) (slice s i j) /\
+    disjoint (slice s i j) (slice s j l) /\
+    disjoint (slice s 0 i) (slice s j l)))
+  (decreases j - i) =
+  let open Seq in
+  let l = length s in
+  if j = i then
+    assert(equal s (slice s 0 i @| slice s i l))
+  else begin
+    assert(equal s (slice s 0 j @| slice s j l));
+    assert(equal s (slice s 0 i @| slice s i l));
+    assert(equal
+      (slice (slice s i l) 0 (j - i) @| slice (slice s i l) (j - i) (l - i))
+      (slice s i l));
+    assert(equal (slice s 0 j) (slice s 0 i @| slice s i j));
+    no_dup_slice s i (j - 1)
+  end
+#pop-options
 
 let slice_empty (#a: Type) (s: Seq.seq a) (len: nat): Lemma
   (requires len == 0)

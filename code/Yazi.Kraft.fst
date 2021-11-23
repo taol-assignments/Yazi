@@ -72,9 +72,9 @@ let node_smaller = fun tree_len tree depth n m ->
   else if nfd `U16.eq` mfd then
     let dn = depth.(n) in
     let dm = depth.(m) in
-    if dn `U8.lt` dm then
+    if dn `U16.lt` dm then
       true
-    else if dn `U8.eq` dm then
+    else if dn `U16.eq` dm then
       n `U32.lte` m
     else
       false
@@ -272,6 +272,51 @@ let pqremove (ctx: sort_ctx) (state: sort_state): ST.Stack U32.t
 
   if heap_len >^ 2ul then pqdownheap ctx state 1ul;
   top
+#pop-options
+
+inline_for_extraction
+let pqreplace (ctx: sort_ctx) (state: sort_state) (node: U32.t): ST.Stack unit
+  (requires fun h ->
+    let c = B.get h (CB.as_mbuf ctx) 0 in
+    SH.context_live h ctx state /\
+    SH.well_formed h ctx state /\
+    SH.heap_sorted h ctx state /\
+    SH.get_heap_max h state < U32.v heap_size /\
+    SH.get_heap_len h state - 1 <= B.length c.tree - U32.v node /\
+    SH.forest_leaf_count h ctx state true <= U32.v l_codes /\
+    SH.tree_freq_inv h ctx state /\
+    SH.depth_inv h ctx state /\
+    U32.v node < c.tree_len)
+  (ensures fun h0 _ h1 ->
+    let c1 = B.get h1 (CB.as_mbuf ctx) 0 in
+    B.modifies (B.loc_buffer c1.tree `B.loc_union` B.loc_buffer c1.heap) h0 h1 /\
+    SH.context_live h1 ctx state /\
+    SH.well_formed h1 ctx state /\
+    SH.heap_sorted h1 ctx state /\
+    SH.tree_freq_inv h1 ctx state /\
+    SH.depth_inv h1 ctx state /\
+    SH.get_heap_len h0 state == SH.get_heap_max h1 state /\
+    SH.get_heap_max h0 state == SH.get_heap_max h1 state + 1 /\
+    SH.forest_leaf_count h0 ctx state true ==
+    SH.forest_leaf_count h1 ctx state false) =
+  let h0 = ST.get () in
+  let heap = (CB.index ctx 0ul).heap in
+  let tree = (CB.index ctx 0ul).tree in
+  let depth = (CB.index ctx 0ul).depth in
+  let heap_max = get_heap_max state in
+  let m = heap.(1ul) in
+  let n = heap.(heap_max) in
+  SH.lemma_tree_freq_inv h0 ctx state 1;
+  tree.(node) <- {
+    tree.(node) with
+    freq_or_code = U16.add (tree.(m)).freq_or_code (tree.(n)).freq_or_code;
+  };
+
+  SH.lemma_forest_height_upper_bound h0 ctx state;
+  depth.(node) <-
+    (if depth.(n) `U16.gt` depth.(m) then depth.(n) else depth.(m)) `U16.add` 1us;
+
+  admit()
 
 let init_heap_common_cond
   (h: HS.mem) (ctx: sort_ctx) (state: sort_state)
@@ -317,7 +362,7 @@ let init_heap_common_cond
 
   (* Forall leaves, its depth should be 0. *)
   (forall i. {:pattern (depth.[i])}
-    i < j /\ U16.v (tree.[i]).freq_or_code > 0 ==> U8.v depth.[i] = 0) /\
+    i < j /\ U16.v (tree.[i]).freq_or_code > 0 ==> U16.v depth.[i] = 0) /\
 
   (* For all non-leaves, their dad_or_len field should be 0. *)
   (forall i. {:pattern (tree.[i]).dad_or_len}
@@ -365,7 +410,7 @@ let rec init_heap (ctx: sort_ctx) (state: sort_state) (j max_code elems: U32.t):
     let depth = (CB.index ctx 0ul).depth in
     let heap_len = get_heap_len state in
     heap.(heap_len +^ 1ul) <- j;
-    depth.(j) <- 0uy;
+    depth.(j) <- 0us;
 
     let h = ST.get () in
     let tree' = Ghost.hide (B.as_seq h tree) in
@@ -386,13 +431,15 @@ let rec init_heap (ctx: sort_ctx) (state: sort_state) (j max_code elems: U32.t):
       j
   end
 
-#set-options "--z3refresh --fuel 0 --ifuel 0"
+#set-options "--z3refresh --fuel 1 --ifuel 0"
 inline_for_extraction
 let rec sort_leaves (ctx: sort_ctx) (state: sort_state) (i: U32.t):
   ST.Stack unit
   (requires fun h ->
+    SH.context_live h ctx state /\
     0 < U32.v i /\ U32.v i < SH.get_heap_len h state / 2 /\
-    SH.partial_well_formed h ctx state (U32.add i 1ul))
+    SH.partial_well_formed h ctx state (U32.add i 1ul) /\
+    SH.get_heap_max h state == U32.v heap_size)
   (ensures fun h0 _ h1 ->
     let heap = (B.get h0 (CB.as_mbuf ctx) 0).heap in
     B.modifies (B.loc_buffer heap) h0 h1 /\
@@ -402,32 +449,3 @@ let rec sort_leaves (ctx: sort_ctx) (state: sort_state) (i: U32.t):
   pqdownheap ctx state i;
   if i >^ 1ul then sort_leaves ctx state (i -^ 1ul)
 
-// let rec merge_trees
-//   (heap: tree_heap_t) (hl: heap_len_t)
-//   (tl: tree_len_t) (tree: B.lbuffer ct_data tl) (depth: tree_depth_t)
-//   (j: heap_internal_index_t hl)
-//   (heap_max: U32.t) (node: U32.t)
-//   (elems: Ghost.erased (UInt.uint_t 32))
-//   (forest: Ghost.erased (Seq.seq SK.tree)):
-//   ST.Stack (Ghost.erased SK.tree)
-//   (requires fun h ->
-//     let heap_max = U32.v heap_max in
-//     U32.v hl >= 2 /\
-//     heap_max <= 2 * elems - 1 /\
-//     htd_seperate h heap tree depth /\
-//     2 * elems - 1 < B.length heap /\
-//     U32.v node < tl /\
-//     Seq.length (Ghost.reveal forest) == Ghost.reveal tl /\
-//     SH.well_formed SH.build_cmp h heap hl tl tree depth /\
-//     (forall (i: nat{heap_max < i /\ i <= 2 * elems - 1}).
-//       let tree = B.as_seq h tree in
-//       let heap = B.as_seq h heap in
-//       let i' = U32.v heap.[i] in
-//       i' < tl /\
-//       (exists (k: nat{heap_max <= k /\ k < i}).
-//         let k' = U32.v heap.[k] in
-//         k' < tl /\ SK.Leaf? forest.[k'] == false /\
-//         U16.v (tree.[i']).dad_or_len == k' /\
-//         (SK.left (forest.[k']) == forest.[i'] \/
-//          SK.right (forest.[k']) == forest.[i']))))
-//   (ensures fun h0 _ h1 -> True) = admit()

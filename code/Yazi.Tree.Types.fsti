@@ -48,7 +48,7 @@ type heap_len_t = l: U32.t{0 < U32.v l /\ U32.v l < U32.v heap_size}
 noextract
 type tree_len_t = tl: Ghost.erased nat{tl <= U32.v heap_size}
 
-type tree_depth_t = B.lbuffer U8.t (2 * U32.v l_codes + 1)
+type tree_depth_t = B.lbuffer U16.t (2 * U32.v l_codes + 1)
 
 type heap_index_t (hl: heap_len_t) = i: U32.t{
   0 < U32.v i /\ U32.v i <= U32.v hl

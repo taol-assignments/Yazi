@@ -9,7 +9,7 @@ open Lib.Rational
 
 let rec lemma_max_leaf_count t =
   match t with
-  | Node l r ->
+  | Node l _ r ->
     lemma_max_leaf_count l;
     lemma_max_leaf_count r;
     Math.pow2_le_compat (height t - 1) (height l);
