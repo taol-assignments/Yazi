@@ -15,7 +15,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "51dc57da6ef5ae1fa3421106a5ccfd9a"
+      "2a444379c887c97bdf220f3baa75120e"
     ],
     [
       "Spec.Kraft.__proj__Node__item__left",
@@ -39,7 +39,7 @@
         "refinement_interpretation_Tm_refine_3e74d404dc9d5560fa29642007e950d5"
       ],
       0,
-      "03a58a2c37672c3db83dd1f19b076edf"
+      "941b4036a1b7ef010f317f81a82f2a9e"
     ],
     [
       "Spec.Kraft.__proj__Node__item__right",
@@ -75,7 +75,7 @@
         "refinement_interpretation_Tm_refine_c59688c4744fb6753a5dcf40509c6d4b"
       ],
       0,
-      "ab412fa49e100c341a4c55d1d143e40b"
+      "b9bc11ba1384cda5945883959a2e2898"
     ],
     [
       "Spec.Kraft.left",
@@ -119,7 +119,7 @@
         "projection_inverse_BoxBool_proj_0"
       ],
       0,
-      "97661ba6e3b9ea0ddefe02ffcda5d0bf"
+      "e97977f655cae015ce5322b5d7314000"
     ],
     [
       "Spec.Kraft.symbols",
@@ -136,7 +136,7 @@
         "subterm_ordering_Spec.Kraft.Node"
       ],
       0,
-      "c59258009fdd3014f0ceff9bb0b33147"
+      "737694b283d754371f8b7e5ec081e3cf"
     ],
     [
       "Spec.Kraft.tree_symbol",
@@ -150,7 +150,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "3edfefb1eb74ae9fb9f61391e217aebe"
+      "5a1af9934b41893bb93642475cc1f3a3"
     ],
     [
       "Spec.Kraft.code_length",
@@ -181,7 +181,7 @@
         "subterm_ordering_Spec.Kraft.Node"
       ],
       0,
-      "1c1d0c98c3721b269ed1dc1330ae66f8"
+      "83d4601e6a93416220836620777fe7a8"
     ],
     [
       "Spec.Kraft.code_freq",
@@ -215,7 +215,7 @@
         "subterm_ordering_Spec.Kraft.Node"
       ],
       0,
-      "6ba9a9c2340a0ce3b55d993a9b3fde44"
+      "52305a1eb8bc2965009bbff1a314b3c4"
     ],
     [
       "Spec.Kraft.height",
@@ -247,7 +247,7 @@
         "subterm_ordering_Spec.Kraft.Node"
       ],
       0,
-      "1cfec99efa27c22cb0260d18860dfb0b"
+      "437f7e2c43f9a59c0697f3faff7f4de9"
     ],
     [
       "Spec.Kraft.wf_tree",
@@ -261,7 +261,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "9d3b51d5bf35733c0890175f6b9c31c0"
+      "b009de3ce6a07eda85e0ca40710b9bca"
     ],
     [
       "Spec.Kraft.avg_len",
@@ -282,7 +282,7 @@
         "subterm_ordering_Spec.Kraft.Node"
       ],
       0,
-      "218a1f07696a2cdadb22b6c532a8024d"
+      "af3ab5714e816a9ccf783b5440098033"
     ],
     [
       "Spec.Kraft.optimal_tree",
@@ -296,7 +296,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "ea02fc77db36b109e9adad87554469b9"
+      "c26ccea38661f8f3f20fb04f6035b122"
     ],
     [
       "Spec.Kraft.merge",
@@ -311,7 +311,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "6563e280fc3e0721068da1d6a4f5aed4"
+      "29e02dbb1e04be38829d92bae80890dc"
     ],
     [
       "Spec.Kraft.subst_pre_cond",
@@ -325,7 +325,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "3330c1a497d8c8ffcf029fe2b5849ee7"
+      "90e51c681f776cb52a6e2dba830a68af"
     ],
     [
       "Spec.Kraft.subst",
@@ -376,7 +376,7 @@
         "typing_FStar.Seq.Properties.count", "typing_Spec.Kraft.symbols"
       ],
       0,
-      "463e95e9db4d420b0b76eb06b3653e67"
+      "43b4b773a0d6e20f1ec1092d0d23db02"
     ],
     [
       "Spec.Kraft.lemma_merge_subst",
@@ -438,7 +438,7 @@
         "typing_FStar.Seq.Properties.mem", "typing_Spec.Kraft.subst"
       ],
       0,
-      "f01512c5a8ac919bb6b8216ca60f0165"
+      "d52a8d023f0395499fdff48d2c0eab57"
     ],
     [
       "Spec.Kraft.min_freq_2",
@@ -452,7 +452,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "1433764b018d9b4bd5894d61b650d9d9"
+      "4de03dd69b237cf9924cabbfb2b53b14"
     ],
     [
       "Spec.Kraft.min_freq_2",
@@ -493,7 +493,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "141e33b6ee2f6065794150f1ab7dfbeb"
+      "8a46850e01f9e0dd27f435d8e145ec97"
     ],
     [
       "Spec.Kraft.forest_symbols",
@@ -515,7 +515,7 @@
         "typing_FStar.Seq.Base.length", "well-founded-ordering-on-nat"
       ],
       0,
-      "77bf3159e63a524299b682179b1bb676"
+      "f56f82890f4892eeb02dd26b038c6c4c"
     ],
     [
       "Spec.Kraft.wf_forest",
@@ -529,7 +529,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "1c9060236923f585429e7beac228dc86"
+      "f4784f8d331105af683a63a74a5ad611"
     ],
     [
       "Spec.Kraft.forest_avg_len",
@@ -555,7 +555,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "0494c25343fd30f6ff15d4bf14f53db0"
+      "51f054277a37e5f22873cde20c1134ef"
     ],
     [
       "Spec.Kraft.forest_symbols_begin",
@@ -580,7 +580,7 @@
         "typing_FStar.Seq.Base.length", "well-founded-ordering-on-nat"
       ],
       0,
-      "93c024e31ca2207d065e03601527340d"
+      "80f42bbb2fa0830569f4060ebf752cc7"
     ],
     [
       "Spec.Kraft.lemma_forest_symbols_begin",
@@ -593,7 +593,7 @@
         "refinement_interpretation_Tm_refine_e0f525f83ca35a4de7eddadd38be3e57"
       ],
       0,
-      "d735f4d5f90430a803dee17178147122"
+      "e27b322e6454ac3ffb8b4bb632b73d85"
     ],
     [
       "Spec.Kraft.lemma_forest_symbols_begin",
@@ -645,7 +645,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "4aa14745845c0f8b52e8b1cba5676f01"
+      "77b28b6cb1b896a1e6d9513eaa6267c5"
     ],
     [
       "Spec.Kraft.lemma_forest_symbols_index",
@@ -660,7 +660,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "9d8f6fddf344a2880a9be5297043183e"
+      "7ae4320f90416a84564444da56881b61"
     ],
     [
       "Spec.Kraft.lemma_forest_symbols_index",
@@ -719,7 +719,7 @@
         "typing_Spec.Kraft.symbols", "well-founded-ordering-on-nat"
       ],
       0,
-      "bf6d5959a3edde7cfaf4dcc8ab23d21b"
+      "a8e24a2cb4a8d12a6fa1c5680af09cce"
     ],
     [
       "Spec.Kraft.lemma_forest_symbols_unsnoc_1",
@@ -728,7 +728,7 @@
       1,
       [ "@query" ],
       0,
-      "f36af3062ce2772532c5f41fae4f2443"
+      "cca7c8c79324bc5a506a7d1dadc13466"
     ],
     [
       "Spec.Kraft.lemma_forest_symbols_unsnoc_1",
@@ -790,7 +790,7 @@
         "typing_Spec.Kraft.symbols", "well-founded-ordering-on-nat"
       ],
       0,
-      "f3267585d874280795e8ee22f0646770"
+      "efb2bb4f679575a5291aaa81f0dc533a"
     ],
     [
       "Spec.Kraft.lemma_forest_symbols_unsnoc_2",
@@ -804,7 +804,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "f249b0bddc3cf844664c89e9bb539b8b"
+      "b70253139693ee0d836edbc1036fe092"
     ],
     [
       "Spec.Kraft.lemma_forest_symbols_unsnoc_2",
@@ -857,7 +857,7 @@
         "typing_Spec.Kraft.symbols", "well-founded-ordering-on-nat"
       ],
       0,
-      "499f0ed226d36af803e4908907303a79"
+      "ee955903d0c3e02f2d79c26229d509ef"
     ],
     [
       "Spec.Kraft.lemma_wf_forest_symbols_disjoint",
@@ -874,7 +874,7 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
       ],
       0,
-      "d1556beb2c3b5055dc974e2f2ed35a07"
+      "1d618dde257f2c31c67a7f3fe1411952"
     ],
     [
       "Spec.Kraft.lemma_wf_forest_symbols_disjoint",
@@ -952,7 +952,7 @@
         "unit_typing", "well-founded-ordering-on-nat"
       ],
       0,
-      "14b6ae1b0b27656e369dd686c96e31b2"
+      "554a55d3f64842517bd7eaadc5046e31"
     ],
     [
       "Spec.Kraft.forest_reduce",
@@ -992,7 +992,7 @@
         "typing_Spec.Kraft.symbols"
       ],
       0,
-      "1bf1f73ea96e59034306c34641214dea"
+      "f4dc67055f2850e466551409218ddf1e"
     ],
     [
       "Spec.Kraft.leaf_count",
@@ -1056,7 +1056,7 @@
         "subterm_ordering_Spec.Kraft.Node", "typing_Spec.Kraft.leaf_count"
       ],
       0,
-      "ac88a51e31a5e33d20c0ef92203c4385"
+      "be0c179fb150f1996dc72f24ead5c97c"
     ],
     [
       "Spec.Kraft.kraft_sum",
