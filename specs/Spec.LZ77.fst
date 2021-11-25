@@ -1,6 +1,7 @@
 module Spec.LZ77
 
 module B = LowStar.Buffer
+module BV = FStar.BitVector
 module Cast = FStar.Int.Cast
 module CB = LowStar.ConstBuffer
 module CFlags = Yazi.CFlags
@@ -12,7 +13,9 @@ module SS = Spec.Stream
 module U8 = FStar.UInt8
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
+module U64 = FStar.UInt64
 module UInt = FStar.UInt
+module Util = Yazi.Util
 
 open FStar.Mul
 open Lib.UInt
@@ -194,9 +197,28 @@ type valid_state_t (#h: HS.mem) (ctx: valid_context_p h) = s: lz77_state_t{
   state_valid h ctx s
 }
 
-assume val hash: (bits: hash_bits) -> U8.t -> U8.t -> U8.t -> U8.t -> Tot (res: U32.t{
+let load_post_cond (h: HS.mem) (n: nat{n == 4 \/ n == 8}) (buf: B.buffer U8.t{
+  B.live h buf /\ B.length buf >= n
+}) (res: BV.bv_t (n * 8)) =
+  let buf = B.as_seq h buf in
+  (Util.is_little_endian () <> 0uy ==> (forall i. 0 <= i /\ i < n ==>
+    Seq.slice res (i * 8) ((i + 1) * 8) == UInt.to_vec (U8.v buf.[n - 1 - i]))) /\
+  (Util.is_little_endian () == 0uy ==> (forall i. 0 <= i /\ i < n ==>
+    Seq.slice res (i * 8) ((i + 1) * 8) == UInt.to_vec (U8.v buf.[i])))
+
+let hash (bits: hash_bits) (a b c d: U8.t): Tot (res: U32.t{
   U32.v res < pow2 bits
-})
+}) =
+  let open FStar.Seq in
+  let vec t = UInt.to_vec (U8.v t) in
+  let k = UInt.from_vec (if Util.is_little_endian () <> 0uy then
+    vec d @| vec c @| vec b @| vec a
+  else
+    vec a @| vec b @| vec c @| vec d)
+  in
+  let k' = k `UInt.mul_mod` U32.v 0x1E35A7BDul in
+  Math.lemma_div_lt k' 32 (32 - bits);
+  U32.uint_to_t (k' `UInt.shift_right` (32 - bits))
 
 let hash_neq (bits: hash_bits) (a b c d: U8.t): Lemma
   (ensures forall (a' b' c' d': U8.t). hash bits a b c d <> hash bits a' b' c' d' ==>
@@ -624,6 +646,121 @@ let fill_window_post
     deflate_params_unchange ls0 ls1 /\
     block_start1 >= -8454144
 
+let rec ctz (#n: pos) (vec: BV.bv_t n): Tot (m: nat{
+  m <= n /\
+  (forall i. i >= n - m ==> vec.[i] == false) /\
+  (m < n ==> vec.[n - m - 1] == true)
+}) =
+  if Seq.last vec then
+    0
+  else if n > 1 then begin
+    assert(forall i. (unsnoc vec).[i] == vec.[i]);
+    1 + ctz #(n - 1) (unsnoc vec)
+  end else
+    1
+
+#push-options "--fuel 1 --ifuel 1"
+let rec ctz_zero (#n: pos) (a: UInt.uint_t n): Lemma
+  (requires a == 0)
+  (ensures ctz (UInt.to_vec a) == n)
+  [SMTPat (ctz (UInt.to_vec a))] =
+  match n with
+  | 1 -> ()
+  | _ -> ctz_zero #(n - 1) a
+#pop-options
+
+let rec clz (#n: pos) (vec: BV.bv_t n): Tot (m: nat{
+  m <= n /\
+  (forall i. i < m ==> vec.[i] == false) /\
+  (m < n ==> vec.[m] == true)
+}) =
+  if Seq.head vec then
+    0
+  else if n > 1 then begin
+    assert(forall i. i > 0 ==> vec.[i] == (Seq.tail vec).[i - 1]);
+    1 + clz #(n - 1) (Seq.tail vec)
+  end else
+    1
+
+#push-options "--fuel 1 --ifuel 1"
+let rec clz_zero (#n: pos) (a: UInt.uint_t n): Lemma
+  (requires a == 0)
+  (ensures clz (UInt.to_vec a) == n)
+  [SMTPat (clz (UInt.to_vec a))] =
+  match n with
+  | 1 -> ()
+  | _ -> clz_zero #(n - 1) a
+#pop-options
+
+let nth_byte_equal (h: HS.mem) (s m: B.buffer U8.t) (n: nat{n < B.length s /\ n < B.length m}) =
+  let s = B.as_seq h s in
+  let m = B.as_seq h m in
+  Seq.equal (UInt.to_vec (U8.v s.[n])) (UInt.to_vec (U8.v m.[n]))
+
+let nth_byte_map
+  (#n: nat{n == 32 \/ n == 64})
+  (h: HS.mem)
+  (s: B.buffer U8.t{B.length s >= n / 8})
+  (m: B.buffer U8.t{B.length m >= n / 8})
+  (x: UInt.uint_t n)
+  (j: nat{j < n / 8}) =
+  let s = B.as_seq h s in
+  let m = B.as_seq h m in
+  let sn = UInt.to_vec (U8.v s.[j]) in
+  let mn = UInt.to_vec (U8.v m.[j]) in
+  let vec = UInt.to_vec x in
+  let l = n - (j + 1) * 8 in
+  let r = n - j * 8 in
+  let l' = j * 8 in
+  let r' = (j + 1) * 8 in
+  (Util.is_little_endian () <> 0uy ==>
+    (forall i. l <= i /\ i < r ==> vec.[i] == (sn.[i - l] <> mn.[i - l]))) /\
+  (Util.is_little_endian () == 0uy ==>
+    (forall i. l' <= i /\ i < r' ==> vec.[i] == (sn.[i - l'] <> mn.[i - l'])))
+
+let load_xor_pre_cond (#n: nat{
+  n == 32 \/ n == 64
+}) (h: HS.mem) (s m: B.buffer U8.t) (s' m' x: UInt.uint_t n) =
+  B.live h s /\ B.live h m /\ B.length s >= n / 8 /\ B.length m >= n / 8 /\
+  x == UInt.logxor s' m' /\
+  load_post_cond h (n / 8) s (UInt.to_vec #n s') /\
+  load_post_cond h (n / 8) m (UInt.to_vec #n m')
+
+#push-options "--z3refresh --z3rlimit 1024 --fuel 0 --ifuel 0 --z3seed 101"
+let lemma_load_xor_equal
+  (#n: nat) (h: HS.mem) (s m: B.buffer U8.t) (s' m' x: UInt.uint_t n) (res i: nat): Lemma
+  (requires (
+    let vec = UInt.to_vec x in
+    (n == 32 \/ n == 64) /\
+    load_xor_pre_cond h s m s' m' x /\
+    (Util.is_little_endian () <> 0uy ==> res == ctz vec) /\
+    (Util.is_little_endian () == 0uy ==> res == clz vec) /\
+    i < res / 8))
+  (ensures
+    i < B.length s /\ i < B.length m /\
+    (B.as_seq h s).[i] == (B.as_seq h m).[i]) =
+  assert(nth_byte_map h s m x i);
+  assert(nth_byte_equal h s m i);
+  UInt.to_vec_lemma_2 (U8.v (B.as_seq h s).[i]) (U8.v (B.as_seq h m).[i])
+
+let lemma_load_xor_not_equal
+  (#n: nat) (h: HS.mem) (s m: B.buffer U8.t) (s' m' x: UInt.uint_t n) (res: nat): Lemma
+  (requires (
+    let vec = UInt.to_vec x in
+    (n == 32 \/ n == 64) /\
+    load_xor_pre_cond h s m s' m' x /\
+    (Util.is_little_endian () <> 0uy ==> res == ctz vec) /\
+    (Util.is_little_endian () == 0uy ==> res == clz vec)) /\
+    res < n)
+  (ensures (B.as_seq h s).[res / 8] <> (B.as_seq h m).[res / 8]) =
+  assert(nth_byte_map h s m x (res / 8));
+  let res' = res / 8 in
+  let s = B.as_seq h s in
+  let m = B.as_seq h m in
+  if s.[res'] = m.[res'] then
+    UInt.to_vec_lemma_1 (U8.v s.[res']) (U8.v m.[res'])
+#pop-options
+
 unfold let ctz_compare_pre (h: HS.mem) (len: U32.t) (s m: B.buffer U8.t) (i: U32.t) =
   (U32.v len == 4 \/ U32.v len == 8) /\
   B.live h s /\ B.live h m /\
@@ -631,16 +768,16 @@ unfold let ctz_compare_pre (h: HS.mem) (len: U32.t) (s m: B.buffer U8.t) (i: U32
   U32.v i + U32.v len <= B.length s /\
   (forall (j: nat{j < U32.v i}). (B.as_seq h s).[j] == (B.as_seq h m).[j])
 
-let ctz_compare_post
+unfold let ctz_compare_post
   (h0: HS.mem) (res: U32.t) (h1: HS.mem) (len: U32.t) (s m: B.buffer U8.t) (i: U32.t) =
-    let s' = B.as_seq h0 s in
-    let m' = B.as_seq h0 m in
-    let res' = U32.v res in
-    let i' = U32.v i in
-    ctz_compare_pre h0 len s m i /\
-    B.modifies B.loc_none h0 h1 /\
-    res' <= U32.v len /\ (res' == U32.v len \/ s'.[i' + res'] <> m'.[i' + res']) /\
-    (forall (j: nat{j < i' + res'}). s'.[j] == m'.[j])
+  let s' = B.as_seq h0 s in
+  let m' = B.as_seq h0 m in
+  let res' = U32.v res in
+  let i' = U32.v i in
+  ctz_compare_pre h0 len s m i /\
+  B.modifies B.loc_none h0 h1 /\
+  res' <= U32.v len /\ (res' == U32.v len \/ s'.[i' + res'] <> m'.[i' + res']) /\
+  (forall (j: nat{j < i' + res'}). s'.[j] == m'.[j])
 
 unfold let string_compare_ite_pre (h: HS.mem) (s m: B.buffer U8.t) (i tail: U32.t) =
   let s' = B.as_seq h s in

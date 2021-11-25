@@ -1,5 +1,7 @@
 module Yazi.Util
 
+module U8 = FStar.UInt8
+
 [@CMacro]
 let z_no_flush = 0l
 [@CMacro]
@@ -75,3 +77,6 @@ let z_deflated   = 8l
 
 [@CMacro]
 let z_null  = 0l  (* for initializing zalloc, zfree, opaque *)
+
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
+val is_little_endian: unit -> Tot U8.t

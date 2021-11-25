@@ -16,7 +16,9 @@ module ST = FStar.HyperStack.ST
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
 module U8 = FStar.UInt8
+module U64 = FStar.UInt64
 module UInt = FStar.UInt
+module Util = Yazi.Util
 
 open LowStar.BufferOps
 open FStar.Mul
@@ -26,40 +28,87 @@ open Yazi.LZ77.State
 open Yazi.Stream.Types
 open Yazi.Stream.State
 
-[@
-  (CPrologue "#ifdef _MSC_VER
+/// Declaration of the load functions. They simply copy 4 bytes or 8 bytes data
+/// to the given pointer. The result depends on the machine endianness.
+[@ (CPrologue "#ifdef _MSC_VER
 #include <intrin.h>
 #endif
 
-#if !defined(__GNUC__) && !defined(__COMPCERT__)
+#ifndef __GNUC__
 #include <string.h>
+#define load32(dst, buf) memcpy(dst, buf, sizeof(*dst))
+#define load64(dst, buf) memcpy(dst, buf, sizeof(*dst))
+#else
+#define load32(dst, buf) __builtin_memcpy(dst, buf, sizeof(*dst))
+#define load64(dst, buf) __builtin_memcpy(dst, buf, sizeof(*dst))
 #endif
 
-static inline uint32_t lz77_hash(uint16_t h_bits, const unsigned char *buf) {
-  uint32_t n;
-#if defined __GNUC__ || defined __COMPCERT__
-  __builtin_memcpy(&n, buf, sizeof(n));
-#else
-  memcpy(&n, buf, sizeof(n));
-#endif
-  return (n * 0x1E35A7BD) >> (32 - h_bits);\n}")
-  (CEpilogue "#define Yazi_LZ77_hash(ctx, i) lz77_hash((ctx)->h_bits, &((ctx)->window[i]))")]
-assume val hash:
-    ctx: lz77_context_p
-  -> state: Ghost.erased lz77_state_t
-  -> i: U32.t
-  -> ST.Stack U32.t
+#if 0") (CEpilogue "#endif")]
+assume val load32: dst: B.pointer U32.t -> buf: B.buffer U8.t -> ST.Stack unit
+  (requires fun h -> B.live h dst /\ B.live h buf /\ B.length buf >= 4)
+  (ensures fun h0 _ h1 ->
+    let open FStar.Seq in
+    B.modifies (B.loc_buffer dst) h0 h1 /\
+    S.load_post_cond h1 4 buf (UInt.to_vec (U32.v (B.get h1 dst 0))))
+
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
+assume val load64: dst: B.pointer U64.t -> buf: B.buffer U8.t -> ST.Stack unit
+  (requires fun h -> B.live h dst /\ B.live h buf /\ B.length buf >= 8)
+  (ensures fun h0 _ h1 ->
+    let open FStar.Seq in
+    B.modifies (B.loc_buffer dst) h0 h1 /\
+    S.load_post_cond h1 8 buf (UInt.to_vec (U64.v (B.get h1 dst 0))))
+
+#push-options "--z3rlimit 1024 --fuel 0 --ifuel 0"
+let hash_load32_aux (h: HS.mem) (dst: B.pointer U32.t) (buf: B.buffer U8.t): Lemma
+  (requires
+    B.live h buf /\ B.length buf >= 4 /\
+    S.load_post_cond h 4 buf (UInt.to_vec (U32.v (B.get h dst 0))))
+  (ensures (
+    let open FStar.Seq in
+    let w = B.as_seq h buf in
+    let vec t = UInt.to_vec (U8.v t) in
+    let d = UInt.to_vec (U32.v (B.get h dst 0)) in
+    (Util.is_little_endian () <> 0uy ==>
+      d == vec w.[3] @| vec w.[2] @| vec w.[1] @| vec w.[0]) /\
+    (Util.is_little_endian () == 0uy ==> 
+      d == vec w.[0] @| vec w.[1] @| vec w.[2] @| vec w.[3]))) =
+  let open FStar.Seq in
+  let w = B.as_seq h buf in
+  let vec t = UInt.to_vec (U8.v t) in
+  let k = UInt.to_vec (U32.v (B.get h dst 0)) in
+  if Util.is_little_endian () <> 0uy then begin
+    let d = vec w.[3] @| vec w.[2] @| vec w.[1] @| vec w.[0] in
+    assert(equal k d)
+  end else
+    let d = vec w.[0] @| vec w.[1] @| vec w.[2] @| vec w.[3] in
+    assert(equal k d)
+
+[@CInline]
+let hash (ctx: lz77_context_p) (state: Ghost.erased lz77_state_t) (i: U32.t):
+  ST.Stack U32.t
   (requires fun h ->
+    let state' = B.as_seq h state in
     S.state_valid h ctx state /\
-    (let state' = B.as_seq h state in
-    U32.v i <= S.strstart state' + S.lookahead state' - S.min_match))
+    U32.v i <= S.strstart state' + S.lookahead state' - S.min_match)
   (ensures fun h0 res h1 ->
-    let ctx' = B.get h0 (CB.as_mbuf ctx) 0 in
-    let w = B.as_seq h0 ctx'.window in
     let i' = U32.v i in
-    let hv = U32.v (S.hash (U16.v ctx'.h_bits) w.[i'] w.[i' + 1] w.[i' + 2] w.[i' + 3]) in
-    B.modifies B.loc_none h0 h1 /\
-    U32.v res == hv)
+    let ctx' = (CB.as_seq h0 ctx).[0] in
+    let w = B.as_seq h0 ((CB.as_seq h0 ctx).[0]).window in
+    let hv = S.hash (U16.v ctx'.h_bits) w.[i'] w.[i' + 1] w.[i' + 2] w.[i' + 3] in
+    B.modifies B.loc_none h0 h1 /\ res == hv) =
+  ST.push_frame ();
+  let w = B.sub (CB.index ctx 0ul).window i 4ul in
+  let bits = (CB.index ctx 0ul).h_bits in
+  let k = B.alloca 0ul 1ul in
+  load32 k w;
+
+  hash_load32_aux (ST.get ()) k w;
+  
+  let k' = k.(0ul) `U32.mul_mod` 0x1E35A7BDul in
+  ST.pop_frame ();
+  k' `U32.shift_right` Cast.uint16_to_uint32 (32us `U16.sub` bits)
+#pop-options
 
 [@@ CMacro ]
 let min_match = 4ul
@@ -440,7 +489,7 @@ let rec do_fill_window
     else
       block_data'
 
-#set-options "--z3rlimit 256 --fuel 0 --ifuel 0 --z3seed 13 --z3refresh"
+#set-options "--z3rlimit 1024 --fuel 0 --ifuel 0 --z3seed 13 --z3refresh"
 let fill_window ss ctx ls next_in wrap block_start block_data =
   let h0 = ST.get () in
   let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in
@@ -454,15 +503,332 @@ let fill_window ss ctx ls next_in wrap block_start block_data =
   end else
     block_data
 
-[@ (CEpilogue "#include \"Yazi_LZ77_String.inc\"")]
-assume val ctz_compare:
-     len: U32.t
-  -> s: B.buffer U8.t
-  -> m: B.buffer U8.t
-  -> i: U32.t
-  -> ST.Stack U32.t
+let builtin_count_zero_32_pre (a: U32.t) =
+  (CFlags.__gnuc__ \/ CFlags.__compcert__) /\ U32.v a <> 0
+
+let builtin_count_zero_64_pre (a: U64.t) =
+  (CFlags.__gnuc__ \/ CFlags.__compcert__) /\ U64.v a <> 0
+  
+/// Declaration of the gcc builtin ctz/clz. Zero as the input argument is a undifined
+/// behavior.
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
+assume val __builtin_ctz: a: U32.t -> Pure I32.t
+  (requires builtin_count_zero_32_pre a)
+  (ensures fun res -> S.ctz (UInt.to_vec (U32.v a)) == I32.v res)
+
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
+assume val __builtin_ctzll: a: U64.t -> Pure I32.t
+  (requires builtin_count_zero_64_pre a)
+  (ensures fun res -> S.ctz (UInt.to_vec (U64.v a)) == I32.v res)
+
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
+assume val __builtin_clz: a: U32.t -> Pure I32.t
+  (requires builtin_count_zero_32_pre a)
+  (ensures fun res -> S.clz (UInt.to_vec (U32.v a)) == I32.v res)
+
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
+assume val __builtin_clzll: a: U64.t -> Pure I32.t
+  (requires builtin_count_zero_64_pre a)
+  (ensures fun res -> S.clz (UInt.to_vec (U64.v a)) == I32.v res)
+
+let bit_scan_32_pre (h: HS.mem) (index: B.pointer U32.t) =
+  CFlags._msc_ver /\ B.live h index
+
+let bit_scan_32_post
+  (h0: HS.mem) (res: U8.t) (h1: HS.mem)
+  (index: B.pointer U32.t) (mask: U32.t) (forward: bool) =
+  (U8.v res == 0 <==> U32.v mask == 0 /\ B.modifies B.loc_none h0 h1) /\
+  (U8.v res <> 0 ==>
+    B.modifies (B.loc_buffer index) h0 h1 /\
+    (forward ==> S.ctz (UInt.to_vec (U32.v mask)) == U32.v (B.get h1 index 0)) /\
+    (forward == false ==> S.clz (UInt.to_vec (U32.v mask)) == U32.v (B.get h1 index 0)))
+
+let bit_scan_64_pre (h: HS.mem) (index: B.pointer U32.t) =
+  CFlags._msc_ver /\ (CFlags._m_arm64 \/ CFlags._m_x64) /\ B.live h index
+
+let bit_scan_64_post
+  (h0: HS.mem) (res: U8.t) (h1: HS.mem)
+  (index: B.pointer U32.t) (mask: U64.t) (forward: bool) =
+  (U8.v res == 0 <==> U64.v mask == 0 /\ B.modifies B.loc_none h0 h1) /\
+  (U8.v res <> 0 ==>
+    B.modifies (B.loc_buffer index) h0 h1 /\
+    (forward ==> S.ctz (UInt.to_vec (U64.v mask)) == U32.v (B.get h1 index 0)) /\
+    (forward == false ==> S.clz (UInt.to_vec (U64.v mask)) == U32.v (B.get h1 index 0)))
+
+/// Declaration of the MSVC bit scan functions.
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
+assume val _BitScanForward: index: B.pointer U32.t -> mask: U32.t -> ST.Stack U8.t
+  (requires fun h -> bit_scan_32_pre h index)
+  (ensures fun h0 res h1 -> bit_scan_32_post h0 res h1 index mask true)
+
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
+assume val _BitScanForward64: index: B.pointer U32.t -> mask: U64.t -> ST.Stack U8.t
+  (requires fun h -> bit_scan_64_pre h index)
+  (ensures fun h0 res h1 -> bit_scan_64_post h0 res h1 index mask true)
+
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
+assume val _BitScanReverse: index: B.pointer U32.t -> mask: U32.t -> ST.Stack U8.t
+  (requires fun h -> bit_scan_32_pre h index)
+  (ensures fun h0 res h1 -> bit_scan_32_post h0 res h1 index mask false)
+
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
+assume val _BitScanReverse64: index: B.pointer U32.t -> mask: U64.t -> ST.Stack U8.t
+  (requires fun h -> bit_scan_64_pre h index)
+  (ensures fun h0 res h1 -> bit_scan_64_post h0 res h1 index mask false)
+
+let count_zero_32_pre = CFlags.__gnuc__ \/ CFlags.__compcert__ \/ CFlags._msc_ver
+
+let count_zero_64_pre =
+  CFlags.__gnuc__ \/ CFlags.__compcert__ \/
+  (CFlags._msc_ver /\ (CFlags._m_arm64 \/ CFlags._m_x64))
+
+let count_zero_32_post (h0: HS.mem) (res: U32.t) (h1: HS.mem) (a: U32.t) (forward: bool) =
+  B.modifies B.loc_none h0 h1 /\
+  (forward ==> U32.v res == S.ctz (UInt.to_vec (U32.v a))) /\
+  (forward == false ==> U32.v res == S.clz (UInt.to_vec (U32.v a)))
+
+unfold let count_zero_64_post (h0: HS.mem) (res: U32.t) (h1: HS.mem) (a: U64.t) (forward: bool) =
+  B.modifies B.loc_none h0 h1 /\
+  (forward ==> U32.v res == S.ctz (UInt.to_vec (U64.v a))) /\
+  (forward == false ==> U32.v res == S.clz (UInt.to_vec (U64.v a)))
+
+inline_for_extraction
+let ctz (a: U32.t): ST.Stack U32.t
+  (requires fun _ -> count_zero_32_pre)
+  (ensures fun h0 res h1 -> count_zero_32_post h0 res h1 a true) =
+  if CFlags.__gnuc__ then
+    if a `U32.eq` 0ul then 32ul else Cast.int32_to_uint32 (__builtin_ctz a)
+  else if CFlags.__compcert__ then
+    if a `U32.eq` 0ul then 32ul else Cast.int32_to_uint32 (__builtin_ctz a)
+  else begin
+    ST.push_frame ();
+    let index = B.alloca 0ul 1ul in
+    let res = _BitScanForward index a in
+    let cres = index.(0ul) in
+    ST.pop_frame ();
+    if res `U8.eq` 0uy then 32ul else cres
+  end
+
+inline_for_extraction
+let clz (a: U32.t): ST.Stack U32.t
+  (requires fun _ -> count_zero_32_pre)
+  (ensures fun h0 res h1 -> count_zero_32_post h0 res h1 a false) =
+  if CFlags.__gnuc__ then
+    if a `U32.eq` 0ul then 32ul else Cast.int32_to_uint32 (__builtin_clz a)
+  else if CFlags.__compcert__ then
+    if a `U32.eq` 0ul then 32ul else Cast.int32_to_uint32 (__builtin_clz a)
+  else begin
+    ST.push_frame ();
+    let index = B.alloca 0ul 1ul in
+    let res = _BitScanReverse index a in
+    let cres = index.(0ul) in
+    ST.pop_frame ();
+    if res `U8.eq` 0uy then 32ul else cres
+  end
+
+inline_for_extraction
+let ctzll (a: U64.t): ST.Stack U32.t
+  (requires fun _ -> count_zero_64_pre)
+  (ensures fun h0 res h1 -> count_zero_64_post h0 res h1 a true) =
+  if CFlags.__gnuc__ then
+    if a `U64.eq` 0uL then 64ul else Cast.int32_to_uint32 (__builtin_ctzll a)
+  else if CFlags.__compcert__ then
+    if a `U64.eq` 0uL then 64ul else Cast.int32_to_uint32 (__builtin_ctzll a)
+  else begin
+    ST.push_frame ();
+    let index = B.alloca 0ul 1ul in
+    let res = _BitScanForward64 index a in
+    let cres = index.(0ul) in
+    ST.pop_frame ();
+    if res `U8.eq` 0uy then 64ul else cres
+  end
+
+inline_for_extraction
+let clzll (a: U64.t): ST.Stack U32.t
+  (requires fun _ -> count_zero_64_pre)
+  (ensures fun h0 res h1 -> count_zero_64_post h0 res h1 a false) =
+  if CFlags.__gnuc__ then
+    if a `U64.eq` 0uL then 64ul else Cast.int32_to_uint32 (__builtin_clzll a)
+  else if CFlags.__compcert__ then
+    if a `U64.eq` 0uL then 64ul else Cast.int32_to_uint32 (__builtin_clzll a)
+  else begin
+    ST.push_frame ();
+    let index = B.alloca 0ul 1ul in
+    let res = _BitScanReverse64 index a in
+    let cres = index.(0ul) in
+    ST.pop_frame ();
+    if res `U8.eq` 0uy then 64ul else cres
+  end
+
+#push-options "--z3refresh --z3rlimit 1024 --fuel 0 --ifuel 0"
+let count_zero_compare_pre (n: nat{n == 4 \/ n == 8}) (h: HS.mem) (s m: B.buffer U8.t) =
+  B.live h s /\ B.live h m /\ B.length s >= n /\ B.length m >= n /\
+  (n == 4 ==> count_zero_32_pre) /\
+  (n == 8 ==> count_zero_64_pre)
+
+
+let count_zero_compare_post
+  (n: nat{n == 4 \/ n == 8}) (h0: HS.mem) (res: U32.t) (h1: HS.mem) (s m: B.buffer U8.t) =
+  let s = B.as_seq h1 s in
+  let m = B.as_seq h1 m in
+  B.modifies B.loc_none h0 h1 /\
+  Seq.length s >= n /\ Seq.length m >= n /\
+  U32.v res <= n /\
+  (forall i. i < U32.v res ==> s.[i] == m.[i]) /\
+  (U32.v res < n ==> s.[U32.v res] <> m.[U32.v res])
+
+inline_for_extraction
+let count_zero_compare_4 (s m: B.buffer U8.t): ST.Stack U32.t
+  (requires fun h -> count_zero_compare_pre 4 h s m)
+  (ensures fun h0 res h1 -> count_zero_compare_post 4 h0 res h1 s m) =
+  ST.push_frame ();
+  let s' = B.alloca 0ul 1ul in
+  let m' = B.alloca 0ul 1ul in
+  load32 s' s;
+  load32 m' m;
+  let x = s'.(0ul) `U32.logxor` m'.(0ul) in
+  let res = if Util.is_little_endian () <> 0uy then ctz x else clz x in
+  
+  let h = ST.get () in
+  let s'' = Ghost.hide (U32.v (B.get h s' 0)) in
+  let m'' = Ghost.hide (U32.v (B.get h m' 0)) in
+  Classical.forall_intro (Classical.move_requires
+    (S.lemma_load_xor_equal #32 h s m s'' m'' (U32.v x) (U32.v res)));
+  if res `U32.lt` 32ul then
+    S.lemma_load_xor_not_equal #32 h s m s'' m'' (U32.v x) (U32.v res);
+
+  ST.pop_frame ();
+  res `U32.div` 8ul
+
+#push-options "--z3seed 112"
+inline_for_extraction
+let count_zero_compare_8 (s m: B.buffer U8.t): ST.Stack U32.t
+  (requires fun h -> count_zero_compare_pre 8 h s m)
+  (ensures fun h0 res h1 -> count_zero_compare_post 8 h0 res h1 s m) =
+  ST.push_frame ();
+  let s' = B.alloca 0uL 1ul in
+  let m' = B.alloca 0uL 1ul in
+  load64 s' s;
+  load64 m' m;
+  let x = s'.(0ul) `U64.logxor` m'.(0ul) in
+  let res = if Util.is_little_endian () <> 0uy then ctzll x else clzll x in
+  
+  let h = ST.get () in
+  let s'' = Ghost.hide (U64.v (B.get h s' 0)) in
+  let m'' = Ghost.hide (U64.v (B.get h m' 0)) in
+  Classical.forall_intro (Classical.move_requires
+    (S.lemma_load_xor_equal #64 h s m s'' m'' (U64.v x) (U32.v res)));
+  if res `U32.lt` 64ul then
+    S.lemma_load_xor_not_equal #64 h s m s'' m'' (U64.v x) (U32.v res);
+
+  ST.pop_frame ();
+  res `U32.div` 8ul
+#pop-options
+
+let naive_compare_pre (n: nat{n == 4 \/ n == 8}) (h: HS.mem) (s m: B.buffer U8.t) =
+  B.live h s /\ B.live h m /\  B.length s >= n /\ B.length m >= n
+
+let naive_compare_post
+  (n: nat{n == 4 \/ n == 8}) (h0: HS.mem) (res: U32.t) (h1: HS.mem) (s m: B.buffer U8.t) =
+  let s = B.as_seq h1 s in
+  let m = B.as_seq h1 m in
+  B.modifies B.loc_none h0 h1 /\
+  U32.v res <= n /\ n <= Seq.length s /\ n <= Seq.length m /\
+  (forall i. i < U32.v res ==> s.[i] == m.[i]) /\
+  (U32.v res < n ==> s.[U32.v res] <> m.[U32.v res])
+
+inline_for_extraction
+let naive_compare_4 (s m: B.buffer U8.t): ST.Stack U32.t
+  (requires fun h -> naive_compare_pre 4 h s m)
+  (ensures fun h0 res h1 -> naive_compare_post 4 h0 res h1 s m) =
+  if s.(0ul) <> m.(0ul) then
+    0ul
+  else if s.(1ul) <> m.(1ul) then
+    1ul
+  else if s.(2ul) <> m.(2ul) then
+    2ul
+  else if s.(3ul) <> m.(3ul) then
+    3ul
+  else
+    4ul
+
+inline_for_extraction
+let naive_compare_8 (s m: B.buffer U8.t): ST.Stack U32.t
+  (requires fun h -> naive_compare_pre 8 h s m)
+  (ensures fun h0 res h1 -> naive_compare_post 8 h0 res h1 s m) =
+  if s.(0ul) <> m.(0ul) then
+    0ul
+  else if s.(1ul) <> m.(1ul) then
+    1ul
+  else if s.(2ul) <> m.(2ul) then
+    2ul
+  else if s.(3ul) <> m.(3ul) then
+    3ul
+  else if s.(4ul) <> m.(4ul) then
+    4ul
+  else if s.(5ul) <> m.(5ul) then
+    5ul
+  else if s.(6ul) <> m.(6ul) then
+    6ul
+  else if s.(7ul) <> m.(7ul) then
+    7ul
+  else
+    8ul
+
+inline_for_extraction
+let string_match (s m: B.buffer U8.t) (len i: U32.t): ST.Stack U32.t
   (requires fun h -> S.ctz_compare_pre h len s m i)
-  (ensures fun h0 res h1 -> S.ctz_compare_post h0 res h1 len s m i)
+  (ensures fun h0 res h1 -> S.ctz_compare_post h0 res h1 len s m i) =
+  let s' = B.sub s i len in
+  let m' = B.sub m i len in
+  let h = ST.get () in
+  assert(forall j. U32.v i <= j /\ j < U32.v i + U32.v len ==>
+    (B.as_seq h s).[j] == (B.as_seq h s').[j - U32.v i]);
+  assert(forall j. U32.v i <= j /\ j < U32.v i + U32.v len ==>
+    (B.as_seq h s).[j] == (B.as_seq h s').[j - U32.v i]);
+
+  if CFlags.__gnuc__ then
+    if len = 4ul then
+      count_zero_compare_4 s' m'
+    else
+      count_zero_compare_8 s' m'
+  else if CFlags.__compcert__ then
+    if len = 4ul then
+      count_zero_compare_4 s' m'
+    else
+      count_zero_compare_8 s' m'
+  else if CFlags._msc_ver then
+    if len = 4ul then
+      count_zero_compare_4 s' m'
+    else if CFlags._m_arm64 then
+      count_zero_compare_8 s' m'
+    else if CFlags._m_x64 then
+      count_zero_compare_8 s' m'
+    else begin
+      let res = count_zero_compare_4 s' m' in
+      if res = 4ul then begin
+        let s'' = B.sub s' 4ul 4ul in
+        let m'' = B.sub m' 4ul 4ul in
+        assert(forall j. 4 <= j /\ j < 8 ==>
+          (B.as_seq h s').[j] == (B.as_seq h s'').[j - 4]);
+        assert(forall j. 4 <= j /\ j < 8 ==>
+          (B.as_seq h s').[j] == (B.as_seq h s'').[j - 4]);
+        assert(forall j. j < 4 ==> (B.as_seq h s').[j] == (B.as_seq h m').[j]);
+        let res' = count_zero_compare_4 s'' m'' in
+
+        assert(forall j. j < 4 + U32.v res' ==>
+          (B.as_seq h s').[j] == (B.as_seq h m').[j]);
+
+        4ul `U32.add` res'
+      end else
+        res
+    end
+  else
+    if len = 4ul then
+      naive_compare_4 s' m'
+    else
+      naive_compare_8 s' m'
+#pop-options
 
 [@ CInline ]
 let rec match_iteration_1 (s m: B.buffer U8.t) (i tail: U32.t):
@@ -488,7 +854,7 @@ let rec match_iteration_8 (s m: B.buffer U8.t) (i tail: U32.t):
   (decreases (U32.v tail - U32.v i)) =
   let open U32 in
   if U32.lt i tail then begin
-    let len = ctz_compare 8ul s m i in
+    let len = string_match s m 8ul i in
     if len = 8ul then
       match_iteration_8 s m (i +^ len) tail
     else
@@ -523,7 +889,7 @@ let match_iteration (s m: B.buffer U8.t) (tail: U32.t):
     if r4 = 0ul then
       match_iteration_8 s m l1 tail
     else
-      let l4 = ctz_compare 4ul s m l1 in
+      let l4 = string_match s m 4ul l1 in
       if l4 = 4ul then begin
         match_iteration_8 s m (l1 +^ 4ul) tail
       end else
