@@ -31,16 +31,18 @@ open Yazi.Stream.State
 /// Declaration of the load functions. They simply copy 4 bytes or 8 bytes data
 /// to the given pointer. The result depends on the machine endianness.
 [@ (CPrologue "#ifdef _MSC_VER
-#include <intrin.h>
+  #include <intrin.h>
 #endif
 
 #ifndef __GNUC__
-#include <string.h>
-#define load32(dst, buf) memcpy(dst, buf, sizeof(*dst))
-#define load64(dst, buf) memcpy(dst, buf, sizeof(*dst))
+  #include <string.h>
+  #define load32(dst, buf) memcpy(dst, buf, sizeof(*dst))
+  #define load64(dst, buf) memcpy(dst, buf, sizeof(*dst))
+  #define fast_compare(s1, s2, len) memcmp(s1, s2, (size_t)len)
 #else
-#define load32(dst, buf) __builtin_memcpy(dst, buf, sizeof(*dst))
-#define load64(dst, buf) __builtin_memcpy(dst, buf, sizeof(*dst))
+  #define load32(dst, buf) __builtin_memcpy(dst, buf, sizeof(*dst))
+  #define load64(dst, buf) __builtin_memcpy(dst, buf, sizeof(*dst))
+  #define fast_compare(s1, s2, len) __builtin_memcmp(s1, s2, (__SIZE_TYPE__)len)
 #endif
 
 #if 0") (CEpilogue "#endif")]
@@ -897,11 +899,7 @@ let match_iteration (s m: B.buffer U8.t) (tail: U32.t):
   else
     l1
 
-[@ (CEpilogue "#ifdef __GNUC__
-  #define Yazi_LZ77_fast_compare(s1, s2, len) __builtin_memcmp(s1, s2, (__SIZE_TYPE__)len)
-#else
-  #define Yazi_LZ77_fast_compare(s1, s2, len) memcmp(s1, s2, (size_t)len)
-#endif")]
+[@ (CPrologue "#if 0") (CEpilogue "#endif")]
 assume val fast_compare: 
     s1: B.buffer U8.t
   -> s2: B.buffer U8.t
