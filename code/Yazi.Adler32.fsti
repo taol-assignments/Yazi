@@ -21,7 +21,8 @@ val adler32:
   -> len: U32.t
   -> ST.Stack U32.t
   (requires fun h ->
-    CB.live h buf /\ CB.length buf == U32.v len /\ Spec.adler32_matched data adler)
+    CB.live h buf /\ CB.length buf == U32.v len /\
+    Spec.adler32_matched data adler)
   (ensures fun h0 res h1 ->
     B.(modifies loc_none h0 h1) /\
     Spec.adler32_matched #(m + U32.v len) (Seq.append data (CB.as_seq h1 buf)) res)
@@ -43,5 +44,6 @@ let adler32_combine
   (s2: Ghost.erased (Spec.input m2))
   (adler1: U32.t{Spec.adler32_matched s1 adler1})
   (adler2: U32.t{Spec.adler32_matched s2 adler2})
-  (len2: U32.t{U32.v len2 == Ghost.reveal m2}) =
+  (len2: U32.t{U32.v len2 == Ghost.reveal m2}):
+  Tot (res: U32.t{Spec.adler32_matched #(m1 + m2) (Seq.append s1 s2) res}) =
   adler32_combine64 s1 s2 adler1 adler2 (Cast.uint32_to_uint64 len2)
