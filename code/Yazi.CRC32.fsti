@@ -91,4 +91,3 @@ val gen_crc32_table:
 val gen_matrix_table: buf: Spec.matrix_buf -> ST.Stack unit
   (requires fun h -> B.live h buf)
   (ensures fun h0 _ h1 -> B.modifies (B.loc_buffer buf) h0 h1 /\ Spec.is_matrix_buf h1 8 buf)
-

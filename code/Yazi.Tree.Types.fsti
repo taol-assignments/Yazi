@@ -10,9 +10,50 @@ module U32 = FStar.UInt32
 module U8 = FStar.UInt8
 
 open FStar.Mul
+open FStar.Seq
+open Lib.Seq
 open Yazi.Deflate.Constants
 
-noeq
+/// Prefix-free code tree.
+noextract
+type tree = 
+  | Node: left: tree -> id: pos -> freq: pos -> right: tree -> tree
+  | Leaf: symbol: nat -> freq: pos -> tree
+
+noextract
+type non_leaf = t: tree{Leaf? t == false}
+
+unfold let left (t: non_leaf) =
+  match t with
+  | Node l _ _ _ -> l
+
+unfold let right (t: non_leaf) =
+  match t with
+  | Node _ _ _ r -> r
+
+unfold let freq (t: tree) =
+  match t with
+  | Node _ _ f _ -> f
+  | Leaf _ f -> f
+
+let rec symbols (t: tree) =
+  match t with
+  | Node l _ _ r -> symbols l @| symbols r
+  | Leaf s _ -> create 1 s
+
+private let rec freq_pred (t: tree): Tot Type0 =
+  match t with
+  | Node l _ f r -> f == freq l + freq r /\ freq_pred l /\ freq_pred r
+  | _ -> True
+
+/// Definition of well-formed trees. Their root frequencies should be the sum of
+/// the children's frequency, and their symbol list should not have duplicated
+/// symbols.
+noextract
+type wf_tree = t: tree{
+  no_dup (symbols t) /\ freq_pred t
+}
+
 type ct_data = {
   freq_or_code: U16.t;
   dad_or_len: U16.t;
@@ -43,34 +84,23 @@ type bl_count_t = B.lbuffer U16.t (U32.v max_bits + 1)
 
 type tree_heap_t = B.lbuffer U32.t (2 * U32.v l_codes + 1)
 
-type heap_len_t = l: U32.t{0 < U32.v l /\ U32.v l < U32.v heap_size}
-
 noextract
 type tree_len_t = tl: Ghost.erased nat{tl <= U32.v heap_size}
 
-type tree_depth_t = B.lbuffer U16.t (2 * U32.v l_codes + 1)
-
-type heap_index_t (hl: heap_len_t) = i: U32.t{
-  0 < U32.v i /\ U32.v i <= U32.v hl
-}
-
-type heap_internal_index_t (hl: heap_len_t) = i: U32.t{
-  0 < U32.v i /\ U32.v i <= U32.v hl / 2
-}
+type tree_depth_t = B.lbuffer U8.t (2 * U32.v l_codes + 1)
 
 noeq type sort_ctx_t = {
   heap: tree_heap_t;
-  tree_len: tree_len_t;
   tree: B.buffer ct_data;
-  forest: Ghost.erased (Seq.seq SK.tree);
   depth: tree_depth_t;
+  state: B.lbuffer U32.t 2;
 }
 
-type sort_ctx = ctx: CB.const_buffer sort_ctx_t{
-  ~ (B.g_is_null (CB.as_mbuf ctx)) /\ CB.length ctx == 1
+noeq type tree_state_t = {
+  ctx: CB.const_buffer sort_ctx_t;
+  tree_len: tree_len_t;
+  forest: Ghost.erased (seq wf_tree)
 }
-
-type sort_state = B.lbuffer U32.t 2
 
 type lit_bufsize_t = s: U32.t {
   let open U32 in

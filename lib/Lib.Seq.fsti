@@ -17,8 +17,8 @@ let unsnoc (#a: Type) (s: Seq.seq a{
 
 let remove (#a: Type) (s: Seq.seq a) (i: nat{i < Seq.length s}): Tot (res: Seq.seq a{
   Seq.length res == Seq.length s - 1 /\
-  (forall j. j < i ==> s.[j] == res.[j]) /\
-  (forall j. i < j ==> s.[j] == res.[j - 1])
+  (forall j. {:pattern res.[j]} j < i ==> s.[j] == res.[j]) /\
+  (forall j. {:pattern res.[j]} i <= j ==> s.[j + 1] == res.[j])
 }) =
   let open Seq in
   if i = 0 then
@@ -168,10 +168,19 @@ let append_empty_seq_r (#a: Type) (s1 s2: Seq.seq a): Lemma
 
 type index_t (#a: eqtype) (s: Seq.seq a) = i:nat{i < Seq.length s}
 
-irreducible let rec index_of (#a: eqtype) (s: Seq.seq a) (v: a{Seq.mem v s}):
-  Tot (i: index_t s{Seq.index s i == v})
+[@@ "opaque_to_smt"]
+let rec index_of (#a: eqtype) (s: Seq.seq a) (v: a{Seq.mem v s}):
+  Tot (i: index_t s{
+    Seq.index s i == v /\
+    (forall j. j < i ==> Seq.index s j <> Seq.index s i)
+  })
   (decreases Seq.length s) =
-  if Seq.head s = v then 0 else 1 + index_of (Seq.tail s) v
+  if Seq.head s = v then
+    0
+  else begin
+    assert(forall j. j > 0 ==> Seq.index s j == Seq.index (Seq.tail s) (j - 1));
+    1 + index_of (Seq.tail s) v
+  end
 
 let rec no_dup_index_of (#a: eqtype) (s: Seq.seq a) (v: a{Seq.mem v s}): Lemma
   (requires no_dup s)

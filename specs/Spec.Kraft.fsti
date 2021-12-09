@@ -33,6 +33,12 @@ let rec symbols (t: tree) =
   | Node l _ r -> symbols l @| symbols r
   | Leaf s _ -> create 1 s
 
+let rec lemma_symbols_length_gt_zero(t: tree): Lemma
+  (ensures length (symbols t) > 0)
+  [SMTPat (length (symbols t))] =
+  if Node? t then
+    lemma_symbols_length_gt_zero (left t)
+
 type tree_symbol (t: tree) = s: nat{
   Seq.mem s (symbols t)
 }
@@ -128,7 +134,7 @@ let lemma_merge_subst
     (mem s (symbols r) ==> merge l (subst r s l' r') == subst (merge l r) s l' r'))) =
   lemma_append_count (symbols l) (symbols r)
 
-#push-options "--z3rlimit 64 --fuel 0 --ifuel 0"
+#push-options "--z3rlimit 512 --fuel 0 --ifuel 0"
 [@"opaque_to_smt"]
 let rec min_freq_2 (f: seq wf_tree{length f >= 2}): Tot (res: (nat & nat){
   let (i1, i2) = res in
@@ -163,16 +169,31 @@ type wf_forest = f: seq wf_tree{
   length f > 0 /\ no_dup (forest_symbols f)
 }
 
-let rec forest_avg_len (f: seq wf_tree{length f > 0}): Tot nat (decreases length f) =
-  match length f with
-  | 1 -> avg_len f.[0]
-  | _ -> avg_len f.[0] + forest_avg_len (tail f)
+let rec forest_freq (f: seq wf_tree) (s: nat{mem s (forest_symbols f)}): Tot nat
+  (decreases length f) =
+  if mem s (symbols f.[0]) then
+    code_freq f.[0] s
+  else begin
+    lemma_mem_append (symbols f.[0]) (forest_symbols (tail f));
+    forest_freq (tail f) s
+  end
 
 let rec forest_symbols_begin (f: seq wf_tree{length f > 0}) (i: nat{i < length f}):
-  Tot nat (decreases i) =
+  Tot (res: nat{res < length (forest_symbols f)}) (decreases i) =
   match i with
   | 0 -> 0
   | _ -> length (symbols f.[0]) + forest_symbols_begin (tail f) (i - 1)
+
+let forest_symbols_end (f: seq wf_tree{length f > 0}) (i: nat{i < length f}): Tot nat =
+  (forest_symbols_begin f i) + length (symbols f.[i])
+
+let rec lemma_forest_symbols_end (f: seq wf_tree{length f > 0}) (i: nat{i < length f}): Lemma
+  (ensures forest_symbols_end f i <= length (forest_symbols f))
+  (decreases length f)
+  [SMTPat (forest_symbols_end f i)] =
+  match length f with
+  | 0 -> ()
+  | _ -> if i > 0 then lemma_forest_symbols_end (tail f) (i - 1)
 
 let rec lemma_forest_symbols_begin (f: seq wf_tree{length f > 0}): Lemma
   (ensures
@@ -182,6 +203,42 @@ let rec lemma_forest_symbols_begin (f: seq wf_tree{length f > 0}): Lemma
   match length f with
   | 1 -> ()
   | _ -> lemma_forest_symbols_begin (tail f)
+
+let rec lemma_forest_symbols_begin_lt_1 (f: seq wf_tree) (i: nat): Lemma
+  (requires i < length f /\ 0 < length f)
+  (ensures forest_symbols_begin f i < length (forest_symbols f))
+  (decreases length f)
+  [SMTPat (forest_symbols_begin f i)] =
+  match i with
+  | 1 -> ()
+  | _ -> if i > 0 then lemma_forest_symbols_begin_lt_1 (tail f) (i - 1)
+
+let rec lemma_forest_symbols_begin_lt_2 (f: seq wf_tree) (i j: nat): Lemma
+  (requires length f > 0 /\ i < j /\ j < length f)
+  (ensures forest_symbols_begin f i < forest_symbols_begin f j)
+  (decreases length f)
+  [SMTPat (forest_symbols_begin f i); SMTPat(forest_symbols_begin f j)] =
+  match length f with
+  | 0 -> ()
+  | _ ->
+    if i = 0 then
+      if i + 1 < j then
+        lemma_forest_symbols_begin_lt_2 (tail f) 0 (j - 1)
+      else
+        ()
+    else
+      lemma_forest_symbols_begin_lt_2 (tail f) (i - 1) (j - 1)
+
+#push-options "--z3refresh --z3rlimit 128 --fuel 2 --ifuel 2"
+let rec lemma_forest_symbols_begin_end (f: seq wf_tree) (i: nat): Lemma
+  (requires length f > 1 /\ i < length f - 1)
+  (ensures forest_symbols_end f i == forest_symbols_begin f (i + 1))
+  (decreases length f)
+  [SMTPat (forest_symbols_end f i)] =
+  match length f with
+  | 2 -> ()
+  | _ -> if i > 0 then lemma_forest_symbols_begin_end (tail f) (i - 1)
+#pop-options
 
 #push-options "--z3refresh --fuel 1 --ifuel 1"
 let rec lemma_forest_symbols_index (f: seq wf_tree{length f > 0}) (i: nat{i < length f}): Lemma
@@ -223,7 +280,7 @@ let rec lemma_forest_symbols_unsnoc_2 (f: wf_forest {length f > 0}): Lemma
     lemma_forest_symbols_unsnoc_2 (tail f)
 
 #push-options "--z3refresh --z3rlimit 1024 --fuel 2 --ifuel 2"
-let rec lemma_wf_forest_symbols_disjoint (f: wf_forest{length f >= 2}) (i j: nat): Lemma
+let rec lemma_wf_forest_symbols_disjoint' (f: wf_forest{length f >= 2}) (i j: nat): Lemma
   (requires i < j /\ j < length f)
   (ensures 
     no_dup (symbols f.[i]) /\
@@ -245,34 +302,261 @@ let rec lemma_wf_forest_symbols_disjoint (f: wf_forest{length f >= 2}) (i j: nat
       lemma_forest_symbols_begin f
     end else begin
       lemma_forest_symbols_unsnoc_2 f;
-      lemma_wf_forest_symbols_disjoint (unsnoc f) i j
+      lemma_wf_forest_symbols_disjoint' (unsnoc f) i j
     end
   else
-    lemma_wf_forest_symbols_disjoint (tail f) (i - 1) (j - 1)
+    lemma_wf_forest_symbols_disjoint' (tail f) (i - 1) (j - 1)
+
+let lemma_wf_forest_symbols_disjoint (f: wf_forest{length f >= 2}) (i j: nat): Lemma
+  (requires i <> j /\ i < length f /\ j < length f)
+  (ensures
+    no_dup (symbols f.[i]) /\
+    no_dup (symbols f.[j]) /\
+    disjoint (symbols f.[i]) (symbols f.[j])) =
+  if i < j then
+    lemma_wf_forest_symbols_disjoint' f i j
+  else
+    lemma_wf_forest_symbols_disjoint' f j i
+
+let rec lemma_forest_symbols_append (f1 f2: seq wf_tree): Lemma
+  (ensures forest_symbols f1 @| forest_symbols f2 == forest_symbols (f1 @| f2))
+  (decreases length f1) =
+  match length f1 with
+  | 0 ->
+    lemma_empty f1;
+    append_empty_l (forest_symbols f2);
+    append_empty_l f2
+  | _ ->
+    calc (==) {
+      (forest_symbols f1) @| (forest_symbols f2);
+      =={}
+      (symbols f1.[0] @| (forest_symbols (tail f1))) @| (forest_symbols f2);
+      =={append_assoc (symbols f1.[0]) (forest_symbols (tail f1)) (forest_symbols f2)}
+      (symbols f1.[0]) @| ((forest_symbols (tail f1)) @| (forest_symbols f2));
+      =={lemma_forest_symbols_append (tail f1) f2}
+      (symbols f1.[0]) @| (forest_symbols ((tail f1) @| f2));
+      =={assert(equal ((tail f1) @| f2) (tail (f1 @| f2)))}
+      (symbols (f1 @| f2).[0]) @| (forest_symbols (tail (f1 @| f2)));
+      =={}
+      forest_symbols (f1 @| f2);
+    }
+
+let lemma_forest_symbols_append_triple (f1 f2 f3: seq wf_tree): Lemma
+  (ensures
+    forest_symbols f1 @| forest_symbols f2 @| forest_symbols f3 ==
+    forest_symbols (f1 @| f2 @| f3)) =
+  calc (==) {
+    forest_symbols (f1 @| f2 @| f3);
+    =={append_assoc f1 f2 f3}
+    forest_symbols ((f1 @| f2) @| f3);
+    =={lemma_forest_symbols_append (f1 @| f2) f3}
+    forest_symbols (f1 @| f2) @| forest_symbols f3;
+    =={lemma_forest_symbols_append f1 f2}
+    (forest_symbols f1 @| forest_symbols f2) @| forest_symbols f3;
+    =={append_assoc (forest_symbols f1) (forest_symbols f2) (forest_symbols f3)}
+    forest_symbols f1 @| forest_symbols f2 @| forest_symbols f3;
+  }
+
+let rec lemma_forest_symbols_slice (f: seq wf_tree) (i j: nat): Lemma
+  (requires length f > 0 /\ i < j /\ j <= length f)
+  (ensures
+    (j < length f ==>
+      forest_symbols (slice f i j) ==
+      slice (forest_symbols f) (forest_symbols_begin f i) (forest_symbols_begin f j)) /\
+    (j == length f ==>
+      forest_symbols (slice f i j) ==
+      slice (forest_symbols f) (forest_symbols_begin f i) (length (forest_symbols f))))
+  (decreases length f)
+  [SMTPat (forest_symbols (slice f i j))] =
+  match length f with
+  | 1 -> ()
+  | _ ->
+    let fs = forest_symbols f in
+    let bi = forest_symbols_begin f i in
+    if i = 0 then
+      if j = length f then
+        ()
+      else
+        let bj = forest_symbols_begin f j in
+        if 1 < j then begin
+          let fs' = forest_symbols (tail f) in
+          let bj' = forest_symbols_begin (tail f) (j - 1) in
+          lemma_forest_symbols_slice (tail f) 0 (j - 1);
+          assert(equal (symbols f.[0] @| slice fs' 0 bj') (slice fs bi bj))
+        end else
+          assert(equal (symbols f.[0]) (slice fs bi bj))
+    else begin
+      let fs' = forest_symbols (tail f) in
+      let bi' = forest_symbols_begin (tail f) (i - 1) in
+      lemma_forest_symbols_slice (tail f) (i - 1) (j - 1);
+      if j < length f then
+        let bj = forest_symbols_begin f j in
+        let bj' = forest_symbols_begin (tail f) (j - 1) in
+        assert(equal (slice fs' bi' bj') (slice fs bi bj))
+      else
+        assert(equal (slice fs bi (length fs)) (slice fs' bi' (length fs')))
+    end
 #pop-options
 
-#push-options "--z3refresh --z3rlimit 1024 --fuel 2 --ifuel 2"
+#push-options "--z3refresh --z3rlimit 1024 --fuel 1 --ifuel 1"
+let lemma_forest_symbols_remove (f: wf_forest) (i: nat{i < length f}) (s: nat): Lemma
+  (ensures
+    count s (forest_symbols (remove f i)) ==
+    count s (forest_symbols f) - count s (symbols f.[i]) /\
+    (count s (forest_symbols (remove f i)) == 1 \/
+     count s (forest_symbols (remove f i)) == 0)) =
+  if i = 0 then
+    lemma_append_count_aux s (symbols f.[0]) (forest_symbols (tail f))
+  else if i = length f - 1 then begin
+    lemma_forest_symbols_append (unsnoc f) (create 1 (last f));
+    calc (==) {
+      forest_symbols (create 1 (last f));
+      =={}
+      symbols (last f) @| forest_symbols (empty #wf_tree);
+      =={}
+      symbols (last f) @| empty #nat;
+      =={append_empty_r (symbols (last f))}
+      symbols (last f);
+    };
+    assert(equal (unsnoc f @| create 1 (last f)) f);
+    lemma_append_count_aux s (forest_symbols (unsnoc f)) (symbols (last f))
+  end else begin
+    let fl = slice f 0 i in
+    let fi = create 1 f.[i] in
+    let fr = slice f (i + 1) (length f) in
+    calc (==) {
+      forest_symbols (create 1 f.[i]);
+      =={}
+      symbols f.[i] @| forest_symbols (empty #wf_tree);
+      =={}
+      symbols f.[i] @| empty #nat;
+      =={append_empty_r (symbols f.[i])}
+      symbols f.[i];
+    };
+    assert(equal (fl @| fi @| fr) f);
+    let fs = forest_symbols f in
+    let fsl = forest_symbols fl in
+    let fsi = forest_symbols fi in
+    let fsr = forest_symbols fr in
+    append_assoc fsl fsi fsr;
+    
+    calc (==) {
+      count s (forest_symbols (remove f i)) <: int;
+      =={lemma_forest_symbols_append fl fr}
+      count s (fsl @| fsr);
+      =={lemma_append_count_aux s fsl fsr}
+      count s fsl + count s fsr;
+      =={}
+      count s fsl + count s fsi + count s fsr - count s fsi;
+      =={}
+      ((count s fsl + count s fsi) + count s fsr) - count s fsi;
+      =={lemma_append_count_aux s fsl fsi}
+      (count s (fsl @| fsi) + count s fsr) - count s fsi;
+      =={lemma_append_count_aux s (fsl @| fsi) fsr}
+      count s (fsl @| fsi @| fsr) - count s fsi;
+      =={lemma_forest_symbols_append_triple fl fi fr}
+      count s fs - count s fsi;
+    }
+  end
+
+let lemma_forest_symbols_remove_gen (f: wf_forest) (i: nat{i < length f}): Lemma
+  (requires 2 < length f)
+  (ensures (
+    let f' = remove f i in
+    length f' == length f - 1 /\ no_dup (forest_symbols f')))
+  [SMTPat (remove f i)] =
+  FStar.Classical.forall_intro (lemma_forest_symbols_remove f i)
+
+#push-options "--fuel 2 --ifuel 2"
+let lemma_forest_remove_merge' (f: wf_forest) (i0 i1: nat) (s: nat): Lemma
+  (requires i0 <> i1 /\ i0 < length f /\ i1 < length f /\ 2 <= length f)
+  (ensures (
+    lemma_wf_forest_symbols_disjoint f i0 i1;
+    let fs = forest_symbols f in
+    let fr = remove (remove f i0) (if i0 < i1 then i1 - 1 else i1) in
+    let frm = create 1 (merge f.[i0] f.[i1]) @| fr in
+    let fsr = forest_symbols fr in
+    let fsr' = forest_symbols frm in
+    count s fs == count s fsr')) =
+  lemma_wf_forest_symbols_disjoint f i0 i1;
+  if length f = 2 then begin
+    let t = merge f.[i0] f.[i1] in
+    calc (==) {
+      forest_symbols (create 1 t);
+      =={}
+      symbols t @| empty #nat;
+      =={append_empty_r (symbols t)}
+      symbols t;
+      =={}
+      symbols f.[i0] @| symbols f.[i1];
+    };
+    if i0 < i1 then
+      assert(forest_symbols f `equal` (symbols f.[i0] @| symbols f.[i1]))
+    else
+      assert(forest_symbols f `equal` (symbols f.[i1] @| symbols f.[i0]));
+    lemma_append_count (symbols f.[i0]) (symbols f.[i1]);
+    lemma_append_count (symbols f.[i1]) (symbols f.[i0])
+  end else begin
+    let fs = forest_symbols f in
+    let fr = remove (remove f i0) (if i0 < i1 then i1 - 1 else i1) in
+    let fsr = forest_symbols fr in
+    let fsr' = forest_symbols (create 1 (merge f.[i0] f.[i1]) @| fr) in
+    calc (==) {
+      fsr';
+      =={lemma_forest_symbols_append (create 1 (merge f.[i0] f.[i1])) fr}
+      forest_symbols (create 1 (merge f.[i0] f.[i1])) @| fsr;
+      =={}
+      (symbols (merge f.[i0] f.[i1]) @| forest_symbols (empty #wf_tree)) @| fsr;
+      =={}
+      ((symbols f.[i0] @| symbols f.[i1]) @| empty #nat) @| fsr;
+      =={append_empty_r (symbols f.[i0] @| symbols f.[i1])}
+      (symbols f.[i0] @| symbols f.[i1]) @| fsr;
+    };
+    calc (==) {
+      count s fsr';
+      =={lemma_append_count_aux s (symbols f.[i0] @| symbols f.[i1]) fsr}
+      count s (symbols f.[i0] @| symbols f.[i1]) + count s fsr;
+      =={lemma_append_count_aux s (symbols f.[i0]) (symbols f.[i1])}
+      count s (symbols f.[i0]) + count s (symbols f.[i1]) + count s fsr;
+      =={
+        lemma_forest_symbols_remove f i0 s;
+        lemma_forest_symbols_remove (remove f i0) (if i0 < i1 then i1 - 1 else i1) s
+      }
+      count s (symbols f.[i0]) + count s (symbols f.[i1]) +
+      (count s fs - count s (symbols f.[i0]) - count s (symbols f.[i1]));
+      =={}
+      count s fs;
+    }
+  end
+#pop-options
+
+let lemma_forest_remove_merge (f: wf_forest) (i0 i1: nat): Lemma
+  (requires i0 <> i1 /\ i0 < length f /\ i1 < length f /\ 2 <= length f)
+  (ensures (
+    lemma_wf_forest_symbols_disjoint f i1 i0;
+    let fs = forest_symbols f in
+    let fr = remove (remove f i0) (if i0 < i1 then i1 - 1 else i1) in
+    let fsr = forest_symbols fr in
+    let fsr' = forest_symbols (create 1 (merge f.[i0] f.[i1]) @| fr) in
+    permutation nat fs fsr')) =
+  lemma_wf_forest_symbols_disjoint f i1 i0;
+  let open FStar.Classical in
+  forall_intro (move_requires (lemma_forest_remove_merge' f i0 i1))
+
+#push-options "--z3refresh --z3rlimit 1024 --fuel 1 --ifuel 1"
 let forest_reduce (f: wf_forest{length f >= 2}): Tot (f': wf_forest{
-  length f' == length f - 1
+  length f' == length f - 1 /\
+  permutation nat (forest_symbols f) (forest_symbols f')
 }) =
   let (i0, i1) = min_freq_2 f in
-  if i0 < i1 then
-    lemma_wf_forest_symbols_disjoint f i0 i1
-  else
-    lemma_wf_forest_symbols_disjoint f i1 i0;
+  lemma_wf_forest_symbols_disjoint f i0 i1;
+  lemma_forest_remove_merge f i0 i1;
   match length f with
-  | 2 ->
-    admit();
-    let res = create 1 (merge f.[i0] f.[i1]) in
-    let t = merge f.[i0] f.[i1] in
-    create 1 (merge f.[i0] f.[i1])
+  | 2 -> create 1 (merge f.[i0] f.[i1])
   | _ ->
     let t' = merge f.[i0] f.[i1] in
     let f' = remove f i0 in
     let f'' = remove f' (if i0 < i1 then i1 - 1 else i1) in
-    assert(no_dup (symbols t'));
-    assert(permutation nat (symbols t') (symbols f.[i0] @| symbols f.[i1]));
-    admit();
     create 1 t' @| f''
 #pop-options
 

@@ -25,11 +25,8 @@ val sum_a_upper_bound_aux: #n: nat -> s: input n -> Lemma
   (ensures sum_a s <= sum_a_upper_bound n)
   [SMTPat (sum_a s)]
 
-val sum_seq_append_byte:
-    #m: nat
-  -> s: input m
-  -> b: U8.t
-  -> Lemma (ensures sum_seq s + U8.v b == sum_seq #(m + 1) (Seq.snoc s b))
+val sum_seq_append_byte: #m: nat -> s: input m -> b: U8.t ->
+  Lemma (ensures sum_seq s + U8.v b == sum_seq #(m + 1) (Seq.snoc s b))
 
 let sum_seq_upper_bound (m: nat): Tot nat = m * 255
 
@@ -47,12 +44,8 @@ let sum_a_seq_u64_upper_bound
   (c: input n): Lemma
   (ensures (sum_a s % base) + sum_seq c <= UInt.max_int 64) = ()
 
-val sum_a_append:
-    #m1: nat
-  -> #m2: nat
-  -> s1: input m1
-  -> s2: input m2
-  -> Lemma (ensures sum_a #(m1 + m2) (Seq.append s1 s2) == sum_a s1 + sum_seq s2)
+val sum_a_append: #m1: nat -> #m2: nat -> s1: input m1 -> s2: input m2 ->
+  Lemma (ensures sum_a #(m1 + m2) (Seq.append s1 s2) == sum_a s1 + sum_seq s2)
 
 let rec sum_b' (#m: nat) (s: input m): Tot nat =
   let open FStar.Mul in
