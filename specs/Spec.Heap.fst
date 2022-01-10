@@ -1,12 +1,8 @@
 module Spec.Heap
 
 module B = LowStar.Buffer
-module C = Yazi.Deflate.Constants
 module CB = LowStar.ConstBuffer
 module HS = FStar.HyperStack
-module Math = FStar.Math.Lemmas
-module Seq = FStar.Seq
-module SK = Spec.Kraft
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
 module U8 = FStar.UInt8
@@ -14,668 +10,256 @@ module U8 = FStar.UInt8
 open FStar.Mul
 open FStar.Seq
 open Lib.Seq
-open Yazi.Deflate.Constants
 open Yazi.Tree.Types
+open Yazi.Deflate.Constants
+include Spec.Heap.Lemmas
 
-private let heap_elem (tree_len: tree_len_t) (a: U32.t) =
-  U32.v a < tree_len && U32.v a < 2 * U32.v l_codes + 1
-
-let node_smaller
-  (tree_len: nat{tree_len <= U32.v heap_size})
-  (tree: Seq.seq ct_data{Seq.length tree == tree_len})
-  (depth: Seq.seq U16.t{Seq.length depth == 2 * U32.v l_codes + 1})
-  (i: U32.t{heap_elem tree_len i})
-  (j: U32.t{heap_elem tree_len j}):
-  Tot bool =
-  let open U32 in
-  let fi = U16.v (tree.[v i]).freq_or_code in
-  let fj = U16.v (tree.[v j]).freq_or_code in
-  (fi < fj ||
-  (fi = fj && U16.v depth.[v i] < U16.v depth.[v j]) ||
-  (fi = fj && U16.v depth.[v i] = U16.v depth.[v j] && v i <= v j))
-
-unfold let get_heap_len (h: HS.mem) (state: sort_state) = U32.v (B.get h state 0)
-unfold let get_heap_max (h: HS.mem) (state: sort_state) = U32.v (B.get h state 1)
-
-let context_live (h: HS.mem) (ctx: sort_ctx) (state: sort_state) =
-  CB.live h ctx /\ ~ (B.g_is_null (CB.as_mbuf ctx)) /\ B.live h state /\
-  (let ctx' = (CB.as_seq h ctx).[0] in
-  let heap_len = get_heap_len h state in
-  let heap_max = get_heap_max h state in
+/// Live tree states definition.
+let tree_state_live (h: HS.mem) (ts: tree_state_t) =
+  (* The sorting context pointer should be live and its length should be one. *)
+  CB.live h ts.ctx /\ B.g_is_null (CB.as_mbuf ts.ctx) == false /\ CB.length ts.ctx == 1 /\
+  (let ctx' = (CB.as_seq h ts.ctx).[0] in
+  B.live h ctx'.state /\
+  (let heap_len = U32.v (B.as_seq h ctx'.state).[0] in
+  let heap_max = U32.v (B.as_seq h ctx'.state).[1] in
   let heap = B.as_seq h ctx'.heap in
   let tree = B.as_seq h ctx'.tree in
   let depth = B.as_seq h ctx'.depth in
+  (* All three buffers should be live and disjoint with each other. *)
   B.live h ctx'.heap /\ B.live h ctx'.tree /\ B.live h ctx'.depth /\
   ~ (B.g_is_null ctx'.heap) /\ ~ (B.g_is_null ctx'.tree) /\ ~ (B.g_is_null ctx'.depth) /\
 
-  (let ctx = CB.as_mbuf ctx in
-  B.disjoint ctx state /\ B.disjoint ctx ctx'.tree /\ B.disjoint ctx ctx'.heap /\
-  B.disjoint ctx ctx'.depth /\ B.disjoint state ctx'.tree /\
-  B.disjoint state ctx'.heap /\ B.disjoint state ctx'.depth /\
+  (let ctx = CB.as_mbuf ts.ctx in
+  B.disjoint ctx ctx'.state /\ B.disjoint ctx ctx'.tree /\ B.disjoint ctx ctx'.heap /\
+  B.disjoint ctx ctx'.depth /\ B.disjoint ctx'.state ctx'.tree /\
+  B.disjoint ctx'.state ctx'.heap /\ B.disjoint ctx'.state ctx'.depth /\
   B.disjoint ctx'.tree ctx'.heap /\ B.disjoint ctx'.tree ctx'.depth /\
   B.disjoint ctx'.heap ctx'.depth) /\
 
-  B.length ctx'.tree == Ghost.reveal ctx'.tree_len /\
-  Seq.length (Ghost.reveal ctx'.forest) == Ghost.reveal ctx'.tree_len /\
-  heap_len < heap_max /\ heap_max <= U32.v heap_size /\
-  (forall i. {:pattern (heap.[i])}
-    (0 < i /\ i <= heap_len \/ heap_max <= i /\ i < U32.v heap_size) ==>
-    heap_elem ctx'.tree_len heap.[i]))
+  (* The length of the tree buffer should equal to the tree_len. *)
+  B.length ctx'.tree == Ghost.reveal ts.tree_len /\
+  Seq.length ts.forest == Ghost.reveal ts.tree_len))
 
-unfold let heap_not_empty (h: HS.mem) (state: sort_state): Tot Type0 =
-  0 < get_heap_len h state
+type live_tree_state (h: HS.mem) = s: tree_state_t{
+  tree_state_live h s
+}
 
-unfold let sorted_not_empty (h: HS.mem) (state: sort_state): Tot Type0 =
-  get_heap_max h state < U32.v heap_size
+/// Convert the C struct to specification record type.
+unfold let g_tree_state (h: HS.mem) (ts: live_tree_state h): GTot (res: tree_state_wf{
+  let ctx = (CB.as_seq h ts.ctx).[0] in
+  res.heap_len == U32.v (B.as_seq h ctx.state).[0] /\
+  res.heap_max == U32.v (B.as_seq h ctx.state).[1] /\
+  res.tree_len == Ghost.reveal ((ts <: tree_state_t).tree_len)
+}) =
+  let ctx = (CB.as_seq h ts.ctx).[0] in {
+    heap = B.as_seq h ctx.heap;
+    tree = B.as_seq h ctx.tree;
+    depth = B.as_seq h ctx.depth;
+    heap_len = U32.v (B.as_seq h ctx.state).[0];
+    heap_max = U32.v (B.as_seq h ctx.state).[1];
+    tree_len = Ghost.reveal (ts <: tree_state_t).tree_len;
+    forest = Ghost.reveal (ts <: tree_state_t).forest;
+  }
 
-unfold let heap_len_well_formed (h: HS.mem) (state: sort_state): Tot Type0 =
-  0 < get_heap_len h state /\ get_heap_len h state < U32.v heap_size
+/// Getter for heap_len and heap_max.
+unfold let get_heap_len (h: HS.mem) (ts: live_tree_state h) =
+  (g_tree_state h ts).heap_len
 
-let heap_seq (h: HS.mem) (ctx: sort_ctx) (state: sort_state): Ghost (Seq.seq U32.t)
-  (requires heap_len_well_formed h state)
-  (ensures fun s -> Seq.length s == get_heap_len h state) =
-  let heap = B.as_seq h (B.get h (CB.as_mbuf ctx) 0).heap in
-  Seq.slice heap 1 (get_heap_len h state + 1)
-
-let sorted_seq (h: HS.mem) (ctx: sort_ctx) (state: sort_state): Ghost (Seq.seq U32.t)
-  (requires get_heap_max h state <= U32.v heap_size)
-  (ensures fun s -> Seq.length s == U32.v heap_size - get_heap_max h state) =
-  let heap = B.as_seq h (B.get h (CB.as_mbuf ctx) 0).heap in
-  Seq.slice heap (get_heap_max h state) (U32.v heap_size)
-
-let element_seq (h: HS.mem) (ctx: sort_ctx) (state: sort_state): Ghost (Seq.seq U32.t)
-  (requires
-    heap_len_well_formed h state /\
-    get_heap_max h state <= U32.v heap_size)
-  (ensures fun s ->
-    let heap_len = get_heap_len h state in
-    let heap_max = get_heap_max h state in
-    Seq.length s == heap_len + U32.v heap_size - heap_max) =
-  heap_seq h ctx state @| sorted_seq h ctx state
-
-unfold let modifies_heap_only (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state) =
-  let c = B.get h0 (CB.as_mbuf ctx) 0 in
-  B.modifies (B.loc_buffer c.heap) h0 h1 /\
-  context_live h0 ctx state /\ context_live h1 ctx state
-
-let whole_heap_perm (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state): Tot Type0 =
-  let c0 = B.get h0 (CB.as_mbuf ctx) 0 in
-  Seq.permutation U32.t (B.as_seq h0 c0.heap) (B.as_seq h1 c0.heap)
-
-let heap_seq_perm (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state):
-  Pure Type0
-  (requires
-    0 < get_heap_len h0 state /\ get_heap_len h0 state < U32.v heap_size /\
-    0 < get_heap_len h1 state /\ get_heap_len h1 state < U32.v heap_size)
-  (ensures fun _ -> True) =
-  Seq.permutation U32.t (heap_seq h0 ctx state) (heap_seq h1 ctx state)
-
-let sorted_seq_perm (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state): Pure Type0
-  (requires
-    get_heap_max h0 state <= U32.v heap_size /\
-    get_heap_max h1 state <= U32.v heap_size)
-  (ensures fun _ -> True) =
-  Seq.permutation U32.t (sorted_seq h0 ctx state) (sorted_seq h1 ctx state)
-
-private unfold let element_seq_perm_pre (h0 h1: HS.mem) (state: sort_state) =
-  0 < get_heap_len h0 state /\ get_heap_len h0 state < U32.v heap_size /\
-  0 < get_heap_len h1 state /\ get_heap_len h1 state < U32.v heap_size /\
-  get_heap_max h0 state <= U32.v heap_size /\
-  get_heap_max h1 state <= U32.v heap_size
-
-let element_seq_perm (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state):
-  Pure Type0
-  (requires element_seq_perm_pre h0 h1 state)
-  (ensures fun _ -> True) =
-  Seq.permutation U32.t (element_seq h0 ctx state) (element_seq h1 ctx state)
-
-let non_heap_unmodified (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state) =
-  let heap = (B.get h1 (CB.as_mbuf ctx) 0).heap in
-  let heap0 = B.as_seq h0 heap in
-  let heap1 = B.as_seq h1 heap in
-  let heap_len = get_heap_len h0 state in
-  heap0.[0] == heap1.[0] /\
-  (forall i. i > heap_len ==> heap0.[i] == heap1.[i])
-
-let lemma_heap_seq_upd_perm
-  (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state) (root i: U32.t): Lemma
-  (requires
-    (let c0 = B.get h0 (CB.as_mbuf ctx) 0 in
-    let heap0 = B.as_seq h0 c0.heap in
-    let heap_len = get_heap_len h0 state in
-    modifies_heap_only h0 h1 ctx state /\
-    whole_heap_perm h0 h1 ctx state /\
-    0 < heap_len /\
-    0 < U32.v root /\ U32.v root <= heap_len / 2 /\
-    i == heap0.[U32.v root] /\
-    non_heap_unmodified h0 h1 ctx state))
-  (ensures heap_seq_perm h0 h1 ctx state) =
-  let c0 = B.get h0 (CB.as_mbuf ctx) 0 in
-  let c1 = B.get h1 (CB.as_mbuf ctx) 0 in
-  let heap0 = B.as_seq h0 c0.heap in
-  let heap1 = B.as_seq h1 c1.heap in
-  let heap_len = get_heap_len h0 state in
-  let heap_size = U32.v heap_size in
-  assert(equal
-    (Seq.slice heap0 (heap_len + 1) heap_size)
-    (Seq.slice heap1 (heap_len + 1) heap_size));
-  permutation_split heap0 heap1 1 (heap_len + 1)
-
-let lemma_sorted_seq_unmodified_perm
-  (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state): Lemma
-  (requires
-    modifies_heap_only h0 h1 ctx state /\
-    non_heap_unmodified h0 h1 ctx state)
-  (ensures sorted_seq_perm h0 h1 ctx state) =
-  assert(equal (sorted_seq h0 ctx state) (sorted_seq h1 ctx state))
-
-let lemma_element_seq_perm_append
-  (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state): Lemma
-  (requires
-    modifies_heap_only h0 h1 ctx state /\
-    0 < get_heap_len h1 state /\
-    heap_seq_perm h0 h1 ctx state /\
-    sorted_seq_perm h0 h1 ctx state)
-  (ensures element_seq_perm h0 h1 ctx state) =
-  lemma_append_count (heap_seq h0 ctx state) (sorted_seq h0 ctx state);
-  lemma_append_count (heap_seq h1 ctx state) (sorted_seq h1 ctx state)
-
-private let rec heap_sorted'
-  (tree_len: nat{tree_len <= U32.v heap_size})
-  (tree: Seq.seq ct_data{Seq.length tree == tree_len})
-  (depth: Seq.seq U16.t{Seq.length depth == 2 * U32.v l_codes + 1})
-  (i: nat{i <= U32.v heap_size})
-  (heap: Seq.seq U32.t{
-    Seq.length heap == U32.v heap_size /\
-    (forall j. j >= i ==> heap_elem tree_len heap.[j])
-  }):
-  Tot bool
-  (decreases U32.v heap_size - i) =
-  if U32.v heap_size - i <= 1 then
-    true
-  else
-    if node_smaller tree_len tree depth heap.[i + 1] heap.[i] then
-      heap_sorted' tree_len tree depth (i + 1) heap
-    else
-      false
-
-let rec lemma_heap_sorted'
-  (tree_len: nat{tree_len <= U32.v heap_size})
-  (tree: Seq.seq ct_data{Seq.length tree == tree_len})
-  (depth: Seq.seq U16.t{Seq.length depth == 2 * U32.v l_codes + 1})
-  (i: nat{i <= U32.v heap_size})
-  (heap0: Seq.seq U32.t{
-    Seq.length heap0 == U32.v heap_size /\
-    (forall j. j >= i ==> heap_elem tree_len heap0.[j])
-  })
-  (heap1: Seq.seq U32.t{
-    Seq.length heap1 == U32.v heap_size /\
-    (forall j. j >= i ==> heap0.[j] == heap1.[j])
-  }):
-  Lemma
-  (requires heap_sorted' tree_len tree depth i heap0)
-  (ensures heap_sorted' tree_len tree depth i heap1)
-  (decreases U32.v heap_size - i) =
-  match U32.v heap_size - i with
-  | 0 -> ()
-  | _ -> lemma_heap_sorted' tree_len tree depth (i + 1) heap0 heap1
-
-unfold let heap_sorted (h: HS.mem) (ctx: sort_ctx) (state: sort_state):
-  Pure Type0
-  (requires context_live h ctx state)
-  (ensures fun _ -> True) =
-  let open U32 in
-  let ctx' = B.get h (CB.as_mbuf ctx) 0 in
-  let heap = B.as_seq h ctx'.heap in
-  let depth = B.as_seq h ctx'.depth in
-  let tree = B.as_seq h ctx'.tree in
-  let heap_len = get_heap_len h state in
-  let heap_max = get_heap_max h state in
+unfold let get_heap_max (h: HS.mem) (ts: live_tree_state h) =
+  (g_tree_state h ts).heap_max
   
-  heap_max <= U32.v heap_size /\
-  (* All elements in heap area is smaller than the first element in the sorted area. *)
-  (heap_len >= 1 /\ heap_max < U32.v heap_size ==> (forall j. 0 < j /\ j <= heap_len ==>
-    node_smaller ctx'.tree_len tree depth heap.[heap_max] heap.[j])) /\
-
-  (* All elements in the sorted area are sorted. *)
-  heap_sorted' ctx'.tree_len tree depth heap_max heap
-
-#push-options "--z3rlimit 1024 --ifuel 1"
-private let rec lemma_heap_sorted_aux
-  (h: HS.mem) (ctx: sort_ctx) (state: sort_state) (i j: pos): Lemma
-  (requires (
-    context_live h ctx state /\ (
-    let heap_max = get_heap_max h state in
-    let ctx = B.get h (CB.as_mbuf ctx) 0 in
-    let tree = B.as_seq h ctx.tree in
-    let depth = B.as_seq h ctx.depth in
-    let heap = B.as_seq h ctx.heap in
-    heap_max <= i /\
-    i <= j /\ j < U32.v heap_size /\
-    heap_sorted' ctx.tree_len tree depth i heap)))
-  (ensures (
-    let ctx = B.get h (CB.as_mbuf ctx) 0 in
-    let tree = B.as_seq h ctx.tree in
-    let depth = B.as_seq h ctx.depth in
-    let heap = B.as_seq h ctx.heap in
-    heap_sorted' ctx.tree_len tree depth j heap))
-  (decreases j - i) =
-  match j - i with
-  | 0 | 1 -> ()
-  | _ ->
-    let heap_max = get_heap_max h state in
-    let ctx' = B.get h (CB.as_mbuf ctx) 0 in
-    let tree = B.as_seq h ctx'.tree in
-    let depth = B.as_seq h ctx'.depth in
-    let heap = B.as_seq h ctx'.heap in
-    lemma_heap_sorted_aux h ctx state (i + 1) j
-
-let rec lemma_heap_sorted
-  (h: HS.mem) (ctx: sort_ctx) (state: sort_state) (i j: pos): Lemma
-  (requires
-    context_live h ctx state /\
-    heap_sorted h ctx state /\
-    get_heap_max h state <= i /\ i <= j /\ j < U32.v heap_size)
-  (ensures (
-    let ctx = B.get h (CB.as_mbuf ctx) 0 in
-    let heap = B.as_seq h ctx.heap in
-    let depth = B.as_seq h ctx.depth in
-    let tree = B.as_seq h ctx.tree in
-    node_smaller ctx.tree_len tree depth heap.[j] heap.[i]
-  ))
-  (decreases j - i) =
-  let ctx' = B.get h (CB.as_mbuf ctx) 0 in
-  let heap = B.as_seq h ctx'.heap in
-  let depth = B.as_seq h ctx'.depth in
-  let tree = B.as_seq h ctx'.tree in
-  let heap_max = get_heap_max h state in
-  match j - i with
-  | 0 -> ()
-  | _ ->
-    lemma_heap_sorted_aux h ctx state heap_max i;
-    lemma_heap_sorted_aux h ctx state i j;
-    lemma_heap_sorted h ctx state (i + 1) j
-#pop-options
-
-let partial_well_formed
-  (h: HS.mem) (ctx: sort_ctx) (state: sort_state) (i: U32.t): Pure Type0
-  (requires context_live h ctx state)
-  (ensures fun _ -> True) =
+/// Pre-condition before i is inserted to the heap.
+let insertion_pre_cond (ts: heap_elems_wf_ts) (root i hole: U32.t) =
   let open U32 in
-  let ctx = B.get h (CB.as_mbuf ctx) 0 in
-  let heap_len = get_heap_len h state in
-  let heap = B.as_seq h ctx.heap in
-  let tree = B.as_seq h ctx.tree in
-  let depth = B.as_seq h ctx.depth in
-  let smaller = node_smaller ctx.tree_len tree depth in
+  let heap = ts.heap in
+  is_tree_index ts i /\
+  is_internal_index ts root /\
+  U32.v root <= U32.v hole /\ U32.v hole <= ts.heap_len /\
+  heap_not_empty ts /\
+    
+  (* heap.[v hole] `smaller` i *)
+  smaller ts heap.[U32.v hole] i /\
 
-  0 < v i /\ v i <= heap_len /\
-  (forall (k: nat). v i <= k /\ k <= heap_len / 2 ==> (
-    (heap.[k] `smaller` heap.[k * 2]) /\
-    (k * 2 + 1 <= heap_len ==> heap.[k] `smaller` heap.[k * 2 + 1]))) /\
+  (* Initial state, elements after root form a partial heap and i is in the root. *)
+  (root == hole ==> partial_wf ts (root +^ 1ul) /\ heap.[v root] == i) /\
 
-  (forall a. a `smaller` a) /\
-  (forall a b. a `smaller` b /\ b `smaller` a ==> a == b) /\
-  (forall a b c. a `smaller` b /\ b `smaller` c ==> a `smaller` c) /\
-  (forall a b. a `smaller` b \/ b `smaller` a)
+  (* Intermediate state, elements start from root form a partial heap.
+     The element i has not been inserted to the partial heap. *)
+  (v root < v hole ==> partial_wf ts root)
 
-let well_formed (h: HS.mem) (ctx: sort_ctx) (state: sort_state) =
-  context_live h ctx state /\ partial_well_formed h ctx state 1ul
+/// Determine the smallest element among i, heap[hole * 2], and heap[hole * 2 + 1]
+/// (if the right child of hole exists). If i is the smallest element, then we can
+/// insert i into heap[hole] because heap[hole / 2] == heap[hole] or hole == root.
+let smallest (ts: heap_elems_wf_ts) (root i hole: U32.t): Ghost U32.t 
+  (requires
+    insertion_pre_cond ts root i hole /\
+    U32.v hole <= ts.heap_len / 2)
+  (ensures fun res ->
+    let res = U32.v res in
+    let root = U32.v root in
+    let hole = U32.v hole in
+    let heap = ts.heap in
+    let smaller = smaller ts in
 
-let permutation_partial (h1 h2: seq U32.t) (root hole: U32.t) =
+    (* The returned result should be zero or hole's child.*)
+    res <= ts.heap_len /\
+    (res == 0 \/ res == hole * 2 \/ res == hole * 2 + 1) /\
+
+    (* If the result is zero then i is the smallest element among i, the left
+       child of hole, and the right child of hole (if it exists). *)
+    (let k = if res = 0 then i else heap.[res] in
+    (* The index should be the smallest one among the three indexes. *)
+    k `smaller` i /\
+    k `smaller` heap.[hole * 2] /\
+    (hole * 2 + 1 <= ts.heap_len ==> k `smaller` heap.[hole * 2 + 1]) /\
+    
+    (root == hole ==> k `smaller` heap.[hole]) /\
+    (root < hole ==> heap.[hole] `smaller` k) /\
+    res > 0 ==> res > hole)) =
+  let open U32 in
+  let smaller = smaller ts in
+  let heap = ts.heap in
+  let l = hole *^ 2ul in let r = l +^ 1ul in
+  let le = heap.[v l] in
+  
+  if v r > ts.heap_len then
+    if i `smaller` le then 0ul else l
+  else
+    let re = heap.[v r] in
+    if i `smaller` le then
+      if i `smaller` re then 0ul else r
+    else
+      if le `smaller` re then l else r
+
+/// Count invariant during the do_pqdownheap iteration. After the iteration,
+/// this invariant will not hold and partial_wf will hold.
+let count_inv (h1 h2: seq U32.t) (root i hole: U32.t) =
   let root = U32.v root in let hole = U32.v hole in
   (* h1 is the initial heap and the root of h1 is the element to be inserted to
      the heap.*)
   length h1 == length h2 /\
   root <= hole /\ hole < length h1 /\
-  (hole == root ==> Seq.permutation U32.t h1 h2 /\ h1 == h2) /\
+
+  (* At the beginning, the new element is in the root. *)
+  h1.[root] == i /\
+
+  (* If we haven't done anything on h2, they should be the same.*)
+  (hole == root ==> h1 == h2) /\
+  
   (hole <> root ==> 
     (* Intermediate state. *)
     (h2.[hole] <> h1.[root] ==>
+      (* The count of the root element in h2 is one less than h1 because h2.[root]
+         is replaced with a smaller child. *)
       count h1.[root] h2 + 1 == count h1.[root] h1 /\
+      (* Conversely, since h2.[hole / 2] == h2.[hole], so we have one more h2.[hole]
+         in h2. *)
       count h2.[hole] h2 == count h2.[hole] h1 + 1) /\
 
-    (* The initial status, the counts should be the same. *)
+    (* If they are equal, then there the previous do_pqdownheap iteration did not
+       change the count of the root element. *)
     (h2.[hole] == h1.[root] ==> count h1.[root] h2 == count h1.[root] h1) /\
     
-    (* For other non-root elements, thier counts are unchanged. *)
+    (* For other elements, thier counts are unchanged. *)
     (forall (x: U32.t). {:pattern (count x h1) \/ (count x h2)}
       x <> h1.[root] /\ x <> h2.[hole] ==> count x h1 == count x h2))
 
-private let rec forest_leaf_count'
-  (tree_len: tree_len_t)
-  (forest: Seq.seq SK.tree{Seq.length forest == Ghost.reveal tree_len})
-  (heap: Seq.seq U32.t{Seq.length heap == U32.v heap_size})
-  (heap_len: nat{
-    heap_len < Seq.length heap /\
-    (forall i. 0 < i /\ i <= heap_len ==> heap_elem tree_len heap.[i])
-  })
-  (i: pos{i <= heap_len}): Tot nat (decreases heap_len - i) =
-  SK.leaf_count forest.[U32.v heap.[i]] + (if i = heap_len then
-    0
+let do_pqdownheap_pre (ts0 ts1: tree_state_wf) (root i hole: U32.t) =
+  let heap0 = ts0.heap in
+  let heap1 = ts1.heap in
+  let heap_len = ts1.heap_len in
+  heap_elems_wf ts0 /\ heap_elems_wf ts1 /\
+  ts1 == {ts0 with heap = ts1.heap} /\
+  insertion_pre_cond ts1 root i hole /\
+  count_inv heap0 heap1 root i hole /\
+  non_heap_unmodified heap0 heap1 heap_len /\
+  (U32.v root == 1 ==> heap_sorted ts1 /\ sorted_lt_heap ts1)
+
+#push-options "--z3refresh --z3rlimit 512 --fuel 0 --ifuel 0 --z3seed 1"
+let rec do_pqdownheap
+  (ts0 ts1: heap_elems_wf_ts)
+  (root: U32.t{0 < U32.v root}) (i hole: U32.t):
+  Ghost (partial_wf_ts root)
+  (requires do_pqdownheap_pre ts0 ts1 root i hole)
+  (ensures fun ts2 ->
+     ts2 == {ts1 with heap = ts2.heap} /\
+     non_heap_unmodified ts1.heap ts2.heap ts2.heap_len /\
+     permutation U32.t ts0.heap ts2.heap /\
+     permutation U32.t (heap_seq ts0) (heap_seq ts2) /\
+     sorted_seq ts1 == sorted_seq ts2 /\
+     (U32.v root == 1 ==> heap_wf ts2))
+  (decreases ts1.heap_len - U32.v hole) =
+  let open U32 in
+  if v hole > ts1.heap_len / 2 then
+    {ts1 with heap = ts1.heap.(v hole) <- i}
   else
-    forest_leaf_count' tree_len forest heap heap_len (i + 1))
-
-let forest_leaf_count (h: HS.mem) (ctx: sort_ctx) (state: sort_state) (with_hm: bool):
-  Ghost nat
-  (requires
-    context_live h ctx state /\
-    heap_not_empty h state /\
-    (with_hm ==> sorted_not_empty h state))
-  (ensures fun _ -> True) =
-  let c = (CB.as_seq h ctx).[0] in
-  let f = Ghost.reveal c.forest in
-  let heap = B.as_seq h c.heap in
-  let heap_len = get_heap_len h state in
-  let heap_max = get_heap_max h state in
-  let fc = forest_leaf_count' c.tree_len f heap heap_len 1 in
-  if with_hm then SK.leaf_count f.[U32.v heap.[heap_max]] + fc else fc
-
-/// Pre-condition for pqreplace()'s forest leaf count.
-let pqreplace_flc_pre (h: HS.mem) (ctx: sort_ctx) (state: sort_state): Pure Type0
-  (requires
-    context_live h ctx state /\
-    heap_not_empty h state /\
-    sorted_not_empty h state)
-  (ensures fun _ -> True) =
-  forest_leaf_count h ctx state true <= U32.v l_codes
-
-// let forest_inv (h0 h1: HS.mem) (ctx: sort_ctx) (state:sort_state): Pure Type0
-//   (requires
-//     context_live h0 ctx state /\
-//     context_live h1 ctx state /\
-//     get_heap_len h0 state > 0 /\
-//     get_heap_max h0 state < U32.v heap_size /\
-//     get_heap_len h1 state > 0)
-//   (ensures fun _ -> True) =
-//   let c0 = B.get h0 (CB.as_mbuf ctx) 0 in
-//   let c1 = B.get h1 (CB.as_mbuf ctx) 0 in
-//   let f0 = Ghost.reveal c0.forest in
-//   let f1 = Ghost.reveal c1.forest in
-//   let heap0 = B.as_seq h0 c0.heap in
-//   let heap1 = B.as_seq h1 c1.heap in
-//   let fc0 = forest_leaf_count' c0.tree_len f0 heap0 (get_heap_len h0 state) 1 in
-//   let fc1 = forest_leaf_count' c1.tree_len f1 heap1 (get_heap_len h1 state) 1 in
-//   fc0 == fc1 /\ fc0 <= U32.v l_codes
-
-#push-options "--fuel 1 --ifuel 1"
-private let rec lemma_forest_height_upper_bound'
-  (h: HS.mem) (ctx: sort_ctx) (state:sort_state) (j: pos): Lemma
-  (requires (
-    let c = (CB.as_seq h ctx).[0] in
-    let f = Ghost.reveal c.forest in
-    let heap = B.as_seq h c.heap in
-    context_live h ctx state /\
-    heap_not_empty h state /\
-    sorted_not_empty h state /\
-    j <= get_heap_len h state /\
-    SK.leaf_count f.[U32.v heap.[get_heap_max h state]] +
-    forest_leaf_count' c.tree_len f heap (get_heap_len h state) j <= U32.v l_codes
-  ))
-  (ensures (
-    let c = (CB.as_seq h ctx).[0] in
-    let heap = B.as_seq h c.heap in
-    let f = Ghost.reveal c.forest in
-    let heap_max = get_heap_max h state in
-    SK.leaf_count f.[U32.v heap.[heap_max]] <= U32.v l_codes /\
-    SK.height f.[U32.v heap.[heap_max]] <= U32.v l_codes /\
-    (forall i. j <= i /\ i <= get_heap_len h state ==>
-      SK.leaf_count f.[U32.v heap.[i]] <= U32.v l_codes /\
-      SK.height f.[U32.v heap.[i]] < U32.v l_codes)))
-  (decreases (get_heap_len h state) - j) =
-  let c = (CB.as_seq h ctx).[0] in
-  let heap = B.as_seq h c.heap in
-  let heap_len = get_heap_len h state in
-  if j < heap_len then lemma_forest_height_upper_bound' h ctx state (j + 1)
+    let s = smallest ts1 root i hole in
+    if s = 0ul then
+      {ts1 with heap = ts1.heap.(v hole) <- i}
+    else
+      let ts1' = {ts1 with heap = ts1.heap.(v hole) <- ts1.heap.[v s]} in
+      do_pqdownheap ts0 ts1' root i s
 #pop-options
 
-let lemma_forest_height_upper_bound
-  (h: HS.mem) (ctx: sort_ctx) (state:sort_state): Lemma
-  (requires
-    context_live h ctx state /\
-    heap_not_empty h state /\
-    sorted_not_empty h state /\
-    forest_leaf_count h ctx state true <= U32.v l_codes)
-  (ensures (
-    let c = (CB.as_seq h ctx).[0] in
-    let heap = B.as_seq h c.heap in
-    let f = Ghost.reveal c.forest in
-    let heap_max = get_heap_max h state in
-    SK.leaf_count f.[U32.v heap.[heap_max]] <= U32.v l_codes /\
-    SK.height f.[U32.v heap.[heap_max]] <= U32.v l_codes /\
-    (forall i. 1 <= i /\ i <= get_heap_len h state ==>
-      SK.leaf_count f.[U32.v heap.[i]] <= U32.v l_codes /\
-      SK.height f.[U32.v heap.[i]] < U32.v l_codes))) =
-  lemma_forest_height_upper_bound' h ctx state 1
+unfold let pqdownheap_pre (ts: tree_state_wf) (i: U32.t{is_internal_index ts i}) =
+  heap_elems_wf ts /\
+  partial_wf ts (i `U32.add` 1ul) /\
+  (U32.v i == 1 ==> heap_sorted ts /\ sorted_lt_heap ts)
 
-private let rec tree_freq_sum
-  (tree_len: tree_len_t)
-  (tree: Seq.seq ct_data{Seq.length tree == Ghost.reveal tree_len})
-  (heap: Seq.seq U32.t{Seq.length heap == U32.v heap_size})
-  (heap_len: pos{
-    heap_len < U32.v heap_size /\
-    (forall i. 0 < i /\ i <= heap_len ==> heap_elem tree_len heap.[i])
-  })
-  (i: pos{i <= heap_len}): Tot nat (decreases heap_len - i) =
-  U16.v (tree.[U32.v heap.[i]]).freq_or_code + (if i < heap_len then
-    tree_freq_sum tree_len tree heap heap_len (i + 1)
-  else
-    0)
+/// Move the root element to keep heap's invariant.
+let pqdownheap (ts: tree_state_wf) (i: U32.t{is_internal_index ts i}):
+  Ghost (partial_wf_ts i)
+  (requires pqdownheap_pre ts i)
+  (ensures fun ts' ->
+    ts' = {ts with heap = ts'.heap} /\
+    non_heap_unmodified ts.heap ts'.heap ts.heap_len /\
+    permutation U32.t ts.heap ts'.heap /\
+    permutation U32.t (heap_seq ts) (heap_seq ts') /\
+    sorted_seq ts == sorted_seq ts' /\
+    permutation U32.t (element_seq ts) (element_seq ts') /\
+    (U32.v i == 1 ==> heap_wf ts')) =
+  let ts' = do_pqdownheap ts ts i ts.heap.[U32.v i] i in
+  lemma_append_count (heap_seq ts) (sorted_seq ts);
+  lemma_append_count (heap_seq ts') (sorted_seq ts');
+  ts'
 
-private let rec tree_freq_sum_lt tree_len tree heap heap_len i j: Lemma
-  (requires i <= j /\ j <= heap_len)
-  (ensures
-    U16.v (tree.[U32.v heap.[j]]).freq_or_code <=
-    tree_freq_sum tree_len tree heap heap_len i)
-  (decreases j - i) =
-  match j - i with
-  | 0 -> ()
-  | _ -> tree_freq_sum_lt tree_len tree heap heap_len (i + 1) j
-
-let tree_freq_inv (h: HS.mem) (ctx: sort_ctx) (state: sort_state): Pure Type0
-  (requires context_live h ctx state)
-  (ensures fun _ -> True) =
-  let c = B.get h (CB.as_mbuf ctx) 0 in
-  let heap = B.as_seq h c.heap in
-  let tree = B.as_seq h c.tree in
-  let heap_len = get_heap_len h state in
-  let heap_max = get_heap_max h state in
-  0 < heap_len /\ 0 < heap_max /\ heap_max < U32.v heap_size /\
-  U16.v (tree.[U32.v heap.[heap_max]]).freq_or_code +
-  tree_freq_sum c.tree_len tree heap heap_len 1 <= pow2 15
-
-let lemma_tree_freq_inv (h: HS.mem) (ctx: sort_ctx) (state: sort_state) (i: pos): Lemma
-  (requires
-    context_live h ctx state /\ tree_freq_inv h ctx state /\
-    i <= get_heap_len h state)
-  (ensures (
-    let ctx = B.get h (CB.as_mbuf ctx) 0 in
-    let heap = B.as_seq h ctx.heap in
-    let tree = B.as_seq h ctx.tree in
-    let heap_max = get_heap_max h state in
-    let sum = U16.v (tree.[U32.v heap.[i]]).freq_or_code +
-      U16.v (tree.[U32.v heap.[heap_max]]).freq_or_code
-    in
-    sum <= pow2 15 /\ pow2 15 < pow2 16)) =
-  Math.pow2_lt_compat 16 15;
-  let ctx = B.get h (CB.as_mbuf ctx) 0 in
-  let heap = B.as_seq h ctx.heap in
-  let tree = B.as_seq h ctx.tree in
-  let heap_len = get_heap_len h state in
-  tree_freq_sum_lt ctx.tree_len tree heap heap_len 1 i
-
-let depth_inv (h: HS.mem) (ctx: sort_ctx) (state: sort_state): Pure Type0
-  (requires context_live h ctx state)
-  (ensures fun _ -> True) =
-  let ctx = B.get h (CB.as_mbuf ctx) 0 in
-  let depth = B.as_seq h ctx.depth in
-  let heap = B.as_seq h ctx.heap in
-  let heap_len = get_heap_len h state in
-  let heap_max = get_heap_max h state in
-  forall i. 0 < i /\ i <= heap_len \/ heap_max <= i /\ i < U32.v heap_size ==>
-    U16.v depth.[U32.v heap.[i]] == SK.height ctx.forest.[U32.v heap.[i]]
-
-private let rec log2 (a: pos): Tot (n: nat{
-  pow2 n <= a /\ a < pow2 (n + 1)
-}) = if a = 1 then 0 else 1 + log2 (a / 2)
-
-private let rec log2_pow2_lt (a: pos) (n: nat): Lemma
-  (requires n < log2 a)
-  (ensures pow2 n < a) =
-  match n with
-  | 0 -> ()
-  | _ -> log2_pow2_lt (a / 2) (n - 1)
-
-private let rec log2_pow2_gt (a: pos) (n: pos): Lemma
-  (requires a < pow2 n)
-  (ensures log2 a < n) =
-  match (a, n) with
-  | (1, _) | (_, 1) -> ()
-  | _ -> log2_pow2_gt (a / 2) (n - 1)
-
-private let rec parent (a: pos) (i: pos{i <= log2 a}): Tot (res: pos{res < a}) =
-  if i > 1 then parent (a / 2) (i - 1) else a / 2
-
-private let rec lemma_parent_next (a: pos) (i: pos{1 < i /\ i <= log2 a}): Lemma
-  (ensures parent a i == parent a (i - 1) / 2) =
-  match i with
-  | 2 -> ()
-  | _ -> lemma_parent_next (a / 2) (i - 1)
-
-private let lemma_div2 (a b: nat): Lemma
-  (requires a / 2 == b)
-  (ensures b * 2 == a \/ b * 2 + 1 == a) = ()
-
-#set-options "--z3refresh --z3rlimit 1024 --fuel 1 --ifuel 0 --z3seed 11"
-private let rec lemma_partial_well_formed_max
-  (h: HS.mem) (ctx: sort_ctx) (state: sort_state)
-  (height: nat) (j: pos) : Lemma
-  (requires
-    context_live h ctx state /\
-    (let ctx' = B.get h (CB.as_mbuf ctx) 0 in
-    height < log2 j /\ j <= get_heap_len h state /\ pow2 height < j /\
-    partial_well_formed h ctx state (U32.uint_to_t (pow2 height))))
-  (ensures (
-    let ctx = B.get h (CB.as_mbuf ctx) 0 in
-    let heap = B.as_seq h ctx.heap in
-    let depth = B.as_seq h ctx.depth in
-    let tree = B.as_seq h ctx.tree in
-    let pj = parent j (log2 j - height) in
-    pow2 height <= pj /\ pj < pow2 (height + 1) /\
-    node_smaller ctx.tree_len tree depth heap.[pj] heap.[j]))
-  (decreases get_heap_len h state - pow2 height) =
-  if j < pow2 (height + 2) then begin
-    log2_pow2_lt j height;
-    log2_pow2_gt j (height + 2);
-    lemma_div2 j (parent j (log2 j - height))
-  end else begin
-    lemma_partial_well_formed_max h ctx state (height + 1) j;
-    lemma_parent_next j (log2 j - height);
-    Math.subtraction_is_distributive (log2 j) height 1;
-    lemma_div2 (parent j (log2 j - (height + 1))) (parent j (log2 j - height))
-  end
-
-private let lemma_heap_max'
-  (h: HS.mem) (ctx: sort_ctx) (state: sort_state)
-  (i: pos{1 < i /\ i <= get_heap_len h state}) : Lemma
-  (requires well_formed h ctx state)
-  (ensures (
-    let ctx = B.get h (CB.as_mbuf ctx) 0 in
-    let heap = B.as_seq h ctx.heap in
-    let depth = B.as_seq h ctx.depth in
-    let tree = B.as_seq h ctx.tree in
-    node_smaller ctx.tree_len tree depth heap.[1] heap.[i])) =
-  lemma_partial_well_formed_max h ctx state 0 i
-
-let lemma_heap_max (h: HS.mem) (ctx: sort_ctx) (state: sort_state): Lemma
-  (requires well_formed h ctx state)
-  (ensures forall i.
-    let ctx = B.get h (CB.as_mbuf ctx) 0 in
-    let heap = B.as_seq h ctx.heap in
-    let depth = B.as_seq h ctx.depth in
-    let tree = B.as_seq h ctx.tree in
-    1 < i /\ i <= get_heap_len h state ==>
-       node_smaller ctx.tree_len tree depth heap.[1] heap.[i])
-  [SMTPat (well_formed h ctx state)] =
-  Classical.forall_intro (Classical.move_requires (lemma_heap_max' h ctx state))
-
-let lemma_non_heap_unmodified
-  (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state):
-  Lemma 
-  (requires (
-    let c0 = B.get h0 (CB.as_mbuf ctx) 0 in
-    let heap0 = B.as_seq h0 c0.heap in
-    let heap1 = B.as_seq h1 c0.heap in
-    modifies_heap_only h0 h1 ctx state /\
-    (forall i. i >= get_heap_max h0 state ==> heap0.[i] == heap1.[i]) /\
-    heap_sorted h0 ctx state))
-  (ensures (
-    let c1 = B.get h1 (CB.as_mbuf ctx) 0 in
-    let heap = B.as_seq h1 c1.heap in
-    let tree = B.as_seq h1 c1.tree in
-    let depth = B.as_seq h1 c1.depth in
-    let heap_max = get_heap_max h1 state in
-    heap_sorted' c1.tree_len tree depth (heap_max) heap
-  )) =
-  let heap_max = get_heap_max h0 state in
-  match U32.v heap_size - heap_max with
-  | 0 -> ()
-  | _ ->
-    let c0 = B.get h0 (CB.as_mbuf ctx) 0 in
-    let c1 = B.get h1 (CB.as_mbuf ctx) 0 in
-    let tree = B.as_seq h0 c0.tree in
-    let depth = B.as_seq h0 c0.depth in
-    let heap0 = B.as_seq h0 c0.heap in
-    let heap1 = B.as_seq h1 c1.heap in
-    lemma_heap_sorted' c0.tree_len tree depth heap_max heap0 heap1
-
-let heap_moved (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state) =
-  let c = B.get h0 (CB.as_mbuf ctx) 0 in
-  B.modifies (B.loc_buffer c.heap `B.loc_union` B.loc_buffer state) h0 h1 /\
-  context_live h0 ctx state /\ context_live h1 ctx state /\
-  well_formed h0 ctx state /\ well_formed h1 ctx state /\
-  get_heap_len h0 state - 1 == get_heap_len h1 state /\
-  get_heap_max h0 state - 1 == get_heap_max h1 state /\
-  heap_sorted h1 ctx state /\
-  element_seq_perm h0 h1 ctx state
-
-let lemma_element_seq_swap (h0 h1: HS.mem) (ctx: sort_ctx) (state: sort_state): Lemma
-  (requires (
-    let heap = (B.get h0 (CB.as_mbuf ctx) 0).heap in
-    let heap0 = B.as_seq h0 heap in
-    let heap1 = B.as_seq h1 heap in
-    B.modifies (B.loc_buffer heap `B.loc_union` B.loc_buffer state) h0 h1 /\
-    context_live h0 ctx state /\ context_live h1 ctx state /\
-    element_seq_perm_pre h0 h1 state /\
-    get_heap_len h0 state - 1 == get_heap_len h1 state /\
-    get_heap_max h0 state - 1 == get_heap_max h1 state /\
-    (forall i. i <> 1 /\ i <> get_heap_max h1 state ==> heap0.[i] == heap1.[i]) /\
-    heap1.[1] == heap0.[get_heap_len h0 state] /\ heap1.[get_heap_max h1 state] == heap0.[1]))
-  (ensures element_seq_perm h0 h1 ctx state) =
-  let heap = (B.get h0 (CB.as_mbuf ctx) 0).heap in
-  let heap0 = B.as_seq h0 heap in
-  let heap1 = B.as_seq h1 heap in
-  let hs0 = heap_seq h0 ctx state in
-  let hs1 = heap_seq h1 ctx state in
-  let ss0 = sorted_seq h0 ctx state in
-  let ss1 = sorted_seq h1 ctx state in
-  let es0 = element_seq h0 ctx state in
-  let es1 = element_seq h1 ctx state in
-  let heap_len = get_heap_len h0 state in
-  let heap_max = get_heap_max h0 state in
-  assert(forall i. {:pattern hs0.[i]} hs0.[i] == heap0.[i + 1]);
-  assert(forall i. {:pattern hs1.[i]} hs1.[i] == heap1.[i + 1]);
-  assert(forall i. {:pattern hs1.[i] \/ hs0.[i]} 0 < i ==> hs1.[i] == hs0.[i]);
-  assert(forall i. {:pattern ss0.[i]} ss0.[i] == heap0.[i + heap_max]);
-  assert(forall i. {:pattern ss1.[i]} ss1.[i] == heap1.[i + heap_max - 1]);
-  assert(forall i. i > 0 ==> ss0.[i - 1] == ss1.[i]);
-  assert(forall i. {:pattern es0.[i]}
-    (i < heap_len ==> es0.[i] == hs0.[i]) /\
-    (heap_len <= i ==> es0.[i] == ss0.[i - heap_len]));
-  assert(forall i. {:pattern es1.[i]}
-    (i < heap_len - 1 ==> es1.[i] == hs1.[i]) /\
-    (heap_len - 1 <= i ==> es1.[i] == ss1.[i - (heap_len - 1)]));
-  assert(forall i. {:pattern es0.[i] \/ es1.[i]}
-    i <> 0 /\ i <> heap_len - 1 ==> es0.[i] == es1.[i]);
-  swap_equal es0 es1 0 (heap_len - 1);
-  Seq.lemma_swap_permutes es0 0 (heap_len - 1)
+#push-options "--z3refresh --z3rlimit 256 --z3seed 7 --fuel 1 --ifuel 1"
+/// Move the root of the heap to the sorted area.
+let pqremove (ts: heap_wf_ts):
+  Ghost heap_wf_ts
+  (requires ts.heap_len > 1)
+  (ensures fun ts' ->
+    ts' == {
+      ts with
+      heap = ts'.heap;
+      heap_len = ts.heap_len - 1;
+      heap_max = ts.heap_max - 1;
+    } /\
+    heap_not_empty ts' /\
+    sorted_not_empty ts' /\
+    sorted_seq ts' `equal` (cons ts.heap.[1] (sorted_seq ts)) /\
+    permutation U32.t (heap_seq ts) (cons ts'.heap.[ts'.heap_max] (heap_seq ts')) /\
+    permutation U32.t (element_seq ts) (element_seq ts') /\
+    (forall k. k >= ts.heap_len ==> (element_seq ts).[k] == (element_seq ts').[k])) =
+  lemma_heap_wf_pqremove ts;
+  let ts1 = {
+    ts with
+    heap = upd (upd ts.heap (ts.heap_max - 1) ts.heap.[1]) 1 ts.heap.[ts.heap_len];
+    heap_len = ts.heap_len - 1;
+    heap_max = ts.heap_max - 1;
+  } in
+  assert(sorted_seq ts1 `equal` (cons ts.heap.[1] (sorted_seq ts)));
+  if ts1.heap_len >= 2 then begin
+    let ts2 = pqdownheap ts1 1ul in
+    assert(ts1.heap.[ts1.heap_max] == ts2.heap.[ts2.heap_max]);
+    lemma_append_count (create 1 ts1.heap.[ts1.heap_max]) (heap_seq ts1);
+    lemma_append_count (create 1 ts2.heap.[ts2.heap_max]) (heap_seq ts2);
+    lemma_trans_perm
+      (heap_seq ts)
+      (cons ts1.heap.[ts1.heap_max] (heap_seq ts1))
+      (cons ts2.heap.[ts2.heap_max] (heap_seq ts2))
+      0 (ts.heap_len);
+    ts2
+  end else
+    ts1
+#pop-options

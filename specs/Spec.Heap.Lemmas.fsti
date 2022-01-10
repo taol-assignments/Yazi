@@ -1,8 +1,8 @@
 module Spec.Heap.Lemmas
 
-module U8 = FStar.UInt8
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
+module U8 = FStar.UInt8
 
 open FStar.Mul
 open FStar.Seq
@@ -10,34 +10,49 @@ open Lib.Seq
 open Yazi.Tree.Types
 open Yazi.Deflate.Constants
 
-/// The tree state type in specification.
-type tree_state = {
-  heap: seq U32.t;
-  tree: seq ct_data;
-  depth: seq U8.t;
-  heap_len: nat;
-  heap_max: nat;
-  tree_len: nat;
-  forest: seq wf_tree;
-}
-
 /// Well-formed tree state. We don't use the tree_state type in the following code.
-type tree_state_wf = res: tree_state{
-  length res.heap == U32.v heap_size /\
-  length res.tree == res.tree_len /\
-  length res.depth == U32.v heap_size /\
-  res.tree_len <= U32.v heap_size
+type tree_state_wf = ts: tree_state{
+  length ts.heap == U32.v heap_size /\
+  length ts.tree == ts.tree_len /\
+  length ts.forest == ts.tree_len /\
+  length ts.depth == U32.v heap_size /\
+  ts.tree_len <= U32.v heap_size
 }
 
 /// The heap indexes: heap_len and heap_max are well-formed.
 let heap_indexes_wf (ts: tree_state) =
   ts.heap_len < ts.heap_max /\ ts.heap_max <= U32.v heap_size
 
+/// The heap area is not empty.
+unfold let heap_not_empty (ts: tree_state_wf) = 0 < ts.heap_len
+
+/// The sorted area is empty.
+unfold let sorted_not_empty (ts: tree_state_wf) = ts.heap_max < U32.v heap_size
+
+/// Get the sorted area sequence.
+let sorted_seq (ts: tree_state_wf): Ghost (Seq.seq U32.t)
+  (requires ts.heap_max <= U32.v heap_size)
+  (ensures fun s -> Seq.length s == U32.v heap_size - ts.heap_max) =
+  Seq.slice ts.heap ts.heap_max (U32.v heap_size)
+
+/// Get the heap area sequence.
+let heap_seq (ts: tree_state_wf): Ghost (Seq.seq U32.t)
+  (requires heap_not_empty ts /\ heap_indexes_wf ts)
+  (ensures fun s -> Seq.length s == ts.heap_len) =
+  Seq.slice ts.heap 1 (ts.heap_len + 1)
+
+/// Get the concatenation of the heap area and sorted area.
+let element_seq (ts: tree_state_wf): Ghost (Seq.seq U32.t)
+  (requires heap_not_empty ts /\ heap_indexes_wf ts)
+  (ensures fun s ->
+    Seq.length s == ts.heap_len + U32.v heap_size - ts.heap_max) =
+  heap_seq ts @| sorted_seq ts
+
 /// The heap stores the well-formed elements. A heap's elements are well-formed if
-/// all elements in the heap should less than tree_len and heap_size.
+/// all elements in the heap less than tree_len and heap_size.
 let heap_elems_wf (ts: tree_state_wf) =
   heap_indexes_wf ts /\
-  (forall i. {:pattern (ts.heap.[i])}
+  (forall i.
     0 < i /\ i <= ts.heap_len \/ ts.heap_max <= i /\ i < U32.v heap_size ==>
     U32.v ts.heap.[i] < ts.tree_len /\ U32.v ts.heap.[i] < 2 * U32.v l_codes + 1)
 
@@ -74,37 +89,12 @@ type partial_wf_ts (root: U32.t{0 < U32.v root}) = ts: tree_state_wf{
 let is_internal_index (ts: tree_state_wf) (i: U32.t) =
   0 < U32.v i /\ U32.v i <= ts.heap_len / 2
 
-/// The heap area is not empty.
-unfold let heap_not_empty (ts: tree_state_wf) = 0 < ts.heap_len
-
-/// The sorted area is empty.
-unfold let sorted_not_empty (ts: tree_state_wf) = ts.heap_max < U32.v heap_size
-
-/// Get the sorted area sequence.
-let sorted_seq (ts: tree_state_wf): Ghost (Seq.seq U32.t)
-  (requires ts.heap_max <= U32.v heap_size)
-  (ensures fun s -> Seq.length s == U32.v heap_size - ts.heap_max) =
-  Seq.slice ts.heap ts.heap_max (U32.v heap_size)
-
-/// Get the heap area sequence.
-let heap_seq (ts: tree_state_wf): Ghost (Seq.seq U32.t)
-  (requires heap_not_empty ts /\ heap_indexes_wf ts)
-  (ensures fun s -> Seq.length s == ts.heap_len) =
-  Seq.slice ts.heap 1 (ts.heap_len + 1)
-
-/// Get the concatenation of the heap area and sorted area.
-let element_seq (ts: tree_state_wf): Ghost (Seq.seq U32.t)
-  (requires heap_not_empty ts /\ heap_indexes_wf ts)
-  (ensures fun s ->
-    Seq.length s == ts.heap_len + U32.v heap_size - ts.heap_max) =
-  heap_seq ts @| sorted_seq ts
-
 /// Non-heap areas are not modified.
 let non_heap_unmodified (h1 h2: seq U32.t) (heap_len: nat) =
   forall i. {:pattern (h1.[i]) \/ (h2.[i])} (i = 0 \/ i > heap_len) ==> h1.[i] == h2.[i]
 
 /// The elements in the sorted area are sorted.
-private let rec heap_sorted' (ts: heap_elems_wf_ts) (i: nat{
+let rec heap_sorted' (ts: heap_elems_wf_ts) (i: nat{
   ts.heap_max <= i /\ i <= U32.v heap_size
 }): GTot bool
   (decreases U32.v heap_size - i) =
@@ -158,8 +148,6 @@ private val lemma_non_heap_unmodified:
     [SMTPat (sorted_seq ts0); SMTPat (sorted_seq ts1)]
   ]]
 
-type heap_area_wf_ts = partial_wf_ts 1ul
-
 /// If a heap is well-formed, its elements should not larger than the root.
 val lemma_heap_wf: ts: partial_wf_ts 1ul -> j: pos{j <= ts.heap_len} -> Lemma
   (ensures smaller ts ts.heap.[1] ts.heap.[j])
@@ -183,4 +171,6 @@ val lemma_heap_wf_pqremove: ts: heap_wf_ts -> Lemma
     } in
     heap_sorted ts' /\
     sorted_lt_heap ts' /\
+    partial_wf ts' 2ul /\
+    permutation U32.t (heap_seq ts) (cons ts'.heap.[ts'.heap_max] (heap_seq ts')) /\
     permutation U32.t (element_seq ts) (element_seq ts')))

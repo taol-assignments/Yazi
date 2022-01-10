@@ -4,7 +4,6 @@ module B = LowStar.Buffer
 module CB = LowStar.ConstBuffer
 module Seq = FStar.Seq
 module ST = FStar.HyperStack.ST
-module SK = Spec.Kraft
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
 module U8 = FStar.UInt8
@@ -17,21 +16,15 @@ open Yazi.Deflate.Constants
 /// Prefix-free code tree.
 noextract
 type tree = 
-  | Node: left: tree -> id: pos -> freq: pos -> right: tree -> tree
+  | Node: left: tree -> id: nat-> freq: pos -> right: tree -> tree
   | Leaf: symbol: nat -> freq: pos -> tree
 
-noextract
-type non_leaf = t: tree{Leaf? t == false}
-
-unfold let left (t: non_leaf) =
+let id (t: tree) =
   match t with
-  | Node l _ _ _ -> l
+  | Node _ id _ _ -> id
+  | Leaf sym _ -> sym
 
-unfold let right (t: non_leaf) =
-  match t with
-  | Node _ _ _ r -> r
-
-unfold let freq (t: tree) =
+unfold let freq (t: tree): Tot pos =
   match t with
   | Node _ _ f _ -> f
   | Leaf _ f -> f
@@ -41,9 +34,12 @@ let rec symbols (t: tree) =
   | Node l _ _ r -> symbols l @| symbols r
   | Leaf s _ -> create 1 s
 
-private let rec freq_pred (t: tree): Tot Type0 =
+let rec wf_pred (t: tree): Tot Type0 =
   match t with
-  | Node l _ f r -> f == freq l + freq r /\ freq_pred l /\ freq_pred r
+  | Node l i f r ->
+    f == freq l + freq r /\
+    i > id l /\ i > id r /\
+    wf_pred l /\ wf_pred r
   | _ -> True
 
 /// Definition of well-formed trees. Their root frequencies should be the sum of
@@ -51,7 +47,7 @@ private let rec freq_pred (t: tree): Tot Type0 =
 /// symbols.
 noextract
 type wf_tree = t: tree{
-  no_dup (symbols t) /\ freq_pred t
+  no_dup (symbols t) /\ wf_pred t
 }
 
 type ct_data = {
@@ -96,10 +92,26 @@ noeq type sort_ctx_t = {
   state: B.lbuffer U32.t 2;
 }
 
+noextract type forest_seq = s: seq wf_tree{
+  forall i. (*{:pattern id s.[i]}*) id s.[i] == i
+}
+
 noeq type tree_state_t = {
   ctx: CB.const_buffer sort_ctx_t;
   tree_len: tree_len_t;
-  forest: Ghost.erased (seq wf_tree)
+  forest: Ghost.erased forest_seq
+}
+
+/// The tree state type in specification.
+noextract
+type tree_state = {
+  heap: seq U32.t;
+  tree: seq ct_data;
+  depth: seq U8.t;
+  heap_len: nat;
+  heap_max: nat;
+  tree_len: nat;
+  forest: forest_seq;
 }
 
 type lit_bufsize_t = s: U32.t {

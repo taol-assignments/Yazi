@@ -133,7 +133,7 @@ private let rec lemma_heap_wf_pqremove_aux
 #pop-options
 
 #push-options "--z3refresh --fuel 0 --ifuel 0"
-let lemma_four_seq_perm (#t: eqtype) (top bot mid ss0: seq t) (s: t): Lemma
+let lemma_four_seq_perm_1 (#t: eqtype) (top bot mid ss0: seq t) (s: t): Lemma
   (ensures count s ((bot @| mid) @| (top @| ss0)) == count s ((top @| mid @| bot) @| ss0)) =
   calc (==) {
     count s ((bot @| mid) @| (top @| ss0));
@@ -152,6 +152,31 @@ let lemma_four_seq_perm (#t: eqtype) (top bot mid ss0: seq t) (s: t): Lemma
     =={lemma_append_count_aux s (top @| mid @| bot) ss0}
     count s ((top @| mid @| bot) @| ss0);
   }
+
+let lemma_four_seq_perm_2 (#t: eqtype) (top mid bot hs0 hs1: seq t) (s: t): Lemma
+  (requires
+    hs0 `equal` (top @| mid @| bot) /\
+    hs1 `equal` (bot @| mid))
+  (ensures count s hs0 == count s (top @| hs1)) =
+  calc (==) {
+    count s hs0;
+    =={}
+    count s (top @| mid @| bot);
+    =={append_assoc top mid bot}
+    count s ((top @| mid) @| bot);
+    =={lemma_append_count_aux s (top @| mid) bot}
+    count s (top @| mid) + count s bot;
+    =={lemma_append_count_aux s top mid}
+    count s top + count s mid + count s bot;
+    =={}
+    count s top + (count s bot + count s mid);
+    =={lemma_append_count_aux s bot mid}
+    count s top + count s (bot @| mid);
+    =={lemma_append_count_aux s top (bot @| mid)}
+    count s (top @| (bot @| mid));
+    =={}
+    count s (top @| hs1);
+  }
 #pop-options
 
 #push-options "--z3refresh --z3rlimit 256 --fuel 1 --ifuel 0 --z3seed 17"
@@ -162,6 +187,7 @@ let lemma_heap_wf_pqremove ts =
     heap_max = ts.heap_max - 1;
     heap_len = ts.heap_len - 1;
   } in
+  let open FStar.Classical in
   let hs0 = heap_seq ts in
   let hs1 = heap_seq ts' in
   let top = create 1 hs0.[0] in
@@ -172,6 +198,13 @@ let lemma_heap_wf_pqremove ts =
   let es0 = element_seq ts in
   let es1 = element_seq ts' in
   calc (==) {
+    es0;
+    =={}
+    hs0 @| ss0;
+    =={assert((top @| mid @| bot) `equal` hs0)}
+    (top @| mid @| bot) @| ss0;
+  };
+  calc (==) {
     es1;
     =={}
     hs1 @| ss1;
@@ -180,14 +213,8 @@ let lemma_heap_wf_pqremove ts =
     =={assert((top @| ss0) `equal` ss1)}
     (bot @| mid) @| (top @| ss0);
   };
-  calc (==) {
-    es0;
-    =={}
-    hs0 @| ss0;
-    =={assert((top @| mid @| bot) `equal` hs0)}
-    (top @| mid @| bot) @| ss0;
-  };
-  FStar.Classical.forall_intro (lemma_four_seq_perm top bot mid ss0);
+  forall_intro (lemma_four_seq_perm_1 top bot mid ss0);
+  forall_intro (move_requires (lemma_four_seq_perm_2 top mid bot hs0 hs1));
 
   assert(forall i. {:pattern ts'.heap.[i]} 1 < i /\ i <= ts'.heap_len ==>
     ts.heap.[i] == ts'.heap.[i]);
