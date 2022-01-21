@@ -44,27 +44,34 @@ let freq_corr (ts: heap_elems_wf_ts) (i: heap_index ts) =
   let i' = U32.v (ts.heap).[i] in
   U16.v (ts.tree.[i']).freq_or_code == freq ts.forest.[i']
 
+private unfold let child_in_sorted (ts: intermediate_ts) (i: heap_index ts{
+  Node? ts.forest.[U32.v ts.heap.[i]]
+}) =
+  exists (j: heap_index ts).
+    let t = ts.forest.[U32.v ts.heap.[i]] in
+    j > i /\ j >= ts.heap_max /\ j + 1 < U32.v heap_size /\
+    U32.v ts.heap.[j] == id (right t) /\
+    U32.v ts.heap.[j + 1] == id (left t)
+
 /// If the tree of ts.forest.[i'] is not a leaf, it should have two corresponding
 /// children on the ts.tree array, and these children should in the sorted area.
-private (*unfold*) let child_corr (ts: intermediate_ts) (i: heap_index ts) =
+private let child_corr (ts: intermediate_ts) (i: heap_index ts) =
   let i' = U32.v ts.heap.[i] in
   let t = ts.forest.[i'] in
   assert(id ts.forest.[U32.v ts.heap.[i]] == U32.v ts.heap.[i]);
   Node? t ==>
     ts.forest.[id (left t)] == left t /\ ts.forest.[id (right t)] == right t /\
     U16.v (ts.tree.[id (left t)]).dad_or_len == i' /\
-    U16.v (ts.tree.[id (right t)]).dad_or_len == i'
+    U16.v (ts.tree.[id (right t)]).dad_or_len == i' /\
+    child_in_sorted ts i
 
 private let parent_corr (ts: intermediate_ts) (i: heap_index ts) =
   let i' = U32.v (ts.heap).[i] in
-  let dad = Cast.uint16_to_uint32 (ts.tree.[i']).dad_or_len in
-  ts.heap_max <= i ==>
-    mem dad (element_seq ts) /\
-    index_of (element_seq ts) dad < i - (ts.heap_max - ts.heap_len)
+  ts.heap_max <= i ==> (exists (j: heap_index ts{j < i}).
+    U16.v (ts.tree.[i']).dad_or_len == U32.v ts.heap.[j])
 
 private unfold let tree_corr (ts: intermediate_ts) (i: heap_index ts) =
-  (* let t = ts.forest.[U32.v ts.heap.[i]] in
-  id t == U32.v ts.heap.[i] /\ *) child_corr ts i /\ parent_corr ts i
+  child_corr ts i /\ parent_corr ts i
 
 type tree_id_seq (ts: heap_elems_wf_ts) = s: seq U32.t{
   forall i. {:pattern s.[i]} is_tree_index ts s.[i]
@@ -90,6 +97,8 @@ let is_forest_wf (ts: intermediate_ts) =
   no_dup (element_seq ts) /\
   no_dup (forest_symbols ts (heap_seq ts)) /\
   0 < forest_freq ts (heap_seq ts) /\ forest_freq ts (heap_seq ts) < pow2 15 /\
+  (forall i. 1 <= i /\ i <= ts.heap_len ==>
+    U16.v (ts.tree.[U32.v ts.heap.[i]]).dad_or_len == 0) /\
   (forall i. freq_corr ts i /\ tree_corr ts i)
 
 type forest_wf_ts = ts: heap_wf_ts{is_forest_wf ts}
@@ -100,6 +109,10 @@ let is_max_id (ts: intermediate_ts) (node: nat) =
   node <= ts.tree_len /\
   (forall i. id ts.forest.[U32.v (element_seq ts).[i]] < node)
 
+/// The intermediate forest node ID sequence after the pqremove call.
+let intermediate_fseq (ts: heap_wf_ts{sorted_not_empty ts}) =
+  cons ts.heap.[ts.heap_max] (heap_seq ts)
+
 val lemma_forest_symbols_perm:
     ts0: heap_elems_wf_ts
   -> s0: tree_id_seq ts0
@@ -109,10 +122,6 @@ val lemma_forest_symbols_perm:
   (requires ts0.forest == ts1.forest /\ permutation U32.t s0 s1)
   (ensures permutation nat (forest_symbols ts0 s0) (forest_symbols ts1 s1))
   (decreases length s0)
-
-/// The intermediate forest node ID sequence after the pqremove call.
-let intermediate_fseq (ts: heap_wf_ts{sorted_not_empty ts}) =
-  cons ts.heap.[ts.heap_max] (heap_seq ts)
 
 /// Auxiliary lemmas for lemma_pqremove_forest and pqmerge_post.
 let lemma_element_seq_tree_index (ts: heap_elems_wf_ts) (i: nat): Lemma
@@ -131,7 +140,7 @@ let lemma_heap_seq_tree_index (ts: heap_elems_wf_ts): Lemma
     let hs = heap_seq ts in
     forall i. {:pattern hs.[i]} is_tree_index ts hs.[i])) = ()
 
-let pqmerge_pre (ts: heap_wf_ts) (node: nat) =
+unfold let pqmerge_pre (ts: heap_wf_ts) (node: nat) =
   sorted_not_empty ts /\ node < ts.tree_len /\ is_max_id ts node /\
   ts.heap_len < ts.heap_max - 1 /\
   (let s = intermediate_fseq ts in
@@ -139,9 +148,11 @@ let pqmerge_pre (ts: heap_wf_ts) (node: nat) =
   0 < ff /\ ff < pow2 15 /\
   no_dup (element_seq ts) /\
   no_dup (forest_symbols ts s) /\
+  (forall i. 1 <= i /\ i <= ts.heap_len ==>
+    U16.v (ts.tree.[U32.v ts.heap.[i]]).dad_or_len == 0) /\
+  U16.v (ts.tree.[U32.v ts.heap.[ts.heap_max]]).dad_or_len == 0 /\
   (forall (i: heap_index ts).
     freq_corr ts i /\
-    // id ts.forest.[U32.v ts.heap.[i]] == U32.v ts.heap.[i] /\
     (ts.heap_max == i ==> child_corr ts i) /\
     (ts.heap_max <> i ==> tree_corr ts i)))
 

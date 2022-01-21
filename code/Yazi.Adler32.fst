@@ -437,9 +437,12 @@ let adler32 #m data adler buf len =
     let (d, s) = init_state data adler len buf in
     let s' = do1 d s in
     combine_sums data s'.consumed s'.a s'.b
-  else if len = 0ul then
+  else if len = 0ul then begin
+    let h0 = ST.get () in
+    lemma_empty (CB.as_seq h0 buf);
+    append_empty_r data;
     adler
-  else if len <^ 16ul then
+  end else if len <^ 16ul then
     let (d, s) = init_state data adler len buf in
     let s' = iteration_1 d s in
     combine_sums data s'.consumed s'.a s'.b

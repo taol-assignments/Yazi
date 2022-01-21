@@ -223,7 +223,7 @@ let pqdownheap (ts: tree_state_wf) (i: U32.t{is_internal_index ts i}):
   lemma_append_count (heap_seq ts') (sorted_seq ts');
   ts'
 
-#push-options "--z3refresh --z3rlimit 256 --z3seed 7 --fuel 1 --ifuel 1"
+#push-options "--z3refresh --z3rlimit 256 --z3seed 11 --fuel 1 --ifuel 1"
 /// Move the root of the heap to the sorted area.
 let pqremove (ts: heap_wf_ts):
   Ghost heap_wf_ts

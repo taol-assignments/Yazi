@@ -13,7 +13,7 @@
         "typing_LowStar.Buffer.trivial_preorder"
       ],
       0,
-      "5d8b9aa15de72d87bc59f79569700a9f"
+      "74f306268e71a66cf1b413824a797fc0"
     ],
     [
       "Lib.Buffer.unchange_except",
@@ -31,7 +31,7 @@
         "typing_LowStar.Buffer.trivial_preorder"
       ],
       0,
-      "67c4e6af78256d3dea85a888381af14b"
+      "22f24af9150a38f1cf6eb79ff80e7b63"
     ],
     [
       "Lib.Buffer.as_seq_gsub_eq",
@@ -83,7 +83,7 @@
         "typing_LowStar.Monotonic.Buffer.as_seq"
       ],
       0,
-      "b31d86c86f9b9f09715719c8f0850523"
+      "0737a6100065e360c06c7bce9bff5b78"
     ]
   ]
 ]

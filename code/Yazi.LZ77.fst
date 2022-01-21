@@ -20,10 +20,10 @@ module U64 = FStar.UInt64
 module UInt = FStar.UInt
 module Util = Yazi.Util
 
-open LowStar.BufferOps
 open FStar.Mul
 open Lib.Seq
 open Lib.Buffer
+open LowStar.BufferOps
 open Yazi.LZ77.State
 open Yazi.Stream.Types
 open Yazi.Stream.State

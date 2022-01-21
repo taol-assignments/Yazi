@@ -93,7 +93,7 @@ noeq type sort_ctx_t = {
 }
 
 noextract type forest_seq = s: seq wf_tree{
-  forall i. (*{:pattern id s.[i]}*) id s.[i] == i
+  forall i. id s.[i] == i
 }
 
 noeq type tree_state_t = {

@@ -1,6 +1,183 @@
 [
-  "DËU\u0013%ãñìGÄ™ÒÃÌÅ{",
+  "\u000fBì+blKTÔıó∏ç√\u0019",
   [
+    [
+      "Yazi.Tree.Types.tree",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Prims.pos",
+        "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "haseqTm_refine_774ba3f728d91ead8ef40be66c9802e5",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "21d206e3be68fc976329871fd3e146fe"
+    ],
+    [
+      "Yazi.Tree.Types.__proj__Node__item__left",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "refinement_interpretation_Tm_refine_818e9af603d0769727c3fd75ba69f2e9"
+      ],
+      0,
+      "179dc1327a719d87b2e69bba2909a56c"
+    ],
+    [
+      "Yazi.Tree.Types.__proj__Node__item__id",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "refinement_interpretation_Tm_refine_818e9af603d0769727c3fd75ba69f2e9"
+      ],
+      0,
+      "de46dd271bc10dc7c187742eb192a4ed"
+    ],
+    [
+      "Yazi.Tree.Types.__proj__Node__item__freq",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "refinement_interpretation_Tm_refine_818e9af603d0769727c3fd75ba69f2e9"
+      ],
+      0,
+      "c4a6a56b89562c4cfe68a1ce1044b55a"
+    ],
+    [
+      "Yazi.Tree.Types.__proj__Node__item__right",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "refinement_interpretation_Tm_refine_818e9af603d0769727c3fd75ba69f2e9"
+      ],
+      0,
+      "b3b8693f7cbde6ac452e32d76d4ab9d5"
+    ],
+    [
+      "Yazi.Tree.Types.__proj__Leaf__item__symbol",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "refinement_interpretation_Tm_refine_8db46dda484f1d20868fe01d42b305d6"
+      ],
+      0,
+      "9075c1571c45f933270c935a7c6fd5c5"
+    ],
+    [
+      "Yazi.Tree.Types.__proj__Leaf__item__freq",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "refinement_interpretation_Tm_refine_8db46dda484f1d20868fe01d42b305d6"
+      ],
+      0,
+      "176601c6f763736aff748a8ed4eb0192"
+    ],
+    [
+      "Yazi.Tree.Types.id",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "disc_equation_Yazi.Tree.Types.Leaf",
+        "disc_equation_Yazi.Tree.Types.Node",
+        "fuel_guarded_inversion_Yazi.Tree.Types.tree",
+        "projection_inverse_BoxBool_proj_0"
+      ],
+      0,
+      "c2483fe59ef4b951bfcab1bcf55a7aa5"
+    ],
+    [
+      "Yazi.Tree.Types.freq",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "disc_equation_Yazi.Tree.Types.Leaf",
+        "disc_equation_Yazi.Tree.Types.Node",
+        "fuel_guarded_inversion_Yazi.Tree.Types.tree",
+        "projection_inverse_BoxBool_proj_0"
+      ],
+      0,
+      "8b9f15542c16f5a8f6a0e9a681747554"
+    ],
+    [
+      "Yazi.Tree.Types.symbols",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Yazi.Tree.Types_pretyping_b1ea661ca54ebe5373f0e2638c8225d7",
+        "binder_x_b1ea661ca54ebe5373f0e2638c8225d7_0",
+        "disc_equation_Yazi.Tree.Types.Leaf",
+        "disc_equation_Yazi.Tree.Types.Node",
+        "fuel_guarded_inversion_Yazi.Tree.Types.tree",
+        "projection_inverse_BoxBool_proj_0",
+        "subterm_ordering_Yazi.Tree.Types.Node"
+      ],
+      0,
+      "2ccb66f0a744ca86be238cc2a3a32697"
+    ],
+    [
+      "Yazi.Tree.Types.wf_pred",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "Yazi.Tree.Types_pretyping_b1ea661ca54ebe5373f0e2638c8225d7",
+        "binder_x_b1ea661ca54ebe5373f0e2638c8225d7_0",
+        "subterm_ordering_Yazi.Tree.Types.Node"
+      ],
+      0,
+      "d14d3fed81418b8f8f03e59503b1cb1f"
+    ],
+    [
+      "Yazi.Tree.Types.wf_tree",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "equation_Prims.nat", "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f"
+      ],
+      0,
+      "c652aff53495d99539bd84f3a2b4ba31"
+    ],
+    [
+      "Yazi.Tree.Types.ct_data",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.eqtype",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "typing_FStar.UInt16.t"
+      ],
+      0,
+      "05f13fa8a218e886ea7981d716401417"
+    ],
     [
       "Yazi.Tree.Types.dyn_ltree_t",
       1,
@@ -13,7 +190,7 @@
         "projection_inverse_BoxBool_proj_0"
       ],
       0,
-      "f09928cd3d96df12d88102b7d097cbc4"
+      "9c7469920485bde1a359308092106033"
     ],
     [
       "Yazi.Tree.Types.dyn_dtree_t",
@@ -48,7 +225,7 @@
         "typing_Yazi.Deflate.Constants.d_codes"
       ],
       0,
-      "c1a1447b5858043d23e6a2d327f2d7af"
+      "0ba549bc8786a348298475a4edffc40a"
     ],
     [
       "Yazi.Tree.Types.bl_tree_t",
@@ -75,7 +252,7 @@
         "typing_FStar.UInt32.v", "typing_Yazi.Deflate.Constants.bl_codes"
       ],
       0,
-      "1bf1e03f68233b57589add5518c4b0f4"
+      "ad0fa4e6511580dc5a62e8a434058c7c"
     ],
     [
       "Yazi.Tree.Types.bl_count_t",
@@ -102,7 +279,7 @@
         "typing_FStar.UInt32.v", "typing_Yazi.Deflate.Constants.max_bits"
       ],
       0,
-      "6244090f7c1fb0cc6e06e0847961ec7e"
+      "af7046171a9413a87f438a7c04330668"
     ],
     [
       "Yazi.Tree.Types.tree_heap_t",
@@ -129,7 +306,7 @@
         "typing_FStar.UInt32.v", "typing_Yazi.Deflate.Constants.l_codes"
       ],
       0,
-      "ccbf698e27df8b68e59ca4a92dfe748f"
+      "304786201f08cc13ec4db34f1b507da5"
     ],
     [
       "Yazi.Tree.Types.tree_depth_t",
@@ -156,7 +333,32 @@
         "typing_FStar.UInt32.v", "typing_Yazi.Deflate.Constants.l_codes"
       ],
       0,
-      "52291bb6b6b129b7220fd83668a5f03a"
+      "897d217af767888ceeec4a83cb876763"
+    ],
+    [
+      "Yazi.Tree.Types.tree_state",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query",
+        "assumption_Yazi.Tree.Types.ct_data__uu___haseq",
+        "assumption_Yazi.Tree.Types.tree__uu___haseq",
+        "equation_Prims.eqtype", "equation_Prims.nat",
+        "equation_Yazi.Tree.Types.forest_seq",
+        "equation_Yazi.Tree.Types.wf_tree",
+        "function_token_typing_Prims.int",
+        "haseqTm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "haseqTm_refine_6e836dbfa6cebc48dd7f4f9b24eab374",
+        "haseqTm_refine_df09099c5dc67537ba55b788a7c4a303",
+        "kinding_Yazi.Tree.Types.ct_data@tok",
+        "lemma_FStar.Seq.Base.hasEq_lemma",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_kinding_Tm_refine_df09099c5dc67537ba55b788a7c4a303",
+        "typing_FStar.UInt32.t", "typing_FStar.UInt8.t"
+      ],
+      0,
+      "a6e23bdb0a3691899c6f3b3fa464001d"
     ],
     [
       "Yazi.Tree.Types.lit_bufsize_t",
@@ -165,7 +367,7 @@
       1,
       [ "@query" ],
       0,
-      "95f708c423e795650f37fe34a21c911b"
+      "9774161a29f40a82c81272f42cc3856f"
     ]
   ]
 ]

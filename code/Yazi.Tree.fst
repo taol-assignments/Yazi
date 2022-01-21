@@ -1,10 +1,11 @@
 module Yazi.Tree
 
 module B = LowStar.Buffer
+module Cast = FStar.Int.Cast
 module CB = LowStar.ConstBuffer
 module HS = FStar.HyperStack
 module Seq = FStar.Seq
-module SH = Spec.Tree.Heap
+module SH = Spec.Tree
 module ST = FStar.HyperStack.ST
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
@@ -78,6 +79,7 @@ let smaller (ts: tree_state_t) (n m: U32.t): ST.Stack bool
   else
     false
 
+#push-options "--z3refresh --z3rlimit 256 --fuel 1 --ifuel 0 --z3seed 111"
 inline_for_extraction
 let smallest (ts: tree_state_t) (root: Ghost.erased U32.t) (i hole: U32.t): ST.Stack U32.t
   (requires fun h ->
@@ -94,17 +96,19 @@ let smallest (ts: tree_state_t) (root: Ghost.erased U32.t) (i hole: U32.t): ST.S
 
   let heap_len = get_heap_len ts in
   [@inline_let] let smaller = smaller ts in
-  if r >^ heap_len then
+  if r >^ heap_len then begin
     if i `smaller` le then 0ul else l
-  else
+  end else begin
     let re = (CB.index ts.ctx 0ul).heap.(r) in
     if i `smaller` le then
       if i `smaller` re then 0ul else r
     else
       if le `smaller` re then l else r
+  end
+#pop-options
 
 #push-options "--z3refresh --z3rlimit 128 --fuel 1 --ifuel 0 --z3seed 111"
-inline_for_extraction
+[@ CInline]
 let rec do_pqdownheap
   (h0: Ghost.erased HS.mem) (ts: tree_state_t)
   (root: Ghost.erased U32.t) (i hole: U32.t):
@@ -147,7 +151,7 @@ let pqdownheap (ts: tree_state_t) (i: U32.t): ST.Stack unit
   do_pqdownheap (ST.get ()) ts i (CB.index ts.ctx 0ul).heap.(i) i
 #pop-options
 
-#push-options "--z3refresh --z3rlimit 128 --fuel 0 --ifuel 0 --query_stats"
+#push-options "--z3refresh --z3rlimit 256 --fuel 0 --ifuel 0"
 inline_for_extraction
 let pqremove (ts: tree_state_t):
   ST.Stack U32.t
@@ -162,7 +166,7 @@ let pqremove (ts: tree_state_t):
     ) h0 h1 /\
     SH.tree_state_live h1 ts /\
     SH.g_tree_state h1 ts == SH.pqremove (SH.g_tree_state h0 ts) /\
-    (SH.g_tree_state h0 ts <: SH.tree_state).heap.[1] == top) =
+    (SH.g_tree_state h0 ts <: tree_state).heap.[1] == top) =
   let h0 = ST.get () in
   SH.lemma_heap_wf_pqremove (SH.g_tree_state h0 ts);
   let open U32 in
@@ -174,7 +178,70 @@ let pqremove (ts: tree_state_t):
   heap.(heap_max -^ 1ul) <- top;
   heap.(1ul) <- bot;
   set_heap_len ts (heap_len -^ 1ul);
-  set_heap_max ts (heap_max -^ 1ul);  
+  set_heap_max ts (heap_max -^ 1ul);
   if heap_len -^ 1ul >=^ 2ul then pqdownheap ts 1ul;
   top
 #pop-options
+
+#push-options "--z3refresh --z3seed 1 --z3rlimit 1024 --fuel 1 --ifuel 1 --query_stats"
+inline_for_extraction
+let pqmerge (ts: tree_state_t) (node: U32.t):
+  ST.Stack tree_state_t
+  (requires fun h ->
+    SH.tree_state_live h ts /\
+    SH.heap_wf (SH.g_tree_state h ts) /\
+    SH.pqmerge_pre (SH.g_tree_state h ts) (U32.v node))
+  (ensures fun h0 ts' h1 ->
+    let ctx = (CB.as_seq h0 ts.ctx).[0] in
+    B.modifies (
+      B.loc_buffer ctx.heap `B.loc_union`
+      B.loc_buffer ctx.state `B.loc_union`
+      B.loc_buffer ctx.depth `B.loc_union`
+      B.loc_buffer ctx.tree
+    ) h0 h1 /\
+    SH.tree_state_live h1 ts' /\
+    SH.g_tree_state h1 ts' == SH.pqmerge (SH.g_tree_state h0 ts) (U32.v node)) =
+  let h0 = ST.get () in
+  let ctx = CB.index ts.ctx 0ul in
+  let t0 = Ghost.hide (SH.g_tree_state h0 ts) in
+
+  let il = ctx.heap.(get_heap_max ts) in
+  ctx.tree.(il) <- ({
+    ctx.tree.(il) with
+    dad_or_len = Cast.uint32_to_uint16 node;
+  });
+
+  let ir = ctx.heap.(1ul) in
+  ctx.tree.(ir) <- ({
+    ctx.tree.(ir) with
+    dad_or_len = Cast.uint32_to_uint16 node;
+  });
+
+  SH.lemma_forest_freq_plus t0 0 1;
+  ctx.tree.(node) <- ({
+    ctx.tree.(node) with
+    freq_or_code = (ctx.tree.(il)).freq_or_code `U16.add`
+      (ctx.tree.(ir)).freq_or_code
+  });
+
+  let dl = ctx.depth.(il) in
+  let dr = ctx.depth.(ir) in
+  ctx.depth.(node) <- 1uy `U8.add_mod` (if dl `U8.gte` dr then dl else dr);
+
+  let heap_max' = get_heap_max ts `U32.sub` 1ul in
+  ctx.heap.(heap_max') <- ir;
+  ctx.heap.(1ul) <- node;
+  set_heap_max ts heap_max';
+
+  let node' = Ghost.hide (U32.v node) in
+  let l = Ghost.hide ts.forest.[U32.v il] in
+  let r = Ghost.hide ts.forest.[U32.v ir] in
+  SH.lemma_is_max_id_map t0 node' 1;
+  SH.lemma_is_max_id_map t0 node' t0.heap_max;
+  SH.lemma_pqmerge_no_dup t0 t0.heap_max 1;
+  let t' = Ghost.hide (Node l node' (freq l + freq r) r) in
+  let f' = Ghost.hide (Seq.upd ts.forest node' t') in
+  {
+    ts with
+    forest = f'
+  }

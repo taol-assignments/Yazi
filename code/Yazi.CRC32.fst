@@ -470,6 +470,7 @@ type it_tuple = (U32.t & (CB.const_buffer U8.t) & U32.t & Ghost.erased (Seq.seq 
 let crc32 data' crc buf len =
   let open U32 in
   ST.push_frame ();
+  let h0 = ST.get () in
   let crc' = crc ^^ 0xFFFFFFFFul in
   let d: Ghost.erased init_state = {
     dlen = Seq.length data';
@@ -505,7 +506,7 @@ let crc32 data' crc buf len =
   else
     (c0, b0, l0, d0)
   in
-  let (c2, d2): (U32.t & Ghost.erased (Seq.seq U8.t))  = if l1 >^ 0ul then
+  let (c2, d2): (U32.t & Ghost.erased (Seq.seq U8.t)) = if l1 >^ 0ul then
     let (c', _, d') = iteration_32 ({
       clen = d.dlen + v (len -^ l1);
       consumed = d1;
@@ -520,6 +521,10 @@ let crc32 data' crc buf len =
   in
   ST.pop_frame ();
   crc32_matched_xor_inv_2 (d.dlen + v len) d2 c2;
+  if len = 0ul then begin
+    lemma_empty (CB.as_seq h0 buf);
+    append_empty_r data'
+  end;
   c2 ^^ 0xFFFFFFFFul
 
 #set-options "--fuel 0 --ifuel 0"
@@ -771,9 +776,11 @@ assume val init_magic_matrix: m: matrix_buf -> ST.Stack unit
 
 let crc32_combine64 s1 s2 crc1 crc2 length =
   let open U64 in
-  if length =^ 0UL then
+  if length =^ 0UL then begin
+    lemma_empty s2;
+    append_empty_r s1;
     crc1
-  else begin
+  end else begin
     ST.push_frame ();
     let odd = B.alloca 0ul 32ul in
     let even = B.alloca 0ul 32ul in

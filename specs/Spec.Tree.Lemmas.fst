@@ -1,13 +1,15 @@
 module Spec.Tree.Lemmas
 
+open FStar.Classical
 open FStar.Mul
+open FStar.Squash
 
 let lemma_subtraction_cancel (a b c: int): Lemma
   (requires b = a - c)
   (ensures b + c == a) = ()
 
 #set-options "--z3refresh --z3rlimit 256 --fuel 0 --ifuel 0"
-let lemma_heap_seq (ts: heap_wf_ts) (i: heap_index ts): Lemma
+let lemma_heap_seq (ts: heap_elems_wf_ts) (i: heap_index ts): Lemma
   (requires i <= ts.heap_len)
   (ensures
     (element_seq ts).[i - 1] == ts.heap.[i] /\
@@ -19,8 +21,8 @@ let lemma_heap_seq (ts: heap_wf_ts) (i: heap_index ts): Lemma
   assert(es.[i'] == ts.heap.[i' + 1]);
   lemma_subtraction_cancel i i' 1
 
-let lemma_sorted_seq (ts: heap_wf_ts) (i: heap_index ts): Lemma
-  (requires i >= ts.heap_max)
+let lemma_sorted_seq (ts: heap_elems_wf_ts) (i: heap_index ts): Lemma
+  (requires i >= ts.heap_max /\ heap_not_empty ts)
   (ensures
     (element_seq ts).[i - (ts.heap_max - ts.heap_len)] == ts.heap.[i] /\
     (sorted_seq ts).[i - ts.heap_max] == ts.heap.[i]) =
@@ -53,35 +55,131 @@ let lemma_pqremove_index
   else
     mem_index ts'.heap.[i] (sorted_seq ts)
 
-#set-options "--z3refresh --z3rlimit 1024 --fuel 0 --ifuel 0"
-let lemma_pqremove_forest_aux
-  (ts: forest_wf_ts{ts.heap_len > 1})
-  (i: heap_index (pqremove ts)): Lemma
-  (requires (
-    let ts' = pqremove ts in
-    ts'.heap_max < i))
+#push-options "--z3seed 14 --z3rlimit 1024 --fuel 0 --ifuel 0 --query_stats"
+let lemma_pqremove_heap_index
+  (ts: heap_wf_ts{ts.heap_len > 1}) (i: heap_index (pqremove ts)): Lemma
+  (requires no_dup (element_seq ts))
   (ensures (
     let ts' = pqremove ts in
-    let (es, es') = (element_seq ts, element_seq ts') in
-    let dad = Cast.uint16_to_uint32 (ts'.tree.[U32.v ts'.heap.[i]]).dad_or_len in
-    mem ts'.heap.[i] es /\
-    i - (ts'.heap_max - ts'.heap_len) == index_of es ts'.heap.[i] /\
-    mem dad es)) =
-  lemma_pqremove_index ts i;
+    (1 <= i /\ i < ts.heap_len ==> (exists (j: nat{1 <= j /\ j <= ts.heap_len}).
+      ts.heap.[j] == ts'.heap.[i])) /\
+    (i == ts'.heap_max ==> ts.heap.[1] == ts'.heap.[i]) /\
+    (i > ts'.heap_max ==> ts.heap.[i] == ts'.heap.[i]))) =
   let ts' = pqremove ts in
-  let (es, es') = (element_seq ts, element_seq ts') in
-  let j = index_of es ts'.heap.[i] in
-  let i' = i - (ts'.heap_max - ts'.heap_len) in
-  let j' = j + (ts.heap_max - ts.heap_len) in
-  lemma_sorted_seq ts' i;
-  no_dup_index_of es i' ts'.heap.[i];
-  no_dup_index_of es' j ts'.heap.[i];
-  lemma_sorted_seq ts j';
+  if i > ts'.heap_max then
+    calc (==) {
+      ts.heap.[i];
+      =={}
+      ts.heap.[i - ts.heap_max + ts.heap_max];
+      =={}
+      (sorted_seq ts).[i - ts.heap_max];
+      =={}
+      (sorted_seq ts').[i + 1 - ts.heap_max];
+      =={}
+      (sorted_seq ts').[i - (ts.heap_max - 1)];
+      =={}
+      (sorted_seq ts').[i - ts'.heap_max];
+      =={}
+      ts'.heap.[i - ts'.heap_max + ts'.heap_max];
+      =={lemma_subtraction_cancel i (i - ts'.heap_max) ts'.heap_max}
+      ts'.heap.[i];
+    }
+  else if i = ts'.heap_max then
+    assert((sorted_seq ts').[0] == ts'.heap.[ts'.heap_max])
+  else begin
+    let hs = heap_seq ts in
+    let hs' = heap_seq ts' in
+    let es' = element_seq ts' in
+    no_dup_alt es' (i - 1) ts'.heap_len;
+    calc (==) {
+      count ts'.heap.[i] hs;
+      =={}
+      count ts'.heap.[i] (cons ts'.heap.[ts'.heap_max] hs');
+      =={lemma_append_count_aux ts'.heap.[i] (create 1 ts'.heap.[ts'.heap_max]) hs'}
+      count ts'.heap.[i] (create 1 ts'.heap.[ts'.heap_max]) +
+      count ts'.heap.[i] hs';
+      ={}
+      count ts'.heap.[i - 1 + 1] (create 1 ts'.heap.[ts'.heap_max]) +
+      count ts'.heap.[i - 1 + 1] hs';
+      =={}
+      count hs'.[i - 1] (create 1 ts'.heap.[ts'.heap_max]) +
+      count hs'.[i - 1] hs';
+      =={
+        calc (==) {
+          ts'.heap.[ts'.heap_max];
+          =={}
+          ts'.heap.[ts'.heap_max - ts'.heap_max + ts'.heap_max];
+          =={}
+          (sorted_seq ts').[ts'.heap_max - ts'.heap_max];
+          =={}
+          (sorted_seq ts').[0];
+          =={}
+          ts.heap.[1];
+        }
+      }
+      count hs'.[i - 1] (create 1 ts.heap.[1]) +
+      count hs'.[i - 1] hs';
+      =={count_create 1 ts.heap.[1] hs'.[i - 1]}
+      count hs'.[i - 1] hs';
+      =={}
+      1;
+    };
 
-  lemma_sorted_seq ts i;
-  lemma_sorted_seq ts' i;
-  assert(tree_corr ts i /\ parent_corr ts i);
-  assert(ts.heap_max <= i /\ ts'.heap.[i] == ts.heap.[i])
+    mem_index ts'.heap.[i] hs
+  end
+
+let lemma_pqremove_heap_index_rev
+  (ts: forest_wf_ts{ts.heap_len > 1}) (i: heap_index ts): Lemma
+  (ensures (
+    let ts' = pqremove ts in
+    1 < i /\ i <= ts.heap_len ==> (exists (j: nat{1 <= j /\ j <= ts'.heap_len}).
+      ts.heap.[i] == ts'.heap.[j]))) =
+  let ts' = pqremove ts in
+  let hs = heap_seq ts in
+  let hs' = heap_seq ts' in
+  let es' = element_seq ts' in
+  if 1 < i && i <= ts.heap_len then begin
+    no_dup_alt hs 0 (i - 1);
+    lemma_heap_seq ts i;
+    lemma_pqremove_heap_index ts ts'.heap_max;
+    count_create 1 ts'.heap.[ts'.heap_max] ts.heap.[i];
+    calc (==) {
+      1;
+      =={}
+      count ts.heap.[i] hs;
+      =={}
+      count ts.heap.[i] (intermediate_fseq ts');
+      =={lemma_append_count_aux ts.heap.[i] (create 1 ts'.heap.[ts'.heap_max]) hs'}
+      count ts.heap.[i] (create 1 ts'.heap.[ts'.heap_max]) +
+      count ts.heap.[i] hs';
+      =={}
+      count ts.heap.[i] hs';
+    };
+    mem_index ts.heap.[i] hs'
+  end
+#pop-options
+
+#set-options "--z3refresh --z3rlimit 1024 --fuel 0 --ifuel 0"
+let lemma_pqremove_parent_corr
+  (ts: forest_wf_ts{ts.heap_len > 1})
+  (i: heap_index (pqremove ts)): Lemma
+  (requires (pqremove ts).heap_max < i)
+  (ensures parent_corr (pqremove ts) i) =
+  let ts' = pqremove ts in
+  let i' = U32.v ts.heap.[i] in
+  let dad = U16.v (ts.tree.[i']).dad_or_len in
+  assert(parent_corr ts i);
+  exists_elim
+    (parent_corr ts' i)
+    (get_proof (exists (j: heap_index ts{j < i}). dad == U32.v ts.heap.[j]))
+    (fun j ->
+      lemma_pqremove_heap_index ts i;
+      if j = 1 then
+        lemma_pqremove_heap_index ts ts'.heap_max
+      else if ts.heap_max <= j then
+        lemma_pqremove_heap_index ts j
+      else
+        lemma_pqremove_heap_index_rev ts j)
 
 #push-options "--fuel 1 --ifuel 1"
 let rec lemma_forest_symbols_append
@@ -234,7 +332,6 @@ let rec lemma_forest_symbols_perm_aux
     }
 
 let lemma_forest_symbols_perm ts0 s0 ts1 s1 =
-  let open FStar.Classical in
   forall_intro (move_requires (lemma_forest_symbols_perm_aux ts0 s0 ts1 s1))
 #pop-options
 
@@ -247,22 +344,70 @@ let lemma_is_max_id_map ts node i =
   mem_index ts.heap.[i] es
 
 #push-options "--fuel 2 --ifuel 2"
+let lemma_wf_tree_id_unfold (t: wf_tree): Lemma
+  (requires Node? t == true)
+  (ensures id (left t) < id t /\ id (right t) < id t) = ()
+#pop-options
+
+#push-options "--z3seed 14 --fuel 0 --ifuel 0 --query_stats"
+let lemma_pqremove_sorted_inv (ts: heap_wf_ts) (i j: heap_index ts): Lemma
+  (requires 
+    ts.heap_len > 1 /\ (
+    let ts' = pqremove ts in
+    j >= ts.heap_max /\
+    no_dup (element_seq ts) /\
+    ts'.heap.[j] == ts.heap.[i]))
+  (ensures i == j) =
+  let ts' = pqremove ts in
+  let es = element_seq ts in
+  let es' = element_seq ts' in
+  let j' = j - (ts.heap_max - ts.heap_len) in 
+  calc (==) {
+    ts.heap.[i];
+    =={}
+    ts'.heap.[j];
+    =={lemma_sorted_seq ts' j}
+    es'.[j - (ts'.heap_max - ts'.heap_len)];
+    =={}
+    es.[j - (ts'.heap_max - ts'.heap_len)];
+    =={}
+    es.[j'];
+  };
+  if i <> j then
+    if i >= ts.heap_max then begin
+      let i' = i - (ts.heap_max - ts.heap_len) in 
+      lemma_sorted_seq ts i;
+      no_dup_index_of es i' es.[j'];
+      no_dup_index_of es j' es.[j']
+    end else begin
+      let i' = i - 1 in 
+      lemma_heap_seq ts i;
+      no_dup_index_of es i' es.[j'];
+      no_dup_index_of es j' es.[j']
+    end
+
 let lemma_pqremove_child_corr
   (ts: forest_wf_ts{ts.heap_len > 1})
   (i: heap_index (pqremove ts)): Lemma
-  (ensures 
-    // let ts' = pqremove ts in
-    // id ts'.forest.[U32.v ts'.heap.[i]] == U32.v ts'.heap.[i] /\
-    child_corr (pqremove ts) i) =
+  (ensures child_corr (pqremove ts) i) =
   let ts' = pqremove ts in
   let i' = U32.v ts'.heap.[i] in
   let t = ts'.forest.[i'] in
-  lemma_pqremove_index ts i;
+  lemma_pqremove_heap_index ts i;
   if Node? t then begin
-    assert(ts.forest.[i'] == t);
-    let l = id (left t) in let r = id (right t) in
-    assert(l < id t /\ r < id t);
-    assert(exists (j: heap_index ts). ts.heap.[j] == ts'.heap.[i] /\ child_corr ts j)
+    lemma_wf_tree_id_unfold t;
+    exists_elim
+      (child_corr ts' i)
+      (get_proof (exists (j: heap_index ts).
+        ts.heap.[j] == ts'.heap.[i] /\ child_corr ts j))
+      (fun j -> exists_elim
+        (child_in_sorted ts' i)
+        (get_proof (child_in_sorted ts j))
+        (fun k ->
+          lemma_pqremove_heap_index ts k;
+          lemma_pqremove_heap_index ts (k + 1);
+          if i > ts'.heap_max then
+            lemma_pqremove_sorted_inv ts j i))
   end
 #pop-options
 
@@ -305,7 +450,7 @@ let lemma_pqremove_heap_seq_index
     assert(index_of es' es.[i] < ts'.heap_len)
 #pop-options
 
-#push-options "--z3seed 0 --fuel 0 --ifuel 0 --query_stats"
+#push-options "--z3seed 8 --fuel 0 --ifuel 0 --query_stats"
 let lemma_pqremove_forest'
   (ts: forest_wf_ts{ts.heap_len > 1})
   (i: heap_index (pqremove ts)): Lemma
@@ -323,15 +468,10 @@ let lemma_pqremove_forest'
   let j = index_of es ts'.heap.[i] in
   let dad = Cast.uint16_to_uint32 (ts'.tree.[U32.v ts'.heap.[i]]).dad_or_len in
   assert(exists (j: heap_index ts). ts.heap.[j] == ts'.heap.[i] /\ freq_corr ts j);
-  if ts'.heap_max < i then begin
-    lemma_pqremove_forest_aux ts i;
-    lemma_sorted_seq ts (j + (ts.heap_max - ts.heap_len));
-    let k = index_of es dad in
-    if ts.heap_len <= k then () else if k = 0 then
-      no_dup_index_of es' ts'.heap_len dad
-    else
-      lemma_pqremove_heap_seq_index ts k
-  end
+  assert(child_corr ts' i);
+  assert(id ts'.forest.[U32.v ts'.heap.[i]] == U32.v ts'.heap.[i]);
+  if ts'.heap_max < i then
+    lemma_pqremove_parent_corr ts i
 #pop-options
 
 let lemma_pqremove_id'
@@ -434,12 +574,55 @@ let rec lemma_forest_freq_perm
     }
 #pop-options
 
+#push-options "--query_stats --fuel 1 --ifuel 1"
+let lemma_pqremove_heap_dad_zero (ts: forest_wf_ts{1 < ts.heap_len}) (node: nat) (i: nat{
+  1 <= i /\ i <= (pqremove ts).heap_len
+}): Lemma
+  (requires forall j. 1 <= j /\ j <= ts.heap_len ==>
+    U16.v (ts.tree.[U32.v ts.heap.[j]]).dad_or_len == 0)
+  (ensures (
+    let ts' = pqremove ts in
+    U16.v (ts'.tree.[U32.v ts'.heap.[i]]).dad_or_len == 0)) =
+  let ts' = pqremove ts in
+  let hs' = heap_seq ts' in
+  let es' = element_seq ts' in
+  let ifs' = intermediate_fseq ts' in
+  let i' = ts'.heap.[i] in
+  lemma_heap_seq ts' i;
+  lemma_sorted_seq ts' ts'.heap_max;
+  no_dup_alt es' (i - 1) ts'.heap_len;
+  calc (==) {
+    count i' (heap_seq ts);
+    =={}
+    count i' ifs';
+    =={lemma_append_count_aux i' (create 1 ts'.heap.[ts'.heap_max]) hs'}
+    count i' (create 1 ts'.heap.[ts'.heap_max]) + count i' hs';
+    =={
+      count_create 1 ts'.heap.[ts'.heap_max] i'
+    }
+    count i' hs';
+  };
+  mem_index i' (heap_seq ts)
+
+let lemma_pqremove_max_dad_zero (ts: forest_wf_ts{1 < ts.heap_len}) (node: nat): Lemma
+  (requires forall j. 1 <= j /\ j <= ts.heap_len ==>
+    U16.v (ts.tree.[U32.v ts.heap.[j]]).dad_or_len == 0)
+  (ensures (
+    let ts' = pqremove ts in
+    U16.v (ts'.tree.[U32.v ts'.heap.[ts'.heap_max]]).dad_or_len == 0)) =
+  let ts' = pqremove ts in
+  lemma_sorted_seq ts' ts'.heap_max;
+  assert(ts'.heap.[ts'.heap_max] == ts.heap.[1])
+#pop-options
+
 #push-options "--fuel 0 --ifuel 0"
 let lemma_pqremove_forest ts node =
   let ts' = pqremove ts in
   let s = intermediate_fseq ts' in
   let open FStar.Classical in
   lemma_pqremove_id ts node;
+  lemma_pqremove_max_dad_zero ts node;
+  forall_intro (move_requires (lemma_pqremove_heap_dad_zero ts node));
   forall_intro (lemma_pqremove_forest' ts);
 
   lemma_heap_seq_tree_index ts;
@@ -984,36 +1167,79 @@ let lemma_pqmerge_id_max
     mem_index es'.[i] es
   end
 
-#push-options "--fuel 2 --ifuel 2"
 let lemma_pqmerge_child_corr
   (ts: heap_wf_ts) (node: nat) (ts': heap_elems_wf_ts) (t': wf_tree)
   (i: heap_index ts'): Lemma
   (requires pqmerge_main_pre ts node ts' t')
   (ensures child_corr ts' i) =
-  let open FStar.Classical in
   let es = element_seq ts in
   let es' = element_seq ts' in
-  if i = 1 || i = ts'.heap_max then
-    admit()
+  if i = 1 then begin
+    let t = ts'.forest.[U32.v ts'.heap.[1]] in
+    exists_intro (fun j ->
+      let t = ts'.forest.[U32.v ts'.heap.[1]] in
+      j > 1 /\ j >= ts'.heap_max /\ j + 1 < U32.v heap_size /\
+      U32.v ts'.heap.[j] == id (right t) /\
+      U32.v ts'.heap.[j + 1] == id (left t)) ts'.heap_max
+  end else if i = ts'.heap_max then begin
+    let t = ts'.forest.[U32.v ts'.heap.[i]] in
+    assert(child_corr ts 1);
+    if Node ? t then begin
+      lemma_wf_tree_id_unfold t;
+      lemma_is_max_id_map ts node 1
+    end
+  end else begin
+    let t = ts.forest.[U32.v ts.heap.[i]] in
+    lemma_is_max_id_map ts node i;
+    if i <= ts'.heap_len then
+      lemma_heap_seq ts' i
+    else
+      lemma_sorted_seq ts' i;
+    assert(child_corr ts i);
+    if Node? t then lemma_wf_tree_id_unfold t
+  end
+
+let lemma_pqmerge_parent_corr
+  (ts: heap_wf_ts) (node: nat) (ts': heap_elems_wf_ts) (t': wf_tree)
+  (i: heap_index ts'): Lemma
+  (requires pqmerge_main_pre ts node ts' t')
+  (ensures parent_corr ts' i) =
+  if ts.heap_max < i then assert(parent_corr ts i)
+
+let lemma_pqmerge_freq_corr
+  (ts: heap_wf_ts) (node: nat) (ts': heap_elems_wf_ts) (t': wf_tree)
+  (i: heap_index ts'): Lemma
+  (requires pqmerge_main_pre ts node ts' t')
+  (ensures freq_corr ts' i) =
+  let i' = U32.v ts'.heap.[i] in
+  if i = 1 then
+    lemma_pqmerge_child_corr ts node ts' t' i
+  else if ts'.heap_max = i then begin
+    lemma_is_max_id_map ts node 1;
+    assert(freq_corr ts 1)
+  end else if ts'.heap_max < i then
+    assert(freq_corr ts i)
   else begin
-    let i' = U32.v ts.heap.[i] in
-    let t = ts.forest.[i'] in
-    assert(ts.heap.[i] == ts'.heap.[i]);
-    assume(i' < node);
-    assert(t == ts'.forest.[i']);
-    if Node? t then begin
-      assert(id t < node);
-      assert(id (left t) < id t /\ id (right t) < id t);
-      assert((ts.tree.[id (left t)]).dad_or_len == (ts'.tree.[id (left t)]).dad_or_len);
-      assume((ts.tree.[id (right t)]).dad_or_len == (ts'.tree.[id (right t)]).dad_or_len);
-      assert(ts.forest.[id (left t)] == ts'.forest.[id (left t)]);
-      assert(ts.forest.[id (right t)] == ts'.forest.[id (right t)]);
-      assume(id ts'.forest.[U32.v ts'.heap.[i]] == U32.v ts'.heap.[i])
-    end;
-    assume(id ts'.forest.[U32.v ts'.heap.[i]] == U32.v ts'.heap.[i]);
-    assert(1 <= i /\ i <= ts.heap_len \/ ts.heap_max <= i /\ i < U32.v heap_size);
-    assert(child_corr ts' i);
-    admit()
+    let es = element_seq ts in
+    let es' = element_seq ts' in
+    lemma_heap_seq ts' i;
+    forall_intro (move_requires (lemma_pqmerge_count ts node ts' t'));
+    lemma_pqmerge_count ts node ts' t' ts'.heap.[i];
+    no_dup_alt es' 0 (i - 1);
+    assert(mem ts'.heap.[i] es');
+    mem_index ts'.heap.[i] es;
+    exists_elim
+      (freq_corr ts' i)
+      (get_proof (exists j. es.[j] == ts'.heap.[i]))
+      (fun j ->
+        if j >= ts.heap_len then begin
+          assert(es.[j] == ts.heap.[j + (ts.heap_max - ts.heap_len)]);
+          assert(freq_corr ts (j + (ts.heap_max - ts.heap_len)))
+        end else begin
+          assert((ts'.tree.[i']).freq_or_code == (ts.tree.[i']).freq_or_code);
+          assert(ts'.forest.[i'] == ts.forest.[i']);
+          assert(freq_corr ts (j + 1))
+        end)
   end
 
 let lemma_pqmerge_main ts node ts' t' =
@@ -1026,4 +1252,6 @@ let lemma_pqmerge_main ts node ts' t' =
   lemma_pqmerge_forest_freq ts node ts' t';
   forall_intro (move_requires (lemma_pqmerge_count ts node ts' t'));
   forall_intro (move_requires (lemma_pqmerge_id_max ts node ts' t'));
-  forall_intro (move_requires (lemma_pqmerge_child_corr ts node ts' t'))
+  forall_intro (move_requires (lemma_pqmerge_child_corr ts node ts' t'));
+  forall_intro (move_requires (lemma_pqmerge_parent_corr ts node ts' t'));
+  forall_intro (move_requires (lemma_pqmerge_freq_corr ts node ts' t'))
