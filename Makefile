@@ -30,7 +30,7 @@ FSTAR_HINTS ?= --use_hints --use_hint_hashes --record_hints
 # the FStar namespace since it's already extracted and packaged as the ocamlfind
 # package fstarlib. Here, unlike in -bundle, +Spec matches both Spec and
 # Spec.*
-FSTAR_EXTRACT = --extract '-* -Spec'
+FSTAR_EXTRACT = --extract 'Kremlin:Yazi' --extract "-*"
 
 # Some reasonable flags to turn on:
 # - 247: checked file not written because some of its dependencies...
@@ -45,7 +45,9 @@ FSTAR_EXTRACT = --extract '-* -Spec'
 FSTAR_NO_FLAGS = $(FSTAR_HOME)/bin/fstar.exe $(FSTAR_HINTS) \
   --odir obj --cache_checked_modules $(FSTAR_INCLUDES) --cmi \
   --already_cached 'Prims FStar LowStar TestLib' --warn_error '+241@247+285' \
-  --cache_dir obj --hint_dir hints --z3rlimit 120
+  --cache_dir obj \
+  --hint_dir hints \
+  --z3rlimit 120
 
 # Initial dependency analysis
 # ---------------------------
@@ -105,7 +107,7 @@ obj:
 #
 # To avoid this unpleasant behavior, the most general pattern rule (longest
 # stem) also defines a suitable default value for FSTAR_FLAGS.
-%.checked: FSTAR_FLAGS=
+# %.checked: FSTAR_FLAGS=
 
 # Note: F* will not change the mtime of a checked file if it is
 # up-to-date (checksum matches, file unchanged), but this will confuse
@@ -191,6 +193,7 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	  -ftail-calls \
 	  -fparentheses \
           -fcurly-braces \
+	  -fc89 \
 	  -minimal \
 	  -bundle 'FStar.*' \
 	  -bundle Yazi.LZ77=Yazi.LZ77,Yazi.LZ77.*,Yazi.Stream.State \
