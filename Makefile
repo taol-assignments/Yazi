@@ -159,12 +159,14 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	$(KRML) -tmpdir $(dir $@) -skip-compilation \
 	  $(filter %.krml,$^) \
 	  -warn-error @4@5@18 \
-	  -drop LowStar.ConstBuffer,C.Loops,Spec.*,Prims,Lib.*\
 	  -no-prefix Yazi.Adler32 \
 	  -no-prefix Yazi.CFlags \
 	  -no-prefix Yazi.CRC32 \
+	  -no-prefix Yazi.CRC32.* \
 	  -no-prefix Yazi.LZ77 \
 	  -no-prefix Yazi.Util \
+	  -no-prefix Yazi.Tree \
+	  -no-prefix Yazi.Tree.* \
 	  -no-prefix Yazi.Types \
 	  -fextern-c \
 	  -ftail-calls \
@@ -172,9 +174,11 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	  -fcurly-braces \
 	  -fc89 \
 	  -minimal \
+	  -drop LowStar.ConstBuffer,C.Loops,Spec.*,Prims,Lib.*\
 	  -bundle 'FStar.*' \
 	  -bundle Yazi.LZ77=Yazi.LZ77,Yazi.LZ77.*,Yazi.Stream.State \
 	  -bundle Yazi.CRC32=Yazi.CRC32,Yazi.CRC32.* \
+	  -bundle Yazi.Tree=Yazi.Tree,Yazi.Tree.* \
 	  -add-include '<stdint.h>' \
 	  -add-include '<string.h>' \
 	  -add-early-include '"Yazi_Misc.h"' \
