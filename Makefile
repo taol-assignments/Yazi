@@ -120,26 +120,10 @@ obj:
 
 # Extraction
 # ----------
-
-# A few mismatches here between the dependencies present in the .depend and the
-# expected F* invocation. In .depend:
-#
-# obj/Bignum_Impl.ml: obj/Bignum.Impl.fst.checked ... more dependencies ...
-#
-# But F* wants (remember that F* searches for source files anywhere on the
-# include path):
-#
-# fstar Bignum.Impl.fst --extract_module BigNum.Impl
-#
-# We use basename because we may also extract krml files from .fsti.checked
-# files (not true for OCaml, we don't extract mlis from fstis).
-obj/Specs_Driver.ml: specs/ml/Specs_Driver.ml
-        # This ensures that all the source directories are not polluted with
-# build artifacts
-	cp $< $@
-
-# F* --> C
-# --------
+.PRECIOUS: obj/%.krml
+obj/%.krml:
+	$(FSTAR) $(notdir $(subst .checked,,$<)) --codegen Kremlin \
+	--extract_module $(basename $(notdir $(subst .checked,,$<)))
 
 KRML=$(KREMLIN_HOME)/krml
 
@@ -226,50 +210,4 @@ crc32_table_gen: dist/Makefile.basic
 
 dist/libz.a: dist/Makefile.basic crc32_table_gen
 	$(MAKE) -C $(dir $@) -f $(notdir $<)
-
-# Compiling the generated OCaml code
-# ----------------------------------
-
-# This is much more difficult, and you're probably better off calling OCamlbuild
-# or Dune at this stage. Nonetheless, I still show how to compile the generate
-# OCaml code with only GNU make and without relying on an external tool or an
-# extra dependency analysis.
-
-# First complication... no comment.
-ifeq ($(OS),Windows_NT)
-  export OCAMLPATH := $(FSTAR_HOME)/bin;$(OCAMLPATH)
-else
-  export OCAMLPATH := $(FSTAR_HOME)/bin:$(OCAMLPATH)
-endif
-
-# Second complication: F* generates a list of ML files in the reverse linking
-# order. No POSIX-portable way of reversing the order of a list.
-TAC = $(shell which tac >/dev/null 2>&1 && echo "tac" || echo "tail -r")
-
-ALL_CMX_FILES = $(patsubst %.ml,%.cmx,$(shell echo $(ALL_ML_FILES) | $(TAC)))
-
-# Third complication: F* does not know about our hand-written files. So, we need
-# to manually add dependency edges in the graph. In our case, the test driver
-# needs all files to be built before. This is convenient because the
-# hand-written file only needs to be inserted at the end of the list of CMX
-# files. If it had to be inserted somewhere in the middle of the topological
-# order, it would be trickier...
-
-obj/Specs_Driver.cmx: $(ALL_CMX_FILES)
-
-# Finally, how to compile things...
-
-OCAMLOPT = ocamlfind opt -package fstarlib -linkpkg -g -I $(BIGNUM_HOME)/obj -w -8-20-26
-
-.PRECIOUS: obj/%.cmx
-obj/%.cmx: obj/%.ml
-	$(OCAMLOPT) -c $< -o $@
-
-obj/specs-test.exe: $(ALL_CMX_FILES) obj/Specs_Driver.cmx
-	$(OCAMLOPT) $^ -o $@
-
-# Compiling the hand-written test
-# -------------------------------
-
-CFLAGS += -I dist -I $(KREMLIN_HOME)/include
 
