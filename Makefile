@@ -133,16 +133,6 @@ obj:
 #
 # We use basename because we may also extract krml files from .fsti.checked
 # files (not true for OCaml, we don't extract mlis from fstis).
-.PRECIOUS: obj/%.ml
-obj/%.ml:
-	$(FSTAR) $(notdir $(subst .checked,,$<)) --codegen OCaml \
-	--extract_module $(basename $(notdir $(subst .checked,,$<)))
-
-.PRECIOUS: obj/%.krml
-obj/%.krml:
-	$(FSTAR) $(notdir $(subst .checked,,$<)) --codegen Kremlin \
-	--extract_module $(basename $(notdir $(subst .checked,,$<)))
-
 obj/Specs_Driver.ml: specs/ml/Specs_Driver.ml
         # This ensures that all the source directories are not polluted with
 # build artifacts
@@ -179,7 +169,7 @@ HAND_WRITTEN_C_FILES = code/c/Yazi_Misc.h code/c/Yazi_Z_Stream_Fields.inc code/c
 #
 # See the advanced topics section for an in-depth explanation of how the -bundle
 # option works. We also use -minimal.
-dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_C_FILES)
+dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_C_FILES) $(ALL_CHECKED_FILES)
 	mkdir -p $(dir $@)
 	cp $(HAND_WRITTEN_C_FILES) $(dir $@)
 	$(KRML) -tmpdir $(dir $@) -skip-compilation \
@@ -195,7 +185,7 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	  -fextern-c \
 	  -ftail-calls \
 	  -fparentheses \
-          -fcurly-braces \
+	  -fcurly-braces \
 	  -fc89 \
 	  -minimal \
 	  -bundle 'FStar.*' \
