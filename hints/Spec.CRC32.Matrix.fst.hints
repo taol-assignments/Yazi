@@ -1,5 +1,5 @@
 [
-  "\u0014õ\u0011Ãü\u0002wnòº¿[)ü*ÿ",
+  "Qð V\b¨\u0000Îµ¹€+í\u0013Ö—",
   [
     [
       "Spec.CRC32.Matrix.magic_matrix_pattern",
@@ -29,7 +29,7 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "c192ea1679ecddde00c8c74fceab665f"
+      "b2247fdd7a36570986cacaec9b0ce1ea"
     ],
     [
       "Spec.CRC32.Matrix.is_magic_matrix_elem",
@@ -43,7 +43,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "da87e5dbf5f780c66d7b0a6f7111139a"
+      "0fd75c89095e2a4564b3a6f0968461b8"
     ],
     [
       "Spec.CRC32.Matrix.is_sub_matrix_buf",
@@ -54,7 +54,7 @@
         "@MaxIFuel_assumption", "@query",
         "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
         "equation_LowStar.Buffer.trivial_preorder", "equation_Prims.eqtype",
-        "equation_Spec.CRC32.Matrix.matrix_buf",
+        "equation_Yazi.CRC32.Types.matrix_buf",
         "lemma_LowStar.Monotonic.Buffer.length_as_seq",
         "refinement_interpretation_Tm_refine_16113b670c3948241b38ee17f4d8fb91",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
@@ -64,7 +64,7 @@
         "typing_LowStar.Monotonic.Buffer.len"
       ],
       0,
-      "0e086ea639cc763cfeb6a380e8867506"
+      "64b82fc41aff1e2984d62250a396f9a0"
     ],
     [
       "Spec.CRC32.Matrix.bit_extract",
@@ -108,7 +108,7 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "9dcd9d683a648cccafc93e23d0e68a09"
+      "d189dffdec30c22ce46e4cd8c2d3f656"
     ],
     [
       "Spec.CRC32.Matrix.bit_extract",
@@ -150,7 +150,7 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "1e7e4cb020bc67f9212588fdcacd9d57"
+      "6e90b3ae4f5cee37a8c7102b45574759"
     ],
     [
       "Spec.CRC32.Matrix.bit_sum",
@@ -162,7 +162,7 @@
         "refinement_interpretation_Tm_refine_eb8cb3b1f8da377cbc0200207abc4de7"
       ],
       0,
-      "210dbedbc0abcaa013254e7db04b05b6"
+      "3414cb7681e9b000ec4f61f3235455dc"
     ],
     [
       "Spec.CRC32.Matrix.bit_sum",
@@ -209,7 +209,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "16ee07bb50fd7940519cf6951bd1cc1b"
+      "870f76649d59a103e261650648d115ce"
     ],
     [
       "Spec.CRC32.Matrix.bit_extract_eq_pattern",
@@ -250,7 +250,7 @@
         "typing_FStar.Seq.Base.index"
       ],
       0,
-      "f58453fc56808d1abaf19a12dee9cf0c"
+      "f01a4bf4fc33f52573b57f09edba2e19"
     ],
     [
       "Spec.CRC32.Matrix.sub_matrix_times_product",
@@ -276,7 +276,7 @@
         "typing_FStar.UInt.to_vec", "typing_FStar.UInt32.v"
       ],
       0,
-      "f1b5a459f85853520c884c57a469dc98"
+      "e2e9459c3989298930921aaee7cdd199"
     ],
     [
       "Spec.CRC32.Matrix.crc32_expand_aux",
@@ -360,7 +360,7 @@
         "typing_Spec.CRC32.Bits.zero_vec_r"
       ],
       0,
-      "90ea4c1fad30fb05ed612ce24abed38e"
+      "5b88eb15d50d63e8bc85e7f3fb0619e1"
     ],
     [
       "Spec.CRC32.Matrix.crc32_matched_append_aux",
@@ -373,7 +373,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "2cde308b57f4acdeb105bb82fa2c8949"
+      "45b9f4e9ef7220638f0a606726682804"
     ],
     [
       "Spec.CRC32.Matrix.crc32_matched_append_aux",
@@ -479,7 +479,7 @@
         "typing_Spec.CRC32.Matrix.bit_sum"
       ],
       0,
-      "f6534b852ec5432dd862410ab26c9a64"
+      "36aa334da7db5f5ef5868251f9230980"
     ],
     [
       "Spec.CRC32.Matrix.crc32_matched_append",
@@ -492,7 +492,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "d68a29320ce3365ca13379c70db37841"
+      "d1f9c8563153fb680e52c50d9042ac3f"
     ],
     [
       "Spec.CRC32.Matrix.crc32_matched_append",
@@ -559,7 +559,7 @@
         "typing_FStar.UInt32.v", "typing_FStar.UInt8.t"
       ],
       0,
-      "781ebebee6cf137fa490b0eb4aba964e"
+      "d196f5b9ef4e246d8a316b9f26ef718a"
     ]
   ]
 ]
