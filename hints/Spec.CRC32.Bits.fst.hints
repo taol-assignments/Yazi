@@ -8,7 +8,7 @@
       1,
       [ "@query" ],
       0,
-      "1b4e6df5ddcd45d104f81855bcef7c84"
+      "65e9d926c52d8e9ce60e1dd1e9d89ce5"
     ],
     [
       "Spec.CRC32.Bits.logxor_vec_comm",
@@ -46,7 +46,7 @@
         "typing_FStar.Seq.Base.length", "well-founded-ordering-on-nat"
       ],
       0,
-      "6845500bb1686ec997b6b5e78b5a1763"
+      "57f22cf5e460409ae13638d44213cada"
     ],
     [
       "Spec.CRC32.Bits.logxor_vec_assoc",
@@ -77,7 +77,7 @@
         "typing_FStar.Seq.Base.index"
       ],
       0,
-      "7366af21b4008831ef5eaa793b31cd5c"
+      "2cebf29e9c8291e69b3f524f4924d36d"
     ],
     [
       "Spec.CRC32.Bits.logxor_vec_assoc",
@@ -107,7 +107,7 @@
         "typing_FStar.BitVector.logxor_vec", "typing_FStar.Seq.Base.index"
       ],
       0,
-      "a69d6c97529c4c2bc8b830311e79360f"
+      "ef3920345d81390f69e708aa80939f8a"
     ],
     [
       "Spec.CRC32.Bits.logxor_vec_zero",
@@ -116,7 +116,7 @@
       1,
       [ "@query" ],
       0,
-      "ff0a239e511412309e2f1334d8031471"
+      "2a9b6a453028553cfcc191c01021ab23"
     ],
     [
       "Spec.CRC32.Bits.logxor_vec_zero",
@@ -152,7 +152,7 @@
         "typing_FStar.Seq.Base.index", "typing_FStar.Seq.Base.length"
       ],
       0,
-      "678a7f33b8179aedaaf5bc09692a58d4"
+      "3773995173ee56c14362d6ec2a1191b1"
     ],
     [
       "Spec.CRC32.Bits.logxor_vec_self",
@@ -164,7 +164,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "b92e7b76e4eef0cd9db2c19d2f1748c5"
+      "e7a91e0bf0c822ca00fc882f2efa2dcd"
     ],
     [
       "Spec.CRC32.Bits.logxor_vec_self",
@@ -196,7 +196,7 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "31dc13d9e60098524546eaa98791952f"
+      "999ac5ca47672f713d1dc4f8295188fb"
     ],
     [
       "Spec.CRC32.Bits.zero_vec_l",
@@ -228,7 +228,7 @@
         "typing_FStar.Seq.Base.create"
       ],
       0,
-      "b5b6d54261885ca0ec946fdca19ff27c"
+      "6309e8c61869ebba8555a7a58d6bc870"
     ],
     [
       "Spec.CRC32.Bits.zero_vec_l",
@@ -261,7 +261,7 @@
         "typing_FStar.Seq.Base.create"
       ],
       0,
-      "af239230008a5e6b8a9d39482d10d3a8"
+      "c3b7b6ab1da214ac67c9210550b19545"
     ],
     [
       "Spec.CRC32.Bits.zero_vec_r",
@@ -293,7 +293,7 @@
         "typing_FStar.Seq.Base.create"
       ],
       0,
-      "0243bca0c676cd6e73b9894963647a47"
+      "4e48d2d0ecb65802dabe53f804a5a588"
     ],
     [
       "Spec.CRC32.Bits.zero_vec_r",
@@ -326,7 +326,7 @@
         "typing_FStar.Seq.Base.create"
       ],
       0,
-      "5172abda50c33bf11a565b4b9fd03ef0"
+      "2847310cc8b3e63be8db967fe18fa902"
     ],
     [
       "Spec.CRC32.Bits.ones_vec_l",
@@ -358,7 +358,7 @@
         "typing_FStar.Seq.Base.create"
       ],
       0,
-      "01b7a3389bd2933025cd7855e7876ce1"
+      "4a26342613159cb4907f7626f5d75a29"
     ],
     [
       "Spec.CRC32.Bits.ones_vec_l",
@@ -391,7 +391,7 @@
         "typing_FStar.Seq.Base.create"
       ],
       0,
-      "04d00bcfcadd558c6dfb855938a8da56"
+      "6b9e22e98709e9d3bacb8ce0f1524c2a"
     ],
     [
       "Spec.CRC32.Bits.ones_vec_r",
@@ -423,7 +423,7 @@
         "typing_FStar.Seq.Base.create"
       ],
       0,
-      "ed81e90f00e05f3c5233ee2f4157c968"
+      "9ca3ac83bcb0b55259fbf43c72764c99"
     ],
     [
       "Spec.CRC32.Bits.ones_vec_r",
@@ -456,7 +456,7 @@
         "typing_FStar.Seq.Base.create"
       ],
       0,
-      "a1682be60786921c77bf2b1ba2ebd3e0"
+      "1c8d161d5af3e63413ab0a206a9d936b"
     ],
     [
       "Spec.CRC32.Bits.lemma_vec_padding_zero",
@@ -486,7 +486,7 @@
         "typing_Spec.CRC32.Bits.zero_vec_r"
       ],
       0,
-      "b4b2f5187e061737b856219afadd7103"
+      "233b61b239d177ff01c85e4a5df83f30"
     ],
     [
       "Spec.CRC32.Bits.lemma_vec_padding_zero",
@@ -517,7 +517,7 @@
         "typing_Spec.CRC32.Bits.zero_vec_r"
       ],
       0,
-      "38816b35a582c222de8da1c22ee1f1df"
+      "18fff824505003f50afa02005e035a76"
     ],
     [
       "Spec.CRC32.Bits.zero_vec_l_app",
@@ -547,7 +547,7 @@
         "typing_Spec.CRC32.Bits.zero_vec_l"
       ],
       0,
-      "f78749eaef174a3d5105273083110b5e"
+      "049a675b9a859df4eb22dcfe4b0cf7a6"
     ],
     [
       "Spec.CRC32.Bits.zero_vec_l_app",
@@ -577,7 +577,7 @@
         "typing_Spec.CRC32.Bits.zero_vec_l"
       ],
       0,
-      "585940be91351d2c0857290d65b4e9a1"
+      "299e616d9ad2837e2b60cb2235ff8e37"
     ],
     [
       "Spec.CRC32.Bits.gf2_plus",
@@ -586,7 +586,7 @@
       1,
       [ "@query" ],
       0,
-      "ce7bcb663c1265ece4b12d39ce4b5f83"
+      "5941ca700b4d553142f5c6a4480223ba"
     ],
     [
       "Spec.CRC32.Bits.gf2_plus",
@@ -595,7 +595,7 @@
       1,
       [ "@query" ],
       0,
-      "755908c551a06e379af28c3b4abc7a17"
+      "167440cb2ef3d2e8cc51bcf098d446f8"
     ],
     [
       "Spec.CRC32.Bits.gf2_sub",
@@ -604,7 +604,7 @@
       1,
       [ "@query" ],
       0,
-      "0978835cca7947d79918e2d92e95974b"
+      "a394489d3f558341c559e931b4b9c768"
     ],
     [
       "Spec.CRC32.Bits.gf2_sub",
@@ -613,7 +613,7 @@
       1,
       [ "@query" ],
       0,
-      "67a6d131070806f49c0a69fc1bc88dea"
+      "0b6c8e164b4a3e908eb3dc9714c3f790"
     ],
     [
       "Spec.CRC32.Bits.gf2_polynomial32",
@@ -638,16 +638,7 @@
         "typing_Tm_abs_2f89083d79c056bee4291f4505700c64"
       ],
       0,
-      "65215277df108183ee716bcab49ce920"
-    ],
-    [
-      "Spec.CRC32.Bits.crc32_polynomial",
-      1,
-      2,
-      1,
-      [ "@query" ],
-      0,
-      "6152773b3f387fd2111ee979a07da491"
+      "d53c60a6463ca50efacae06cd6d63888"
     ],
     [
       "Spec.CRC32.Bits.poly",
@@ -681,7 +672,7 @@
         "typing_Tm_abs_2f89083d79c056bee4291f4505700c64"
       ],
       0,
-      "540e5e9011a1fd2cc10692fb10ecea74"
+      "4f6f2810e4956cbe11adeeca4ff5d6e0"
     ],
     [
       "Spec.CRC32.Bits.poly_xor",
@@ -734,7 +725,7 @@
         "typing_FStar.Seq.Base.length"
       ],
       0,
-      "204e707cc89ddb28ff14867a37133bad"
+      "b1a55fce5f683ef0618f1e23967a0304"
     ],
     [
       "Spec.CRC32.Bits.poly_mod",
@@ -785,7 +776,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "1ecbd74bb4975f041998cc1d8aaf89de"
+      "ac42d84af430684d2d5fa83220f24c82"
     ],
     [
       "Spec.CRC32.Bits.poly_xor_zero_prefix",
@@ -843,7 +834,7 @@
         "typing_Tm_abs_2f89083d79c056bee4291f4505700c64"
       ],
       0,
-      "d26eae81e3200fe6c377b243155be341"
+      "b699bda0d342d016ecccc9ed8e6ecd7c"
     ],
     [
       "Spec.CRC32.Bits.zero_vec_l_aux",
@@ -868,7 +859,7 @@
         "typing_FStar.Seq.Base.index", "typing_Spec.CRC32.Bits.zero_vec_l"
       ],
       0,
-      "d66fc0272439aa6bcb12fa7e53e9c2a1"
+      "d59bf5f737589d2adaeb99d65585f65b"
     ],
     [
       "Spec.CRC32.Bits.zero_vec_l_aux",
@@ -894,7 +885,7 @@
         "typing_FStar.Seq.Base.index", "typing_Spec.CRC32.Bits.zero_vec_l"
       ],
       0,
-      "ce54dfc42c98943dc0ca7e29609bcf43"
+      "382c50f76df60cfa9675518c6e4bc30d"
     ],
     [
       "Spec.CRC32.Bits.poly_xor_zero_vec_l",
@@ -920,7 +911,7 @@
         "typing_Spec.CRC32.Bits.poly_xor"
       ],
       0,
-      "986b81b9b495c3d232c0684a46e08902"
+      "22aecda4910b9c39babaefaaff199d65"
     ],
     [
       "Spec.CRC32.Bits.poly_xor_zero_vec_l",
@@ -1004,7 +995,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "46a7c148192815d39a835d2ce57d7754"
+      "abb5fd1cb404588d280088f917eb7ac0"
     ],
     [
       "Spec.CRC32.Bits.poly_xor_sub_eq",
@@ -1065,7 +1056,7 @@
         "typing_Tm_abs_2f89083d79c056bee4291f4505700c64"
       ],
       0,
-      "9848a6daca68a553a2f55373b066e54f"
+      "c47d3313b8e270a7d824d4820e564516"
     ],
     [
       "Spec.CRC32.Bits.poly_xor_aux",
@@ -1110,7 +1101,7 @@
         "typing_Tm_abs_bae2e04c7f90f436adb2db234224cf0e"
       ],
       0,
-      "fb9177fb388b20ce07c7d5c5c2d06c24"
+      "c528150e115a824019ace7ff88e4574f"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_zero",
@@ -1119,7 +1110,7 @@
       1,
       [ "@query", "projection_inverse_BoxInt_proj_0" ],
       0,
-      "e610fb81043126ef889bf9a496e1cfb0"
+      "8401bc30dbc482090e13efeffe1eef66"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_zero",
@@ -1128,7 +1119,7 @@
       1,
       [ "@query", "projection_inverse_BoxInt_proj_0" ],
       0,
-      "4e340852ac9898935ede3a599a722cb7"
+      "6ecc340d60b8915712f3fda7269f88eb"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_zero",
@@ -1174,7 +1165,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "eeb2b1e8ce787694e95a128136fb7ec2"
+      "a4399564b548ecf5829ed8ce450e658a"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_add",
@@ -1183,7 +1174,7 @@
       1,
       [ "@query", "projection_inverse_BoxInt_proj_0" ],
       0,
-      "6b5b753f319a054f8fc8d2a53b3ddc11"
+      "9397d26b3bbf07267a97cae7ced0ce94"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_add",
@@ -1192,7 +1183,7 @@
       1,
       [ "@query", "projection_inverse_BoxInt_proj_0" ],
       0,
-      "58e1e054e6b8357ebb387eb2be674644"
+      "0afdd8ccfae78031ceca43c3b5b6fd73"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_add",
@@ -1292,7 +1283,7 @@
         "unit_typing", "well-founded-ordering-on-nat"
       ],
       0,
-      "b8e8bedfb4ae704d8fa9ba52ac4f4260"
+      "ab899077f3dd5fd01731fb1ca7a5fee2"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_zero_prefix",
@@ -1307,7 +1298,7 @@
         "refinement_interpretation_Tm_refine_8bbf01c292cbe5ae48ece11106112430"
       ],
       0,
-      "23f25f72d4482b1032daea40ba594df2"
+      "743fb0e8cacdb6ecd3ca488410191878"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_zero_prefix",
@@ -1323,7 +1314,7 @@
         "refinement_interpretation_Tm_refine_c8f56506347271219831f8632f3a03cb"
       ],
       0,
-      "b1fc6239e3d8039da50e4a2601434b43"
+      "ceac43615050f0e021628831195603a2"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_zero_prefix",
@@ -1413,7 +1404,7 @@
         "unit_typing", "well-founded-ordering-on-nat"
       ],
       0,
-      "551462e1f001425c742e915a4c88d74e"
+      "066559cb5d82c91c815181a743aa6cdf"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_zero_suffix",
@@ -1431,7 +1422,7 @@
         "refinement_interpretation_Tm_refine_b58913bc1b35aff1da804bb574f6f01a"
       ],
       0,
-      "3d125fbab4c3bc5c5a0a87320e52d8c4"
+      "904108b11500900207c0dae44ad92288"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_zero_suffix",
@@ -1450,7 +1441,7 @@
         "refinement_interpretation_Tm_refine_b58913bc1b35aff1da804bb574f6f01a"
       ],
       0,
-      "3ebbc4bfd22aac7096085a661059aa6f"
+      "f7af31457145d539e68a16b4b908f772"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_zero_suffix",
@@ -1520,7 +1511,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "c77b2bbcf64d16d91a86ce3cbf266d42"
+      "9601d703266e43be4db0223023c75914"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_small",
@@ -1530,11 +1521,11 @@
       [
         "@MaxIFuel_assumption", "@query", "equation_FStar.BitVector.bv_t",
         "refinement_interpretation_Tm_refine_8bbf01c292cbe5ae48ece11106112430",
-        "refinement_interpretation_Tm_refine_e2d5d62a90ceed8a6faf9d20615f4e1e",
-        "refinement_interpretation_Tm_refine_f7e766372ba91b51853ff786c9ed02dd"
+        "refinement_interpretation_Tm_refine_cd6a50e8217cc73df5cf0cfac4f3a77a",
+        "refinement_interpretation_Tm_refine_e2d5d62a90ceed8a6faf9d20615f4e1e"
       ],
       0,
-      "068a7da3b04e29ffde93f8ab903cf9c1"
+      "61028ad00e12cefa476b6e30276fa2b5"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_small",
@@ -1581,7 +1572,7 @@
         "typing_Spec.CRC32.Bits.poly_mod", "well-founded-ordering-on-nat"
       ],
       0,
-      "cbef950721700590ab0bcc675c62774f"
+      "58150e0d0251543783d730d6a0335ca0"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_correct",
@@ -1605,7 +1596,7 @@
         "typing_FStar.UInt.to_vec", "typing_FStar.UInt32.v"
       ],
       0,
-      "8c687895eda9ca32ca9b38e88467efbd"
+      "522ce92d821bba65df1972bc46b8fe9e"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_u32",
@@ -1619,7 +1610,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "0159e81f9ae0de1050b2f1075fd3f705"
+      "e6b8c76c2c164fa795c29ed47511590a"
     ],
     [
       "Spec.CRC32.Bits.logand_mask_aux",
@@ -1646,7 +1637,7 @@
         "typing_Prims.pow2"
       ],
       0,
-      "d81682a2c2ca691cb07b676a1bd19bb3"
+      "05107c4f80393f45165d5894ff9fdc44"
     ],
     [
       "Spec.CRC32.Bits.logand_mask_aux",
@@ -1681,7 +1672,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "5aa98b67cd29e172826b46e66383e603"
+      "39aa659325f48f13c4c0415fa33e4edb"
     ],
     [
       "Spec.CRC32.Bits.large_table_val_aux",
@@ -1694,7 +1685,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "1ac14d16e795921e1d11cee2b9982fd2"
+      "ee6a9b9b23c8cf518460b7f7fb563e03"
     ],
     [
       "Spec.CRC32.Bits.large_table_val_aux",
@@ -1778,7 +1769,7 @@
         "typing_Spec.CRC32.Bits.zero_vec_r"
       ],
       0,
-      "4037a72356588d327879a3a3768d8f81"
+      "f20c2998ace9e0f66bec03df947e7385"
     ],
     [
       "Spec.CRC32.Bits.poly_mod_correct_eq",
@@ -1805,7 +1796,7 @@
         "typing_FStar.UInt32.v"
       ],
       0,
-      "4e456635e0735fc371dbc534264aa0e7"
+      "f4fa400cb97b5b802209ba65466371d0"
     ],
     [
       "Spec.CRC32.Bits.sub_table_correct",
@@ -1814,7 +1805,7 @@
       1,
       [ "@query" ],
       0,
-      "498e07b3edeaabad500c56475ae3f296"
+      "c3ee77664145f68cea46c612c3f8a0a2"
     ],
     [
       "Spec.CRC32.Bits.seq_append_index_l",
@@ -1826,7 +1817,7 @@
         "refinement_interpretation_Tm_refine_d4ee6b9b004413574c5c73551bb8cebd"
       ],
       0,
-      "33bb627252436ee4473ff26b776441b1"
+      "bf50fca59e05e2166d0e2790c0bc3934"
     ],
     [
       "Spec.CRC32.Bits.seq_append_index_l",
@@ -1852,7 +1843,7 @@
         "typing_FStar.Seq.Base.length", "well-founded-ordering-on-nat"
       ],
       0,
-      "c5d460c1b43592d7d647f006c46e712c"
+      "cb42bd288dbe27d9a3bb3727c1383583"
     ],
     [
       "Spec.CRC32.Bits.crc32_append_8bit",
@@ -1884,7 +1875,7 @@
         "typing_FStar.UInt8.v"
       ],
       0,
-      "0979126199a1d2b27e8219d9d3304ce6"
+      "79f5cbd4f370808c313803d0bb60b05e"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_cont",
@@ -1900,7 +1891,7 @@
         "refinement_interpretation_Tm_refine_e528b33581e21fe81e369e87f1159004"
       ],
       0,
-      "da61e235f2bf4c4f51b465d399b594f8"
+      "5361f4b89779eb677f20ba122c2b4f84"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_cont",
@@ -1938,7 +1929,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "c885be2ecef695032baac25be1e54d59"
+      "807ac338f5653b50eb7636d9619603ba"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits",
@@ -1957,7 +1948,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "23e93b9c199a72cf309a2f66cdc8ffa5"
+      "6e1289204216d79d761ae98b83efcc4a"
     ],
     [
       "Spec.CRC32.Bits.data_bits_rev",
@@ -1974,12 +1965,12 @@
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_4bb7a2db2ce06edcc796ff8082ea5d03",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "refinement_interpretation_Tm_refine_d0f3d891a752224f100958f7baa944b9",
+        "refinement_interpretation_Tm_refine_dd1516aafa516ea6a2c3bd1f0d4b3e5b",
         "refinement_interpretation_Tm_refine_e2d5d62a90ceed8a6faf9d20615f4e1e",
         "typing_FStar.Seq.Base.length", "typing_FStar.UInt8.t"
       ],
       0,
-      "be85c473b1cd293826e71b65c1c1da26"
+      "5d0cc911b3c3ef9f13b532c320cc3326"
     ],
     [
       "Spec.CRC32.Bits.data_bits_rev",
@@ -2040,7 +2031,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "f6f4c7f23060cd79f26f93bef2ea0c1c"
+      "183980f07f936f2298c4f58914a1725e"
     ],
     [
       "Spec.CRC32.Bits.data_bits_rev_app_one",
@@ -2100,7 +2091,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "62f1612b114313ed2edca86903db111b"
+      "7f80ef6d579cd4d5f4d9c6f07476de1b"
     ],
     [
       "Spec.CRC32.Bits.data_bits_rev_app",
@@ -2169,7 +2160,7 @@
         "well-founded-ordering-on-nat"
       ],
       0,
-      "6b2bf6b3e45745d7a9baf540b334b0e7"
+      "4156bedc91d4e21113c2bae6043e67f0"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_append'",
@@ -2197,7 +2188,7 @@
         "typing_FStar.UInt8.t"
       ],
       0,
-      "5fba277b945025267315756d95316e11"
+      "1929d0c0a91b9a7109956f3133c7bec8"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_append'",
@@ -2225,7 +2216,7 @@
         "typing_FStar.UInt8.t"
       ],
       0,
-      "f76390bf521eb7ade9313d4a6a436035"
+      "48c85acd5f674de44da40f494471ee50"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_append'",
@@ -2298,7 +2289,7 @@
         "unit_typing", "well-founded-ordering-on-nat"
       ],
       0,
-      "4a07ce0c9a4a8f9055b9ecfed4b84b9f"
+      "890f3ff2a968b413418768c3202cb777"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_append",
@@ -2324,7 +2315,7 @@
         "typing_FStar.UInt8.t"
       ],
       0,
-      "bc3a7f44f057c34efdeccd8d23abcf5d"
+      "5595b346baccca0735065bcf4d21e99e"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_append",
@@ -2343,7 +2334,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "dd194e510a17b03f02e379ed2209e9e8"
+      "b82d7ccb14106bb6c0428dc706221ad2"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_rev",
@@ -2362,7 +2353,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "0dcf4384e223d9d4bf1d46bfbffd0552"
+      "6d4901d5d2aec1dc6771b8af9227eeb8"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_rev",
@@ -2381,7 +2372,7 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5"
       ],
       0,
-      "857d53a142b4efa5b31b77ee177d633b"
+      "77ac5687e2a109410724ebcc80c8c905"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_rev",
@@ -2501,30 +2492,7 @@
         "typing_Spec.CRC32.Bits.zero_vec_l", "well-founded-ordering-on-nat"
       ],
       0,
-      "99c72a797aa21f0e6b7917036615a5d1"
-    ],
-    [
-      "Spec.CRC32.Bits.crc32_data_dword",
-      1,
-      1,
-      1,
-      [
-        "@MaxFuel_assumption", "@MaxIFuel_assumption",
-        "@fuel_correspondence_FStar.UInt.to_vec.fuel_instrumented",
-        "@fuel_irrelevance_FStar.UInt.to_vec.fuel_instrumented", "@query",
-        "equation_FStar.BitVector.bv_t", "equation_Prims.nat",
-        "equation_with_fuel_FStar.UInt.to_vec.fuel_instrumented",
-        "int_inversion", "int_typing", "primitive_Prims.op_Subtraction",
-        "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "refinement_interpretation_Tm_refine_da1b0dfb8283502ec162998a8bbb6431",
-        "refinement_interpretation_Tm_refine_e2d5d62a90ceed8a6faf9d20615f4e1e",
-        "token_correspondence_FStar.UInt.to_vec.fuel_instrumented",
-        "typing_FStar.UInt.to_vec", "typing_FStar.UInt32.v",
-        "typing_FStar.UInt8.v"
-      ],
-      0,
-      "d6b151815eaef8570ca73e79d296593c"
+      "3dc1be141866cb945258e27d7450524d"
     ],
     [
       "Spec.CRC32.Bits.crc32_dword_seq",
@@ -2538,7 +2506,7 @@
         "refinement_interpretation_Tm_refine_7acf795d50ec256996534a97e12bfa61"
       ],
       0,
-      "84fb8c9127701846457a632ecdc25bc0"
+      "299aafa08cc524cd117e1b5f0408d229"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_32bit_aux",
@@ -2606,7 +2574,7 @@
         "typing_Spec.CRC32.Bits.zero_vec_l"
       ],
       0,
-      "40e12547888ca036f42b407ddc7fa51c"
+      "383f317870f3c9aa5dc15a3ab21197da"
     ],
     [
       "Spec.CRC32.Bits.xor_status",
@@ -2620,7 +2588,7 @@
         "refinement_interpretation_Tm_refine_8bbf01c292cbe5ae48ece11106112430"
       ],
       0,
-      "4fbb2793c220c0673c074d7c25af2494"
+      "a25eac8259fcc0cfbf60329b90157e07"
     ],
     [
       "Spec.CRC32.Bits.xor_status",
@@ -2640,7 +2608,7 @@
         "typing_FStar.UInt.to_vec", "typing_FStar.UInt8.v"
       ],
       0,
-      "2868322ac233f56b2d9e7872607fd084"
+      "f8b8de4417ae5f91dcabba49afbf05a6"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_32bit_aux'",
@@ -2661,7 +2629,7 @@
         "refinement_interpretation_Tm_refine_8bbf01c292cbe5ae48ece11106112430"
       ],
       0,
-      "539ff7e501216e1f4eff0f76ad157fd8"
+      "8342bb81c150fe514c3ee870e93c3169"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_32bit_aux'",
@@ -2733,7 +2701,7 @@
         "typing_FStar.UInt8.v", "typing_Spec.CRC32.Bits.zero_vec_l"
       ],
       0,
-      "ff8c35ebbbba6626f3ab9813e2be86b0"
+      "90bc4bf4a431f8973586a616cf0d4375"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_32bit_aux''",
@@ -2744,21 +2712,22 @@
         "@MaxFuel_assumption", "@MaxIFuel_assumption",
         "@fuel_correspondence_FStar.BitVector.logxor_vec.fuel_instrumented",
         "@fuel_correspondence_FStar.UInt.to_vec.fuel_instrumented", "@query",
-        "Prims_pretyping_f537159ed795b314b4e58c260361ae86", "b2t_def",
-        "bool_inversion", "bool_typing", "equation_FStar.BitVector.bv_t",
+        "Prims_pretyping_f537159ed795b314b4e58c260361ae86",
+        "Spec.CRC32.Bits_interpretation_Tm_arrow_2a63a3a15ca115ef277527a340d2a615",
+        "b2t_def", "bool_typing", "equation_FStar.BitVector.bv_t",
         "equation_FStar.BitVector.ones_vec", "equation_FStar.UInt.fits",
         "equation_FStar.UInt.nth", "equation_FStar.UInt.size",
         "equation_FStar.UInt.uint_t", "equation_Prims.eqtype",
         "equation_Prims.nat", "equation_Prims.pos",
-        "equation_Spec.CRC32.Bits.crc32_data_dword",
         "equation_Spec.CRC32.Bits.op_Plus_At",
+        "equation_Yazi.CRC32.Types.crc32_data_dword",
         "function_token_typing_Prims.bool", "int_inversion", "int_typing",
         "interpretation_Tm_abs_bae2e04c7f90f436adb2db234224cf0e",
         "lemma_FStar.BitVector.logxor_vec_definition",
         "lemma_FStar.Seq.Base.lemma_index_create",
         "lemma_Spec.CRC32.Bits.logxor_vec_comm",
         "primitive_Prims.op_Addition", "primitive_Prims.op_AmpAmp",
-        "primitive_Prims.op_Subtraction", "primitive_Prims.op_disEquality",
+        "primitive_Prims.op_Subtraction",
         "projection_inverse_BoxBool_proj_0",
         "projection_inverse_BoxInt_proj_0",
         "refinement_interpretation_Tm_refine_054ad5846b204b9b94f6ff97932cfe78",
@@ -2769,21 +2738,18 @@
         "refinement_interpretation_Tm_refine_774ba3f728d91ead8ef40be66c9802e5",
         "refinement_interpretation_Tm_refine_7f03697aeb365e2cd8285aac11986ee3",
         "refinement_interpretation_Tm_refine_9007fbc417d54bac8a69eb57c27f77cb",
-        "refinement_interpretation_Tm_refine_afd51579b90d50ea23e03b743a1fa001",
         "refinement_interpretation_Tm_refine_c1424615841f28cac7fc34e92b7ff33c",
-        "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
         "refinement_interpretation_Tm_refine_da1b0dfb8283502ec162998a8bbb6431",
         "refinement_interpretation_Tm_refine_e2d5d62a90ceed8a6faf9d20615f4e1e",
         "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
         "token_correspondence_Spec.CRC32.Bits.op_Plus_At",
-        "typing_FStar.BitVector.logxor_vec",
-        "typing_FStar.BitVector.ones_vec", "typing_FStar.Seq.Base.index",
-        "typing_FStar.UInt.nth", "typing_FStar.UInt.to_vec",
-        "typing_FStar.UInt32.v", "typing_FStar.UInt8.v",
-        "typing_Spec.CRC32.Bits.zero_vec_l"
+        "typing_FStar.BitVector.ones_vec", "typing_FStar.Seq.Base.length",
+        "typing_FStar.UInt.to_vec", "typing_FStar.UInt32.v",
+        "typing_Spec.CRC32.Bits.zero_vec_l",
+        "typing_Tm_abs_bae2e04c7f90f436adb2db234224cf0e"
       ],
       0,
-      "6efdbe7787114621a7ff87c7b83126e9"
+      "c81a890a6e71366cbf505dafcc116b2c"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_32bit_aux'''",
@@ -2805,7 +2771,7 @@
         "refinement_interpretation_Tm_refine_f76fbae5374d971d2891d11aa132248e"
       ],
       0,
-      "28e3b15fc7047b01d2012a10418f8458"
+      "18857510a4d85e05e2a88d8ea7c1c043"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_32bit_aux'''",
@@ -2816,12 +2782,11 @@
         "@MaxFuel_assumption", "@MaxIFuel_assumption",
         "@fuel_correspondence_FStar.BitVector.logxor_vec.fuel_instrumented",
         "@fuel_correspondence_FStar.UInt.to_vec.fuel_instrumented", "@query",
-        "Prims_pretyping_f537159ed795b314b4e58c260361ae86",
-        "Spec.CRC32.Bits_interpretation_Tm_arrow_2a63a3a15ca115ef277527a340d2a615",
-        "bool_inversion", "bool_typing", "equation_FStar.BitVector.bv_t",
+        "Prims_pretyping_f537159ed795b314b4e58c260361ae86", "bool_inversion",
+        "bool_typing", "equation_FStar.BitVector.bv_t",
         "equation_Prims.eqtype", "equation_Prims.nat", "equation_Prims.pos",
-        "equation_Spec.CRC32.Bits.crc32_data_dword",
         "equation_Spec.CRC32.Bits.op_Plus_At",
+        "equation_Yazi.CRC32.Types.crc32_data_dword",
         "function_token_typing_Prims.bool", "int_inversion", "int_typing",
         "interpretation_Tm_abs_bae2e04c7f90f436adb2db234224cf0e",
         "lemma_FStar.BitVector.logxor_vec_definition",
@@ -2839,21 +2804,19 @@
         "refinement_interpretation_Tm_refine_81a443b870cd28caca8eb53dd5a81785",
         "refinement_interpretation_Tm_refine_9007fbc417d54bac8a69eb57c27f77cb",
         "refinement_interpretation_Tm_refine_9fca77211049e6466825310838b9c114",
-        "refinement_interpretation_Tm_refine_afd51579b90d50ea23e03b743a1fa001",
         "refinement_interpretation_Tm_refine_c1424615841f28cac7fc34e92b7ff33c",
         "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
         "refinement_interpretation_Tm_refine_da1b0dfb8283502ec162998a8bbb6431",
         "refinement_interpretation_Tm_refine_e2d5d62a90ceed8a6faf9d20615f4e1e",
         "refinement_interpretation_Tm_refine_f691685e7e36515be83d1ad9baffb1e5",
         "token_correspondence_Spec.CRC32.Bits.op_Plus_At",
-        "typing_FStar.Seq.Base.index", "typing_FStar.Seq.Base.length",
+        "typing_FStar.BitVector.logxor_vec", "typing_FStar.Seq.Base.index",
         "typing_FStar.UInt.to_vec", "typing_FStar.UInt32.v",
         "typing_Spec.CRC32.Bits.zero_vec_l",
-        "typing_Spec.CRC32.Bits.zero_vec_r",
-        "typing_Tm_abs_bae2e04c7f90f436adb2db234224cf0e"
+        "typing_Spec.CRC32.Bits.zero_vec_r"
       ],
       0,
-      "068ea520edafa45633ace941555a94a4"
+      "d15c4397afabc2a14271acd65ffb0dee"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_unfold'",
@@ -2870,7 +2833,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "f50245099d3fb84922e1e9a7b1753ee9"
+      "83a5a0b02eea1a91b007610f45392144"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_unfold'",
@@ -2947,7 +2910,7 @@
         "typing_Tm_abs_4153cc131d4faab92d3c0c0449f39c5e"
       ],
       0,
-      "a6dbce9ed5a61387c636910ea80204c1"
+      "e8a32badb13a48a7b864898b732f839d"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_unfold''",
@@ -3008,7 +2971,7 @@
         "typing_Tm_abs_4153cc131d4faab92d3c0c0449f39c5e"
       ],
       0,
-      "fe665f1e62703e918e47750cabd8da12"
+      "4e28328a249d86937a225cf668e752a3"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_32bit",
@@ -3041,7 +3004,7 @@
         "typing_Tm_abs_4153cc131d4faab92d3c0c0449f39c5e"
       ],
       0,
-      "5e9ba4828616f7403501e0941f2b3645"
+      "96b0e3d22dc70df70120947fffb2fd15"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_32bit",
@@ -3058,7 +3021,7 @@
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2"
       ],
       0,
-      "bf481c2fbebea46782bd05021a516fd2"
+      "df0cf5b25236998b1f4dfe22fbf2dc93"
     ],
     [
       "Spec.CRC32.Bits.crc32_data_to_bits_32bit",
@@ -3078,8 +3041,8 @@
         "equation_FStar.Seq.Base.op_At_Bar", "equation_Prims.eqtype",
         "equation_Prims.nat", "equation_Prims.pos",
         "equation_Spec.CRC32.Bits.crc32_buf_len",
-        "equation_Spec.CRC32.Bits.crc32_data_dword",
         "equation_Spec.CRC32.Bits.op_Plus_At",
+        "equation_Yazi.CRC32.Types.crc32_data_dword",
         "function_token_typing_Prims.__cache_version_number__",
         "function_token_typing_Prims.bool", "int_inversion", "int_typing",
         "interpretation_Tm_abs_bae2e04c7f90f436adb2db234224cf0e",
@@ -3103,7 +3066,6 @@
         "refinement_interpretation_Tm_refine_7acf795d50ec256996534a97e12bfa61",
         "refinement_interpretation_Tm_refine_84725076f1eb2c448c0eddb30cddd07f",
         "refinement_interpretation_Tm_refine_9fca77211049e6466825310838b9c114",
-        "refinement_interpretation_Tm_refine_afd51579b90d50ea23e03b743a1fa001",
         "refinement_interpretation_Tm_refine_b913a3f691ca99086652e0a655e72f17",
         "refinement_interpretation_Tm_refine_bad636376d857c953d20883a8311ca0c",
         "refinement_interpretation_Tm_refine_c1424615841f28cac7fc34e92b7ff33c",
@@ -3113,15 +3075,15 @@
         "refinement_interpretation_Tm_refine_f76fbae5374d971d2891d11aa132248e",
         "token_correspondence_Spec.CRC32.Bits.op_Plus_At",
         "typing_FStar.BitVector.logxor_vec",
-        "typing_FStar.BitVector.ones_vec", "typing_FStar.Seq.Base.append",
-        "typing_FStar.Seq.Base.empty", "typing_FStar.Seq.Base.index",
-        "typing_FStar.Seq.Base.length", "typing_FStar.UInt.to_vec",
+        "typing_FStar.BitVector.ones_vec", "typing_FStar.Seq.Base.empty",
+        "typing_FStar.Seq.Base.index", "typing_FStar.Seq.Base.length",
+        "typing_FStar.Seq.Base.op_At_Bar", "typing_FStar.UInt.to_vec",
         "typing_FStar.UInt32.v", "typing_FStar.UInt8.t",
         "typing_Spec.CRC32.Bits.crc32_data_to_bits_cont",
         "typing_Tm_abs_4153cc131d4faab92d3c0c0449f39c5e"
       ],
       0,
-      "4a6f21a6ea5ef38852fdbb1bf6e32503"
+      "6ab771923609ee6e4a9017f9d8751298"
     ],
     [
       "Spec.CRC32.Bits.crc32_matched",
@@ -3147,7 +3109,7 @@
         "typing_FStar.UInt.fits", "typing_Prims.pow2"
       ],
       0,
-      "a40b28e64df709afbde02b8f5f1c3923"
+      "ab65c41675180f915cf089c650697594"
     ],
     [
       "Spec.CRC32.Bits.crc32_matched_zero",
@@ -3179,7 +3141,7 @@
         "typing_FStar.UInt32.v"
       ],
       0,
-      "d102e4de7271e0d90db871de92ed9bea"
+      "a19535b0ca14fa3fd7f9d4d03e9721e4"
     ],
     [
       "Spec.CRC32.Bits.crc32_matched_xor_inv_1",
@@ -3223,7 +3185,7 @@
         "typing_FStar.UInt32.uint_to_t", "typing_FStar.UInt32.v"
       ],
       0,
-      "ca14c64d1b06c5531c07c522279bdfa2"
+      "5726c312f698791ce2b7289371d79e00"
     ],
     [
       "Spec.CRC32.Bits.crc32_matched_xor_inv_2",
@@ -3249,7 +3211,7 @@
         "typing_FStar.UInt32.logxor", "typing_FStar.UInt32.v"
       ],
       0,
-      "a8de9afd7fb51aa7d03abae0be4b2d5e"
+      "e1f768811916221c575e628fed9e7766"
     ],
     [
       "Spec.CRC32.Bits.crc32_matched_xor_inv_3",
@@ -3291,7 +3253,7 @@
         "typing_Spec.CRC32.Bits.poly_mod"
       ],
       0,
-      "41e1553433c38382fe4aa13036bbaa6e"
+      "12c04f6851977b2ddf095c7ae427a2b2"
     ],
     [
       "Spec.CRC32.Bits.crc32_matched_xor_inv_3",
@@ -3300,7 +3262,7 @@
       0,
       [ "@query" ],
       0,
-      "dbfdb719353ffd5f42346af6d77554b5"
+      "23f55c7ca4e43fa80ee695f482834ce6"
     ],
     [
       "Spec.CRC32.Bits.crc32_matched_xor_inv_3",
@@ -3376,7 +3338,7 @@
         "typing_Spec.CRC32.Bits.poly_mod"
       ],
       0,
-      "25c225579f856527c9ba541378164425"
+      "2198d78ef027eba2844456c3d2a0b331"
     ]
   ]
 ]
