@@ -12,7 +12,7 @@ module Seq = FStar.Seq
 module Spec = Spec.CRC32
 module ST = FStar.HyperStack.ST
 
-private type matrix_buf = B.lbuffer U32.t 32
+open Yazi.CRC32.Types
 
 [@ (CPrologue "#ifndef YAZI_CRC32_TABLE_GEN
 uint32_t crc32_z(uint32_t crc, const unsigned char *buf, size_t len);")
@@ -88,6 +88,6 @@ val gen_crc32_table:
 
 [@ (CPrologue "#ifdef YAZI_CRC32_TABLE_GEN")
    (CEpilogue "#endif")]
-val gen_matrix_table: buf: Spec.matrix_buf -> ST.Stack unit
+val gen_matrix_table: buf: matrix_buf -> ST.Stack unit
   (requires fun h -> B.live h buf)
   (ensures fun h0 _ h1 -> B.modifies (B.loc_buffer buf) h0 h1 /\ Spec.is_matrix_buf h1 8 buf)

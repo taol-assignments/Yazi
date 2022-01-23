@@ -82,12 +82,6 @@ val sum_b'_u64_uppser_bound:
   -> s: input n
   -> c: input m
   -> Lemma (ensures (sum_b s % base) + m * (sum_a s % base) + sum_b' c <= UInt.max_int 64)
-  
-type adler32_pair (#m: nat) (s: input m) = p: (U64.t & U64.t){
-  let open U64 in
-  let (a, b) = p in
-  v a == sum_a s % base /\ v b == sum_b s % base
-}
 
 let adler32_matched (#m: nat) (s: input m) (a: U32.t) =
   let open U32 in

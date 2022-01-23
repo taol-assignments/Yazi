@@ -30,7 +30,10 @@ FSTAR_HINTS ?= --use_hints --use_hint_hashes --record_hints
 # the FStar namespace since it's already extracted and packaged as the ocamlfind
 # package fstarlib. Here, unlike in -bundle, +Spec matches both Spec and
 # Spec.*
-FSTAR_EXTRACT = --extract 'Kremlin:Yazi' --extract "-*"
+FSTAR_EXTRACT = --extract 'Kremlin:Yazi' \
+	--extract 'Kremlin:FStar' \
+	--extract 'Kremlin:LowStar' \
+	--extract "-*"
 
 # Some reasonable flags to turn on:
 # - 247: checked file not written because some of its dependencies...
@@ -197,6 +200,7 @@ dist/Makefile.basic: $(filter-out %prims.krml,$(ALL_KRML_FILES)) $(HAND_WRITTEN_
 	  -minimal \
 	  -bundle 'FStar.*' \
 	  -bundle Yazi.LZ77=Yazi.LZ77,Yazi.LZ77.*,Yazi.Stream.State \
+	  -bundle Yazi.CRC32=Yazi.CRC32,Yazi.CRC32.* \
 	  -add-include '<stdint.h>' \
 	  -add-include '<string.h>' \
 	  -add-early-include '"Yazi_Misc.h"' \

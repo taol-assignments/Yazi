@@ -19,16 +19,19 @@ type tree =
   | Node: left: tree -> id: nat-> freq: pos -> right: tree -> tree
   | Leaf: symbol: nat -> freq: pos -> tree
 
+noextract
 let id (t: tree) =
   match t with
   | Node _ id _ _ -> id
   | Leaf sym _ -> sym
 
+noextract
 unfold let freq (t: tree): Tot pos =
   match t with
   | Node _ _ f _ -> f
   | Leaf _ f -> f
 
+noextract
 let rec symbols (t: tree) =
   match t with
   | Node l _ _ r -> symbols l @| symbols r

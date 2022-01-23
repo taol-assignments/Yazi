@@ -13,8 +13,7 @@ open FStar.Seq
 open FStar.Mul
 open Lib.Seq
 open Lib.UInt
-
-type matrix_buf = B.lbuffer U32.t 32
+open Yazi.CRC32.Types
 
 let magic_matrix_pattern (nzeros: pos) (i: nat{i < 32}):
   Tot (res: BV.bv_t (nzeros + 32){
@@ -70,12 +69,14 @@ let bit_extract_eq_pattern (#len: nat{len > 32}) (n: BV.bv_t len) (i: nat{i < 32
   (ensures bit_extract n i == magic_matrix_pattern (len - 32) i) =
   assert(Seq.equal (bit_extract n i) (magic_matrix_pattern (len - 32) i))
 
+noextract
 type sub_matrix_times_product (nzeros: pos) (i: nat{i < 32}) (vec: U32.t) = 
   res: U32.t{
     let vec' = Bits.zero_vec_l nzeros (UInt.to_vec (U32.v vec)) in
     UInt.to_vec (U32.v res) == Bits.poly_mod (bit_sum vec' i)
   }
 
+noextract
 type matrix_times_product (nzeros: pos) (vec: U32.t) =
   sub_matrix_times_product nzeros 31 vec
 

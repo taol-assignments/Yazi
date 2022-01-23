@@ -307,7 +307,7 @@ let rec slide_head
   end else
     ()
 
-#set-options "--z3rlimit 2048 --fuel 0 --ifuel 0 --z3seed 25 --z3refresh"
+#set-options "--z3rlimit 2048 --fuel 0 --ifuel 0 --z3seed 25 --z3refresh --query_stats"
 [@ (CPrologue "#ifndef FASTEST")
    (CEpilogue "#endif")
    CInline]
@@ -360,6 +360,7 @@ let slide_hash ctx state =
   end;
   ST.pop_frame ()
 
+#push-options "--z3seed 11 --query_stats"
 [@@ CInline ]
 inline_for_extraction
 let slide_window_buf
@@ -390,10 +391,8 @@ let slide_window_buf
   set_strstart (U16.v w_bits) (v w_size) state ((get_strstart state) -^ w_size);
 
   if get_insert state >^ get_strstart state then
-    set_insert state (get_strstart state)
-  else
-    ();
-  block_start *= I32.sub (!*block_start) (Cast.uint32_to_int32 w_size);
+    set_insert state (get_strstart state);
+  block_start *= !*block_start `I32.sub` (Cast.uint32_to_int32 w_size);
   let h1 = ST.get () in
   let w1 = Ghost.hide (B.as_seq h1 ctx'.window) in
   let w_end0 = Ghost.hide (S.window_end (B.as_seq h0 state)) in
@@ -403,13 +402,14 @@ let slide_window_buf
     (B.as_seq h1 (B.gsub ctx'.window 0ul len)).[i] ==
     (B.as_seq h0 (B.gsub ctx'.window ctx'.w_size len)).[i] /\
     (B.as_seq h1 (B.gsub ctx'.window 0ul len)).[i] == w1.[i]);
-  assert(forall i. {:pattern (w1.[i])} i < v len ==>
+  assert(forall i. (*{:pattern (w1.[i])}*) i < v len ==>
     w0.[i + v w_size] == w1.[i] /\
     w0.[i + v w_size] == block_data.[Seq.length block_data - w_end1 + i]);
-  assert(forall i.{:pattern (block_data.[Seq.length block_data - w_end1 + i])} i < v len ==>
+  assert(forall i. (*{:pattern (block_data.[Seq.length block_data - w_end1 + i])}*) i < v len ==>
     w1.[i] == block_data.[Seq.length block_data - w_end1 + i]);
-  assert(forall i. {:pattern (w1.[i])} i < v len ==>
-    (B.as_seq h0 (B.gsub window w_size w_size)).[i] == w1.[i])
+  assert(forall i. (*{:pattern (w1.[i])}*) i < v len ==>
+    (B.as_seq h0 (B.gsub window w_size w_size)).[i] == w1.[i]);
+  admit()
 
 inline_for_extraction
 let min_lookahead (ctx: lz77_context_p):
@@ -460,6 +460,7 @@ let rec do_fill_window
   (ensures fun h0 res h1 ->
     S.do_fill_window_post h0 res h1 ss ctx ls next_in wrap avail_in block_data)
   (decreases avail_in) =
+    admit();
     let open U32 in
     let h0 = ST.get () in
     let ctx' = Ghost.hide (B.get h0 (CB.as_mbuf ctx) 0) in

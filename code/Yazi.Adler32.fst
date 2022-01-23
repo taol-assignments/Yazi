@@ -254,6 +254,12 @@ let rec iteration_16 (d: Ghost.erased do_init_state) (s: do_state): ST.Stack do_
   else
     s
 
+type adler32_pair (#m: nat) (s: input m) = p: (U64.t & U64.t){
+  let open U64 in
+  let (a, b) = p in
+  v a == sum_a s % base /\ v b == sum_b s % base
+}
+
 inline_for_extraction
 let extract_sums
   (#m: Ghost.erased nat)
@@ -433,13 +439,14 @@ let iteration_nmax
 
 let adler32 #m data adler buf len =
   let open U32 in
-  if len = 1ul then
+  if len =^ 1ul then
     let (d, s) = init_state data adler len buf in
     let s' = do1 d s in
     combine_sums data s'.consumed s'.a s'.b
-  else if len = 0ul then begin
-    let h0 = ST.get () in
-    lemma_empty (CB.as_seq h0 buf);
+  else if len =^ 0ul then begin
+    let h0 = Ghost.hide (ST.get ()) in
+    let sbuf = Ghost.hide (CB.as_seq h0 buf) in
+    lemma_empty sbuf;
     append_empty_r data;
     adler
   end else if len <^ 16ul then

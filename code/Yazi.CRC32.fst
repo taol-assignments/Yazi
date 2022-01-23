@@ -148,11 +148,11 @@ let do1_shift_right_logxor (r: U32.t) (t: U32.t): Lemma
 
 [@ (CPrologue "#if 0")
    (CEpilogue "#endif")]
-assume val get_crc32_table: i: U32.t{U32.v i < 4} -> ST.Stack (Spec.table_buf)
+assume val get_crc32_table: i: U32.t{U32.v i < 4} -> ST.Stack table_buf
   (requires fun h -> True)
   (ensures fun h0 t h1 ->
     B.modifies B.loc_none h0 h1 /\
-    CB.live h1 t /\ Spec.table_correct (8 * (U32.v i + 1)) h1 t)
+    CB.live h1 t /\ table_correct (8 * (U32.v i + 1)) h1 t)
 
 #set-options "--z3rlimit 400 --z3seed 1 --fuel 1 --ifuel 1"
 inline_for_extraction let do1
@@ -527,6 +527,14 @@ let crc32 data' crc buf len =
   end;
   c2 ^^ 0xFFFFFFFFul
 
+type sub_matrix_times_product (nzeros: pos) (i: nat{i < 32}) (vec: U32.t) = res: U32.t{
+  let vec' = zero_vec_l nzeros (UInt.to_vec (U32.v vec)) in
+  UInt.to_vec (U32.v res) == poly_mod (bit_sum vec' i)
+}
+
+type matrix_times_product (nzeros: pos) (vec: U32.t) =
+  sub_matrix_times_product nzeros 31 vec
+
 #set-options "--fuel 0 --ifuel 0"
 [@ CInline ]
 inline_for_extraction
@@ -539,7 +547,7 @@ let rec do_gf2_matrix_times
     forall (j: nat{j >= U32.v i /\ j < 32}).
       UInt.nth (U32.v vec) j == UInt.nth (U32.v vec') (j - U32.v i)
   })
-  (sum:sub_matrix_times_product nzeros (U32.v i - 1) vec'):
+  (sum: sub_matrix_times_product nzeros (U32.v i - 1) vec'):
   ST.Stack (matrix_times_product nzeros vec')
   (decreases 31 - U32.v i)
   (requires fun h -> is_matrix_buf h nzeros buf)
@@ -575,7 +583,7 @@ let rec do_gf2_matrix_times
 
 [@ CInline ]
 let gf2_matrix_times (nzeros: Ghost.erased pos) (buf: matrix_buf) (vec: U32.t):
-  ST.Stack (Spec.matrix_times_product nzeros vec)
+  ST.Stack (matrix_times_product nzeros vec)
   (requires fun h -> Spec.is_matrix_buf h nzeros buf)
   (ensures fun h0 res h1 -> B.(modifies loc_none h0 h1)) =
   let open U32 in
@@ -826,6 +834,11 @@ private let poly_mask (i: U32.t{(U32.v i) < 32}) (p: U32.t{
     res
   end else
     p
+
+type crc32_polynomial = res: U32.t{
+  let res' = U32.v res in
+  forall i. UInt.nth res' i == Seq.index gf2_polynomial32 i
+}
 
 [@ (CPrologue "#ifdef YAZI_CRC32_TABLE_GEN")
    (CEpilogue "#endif")]

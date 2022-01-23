@@ -13,6 +13,7 @@ open FStar.Mul
 open FStar.Seq
 open Lib.Seq
 open Lib.UInt
+open Yazi.CRC32.Types
 
 let rec logxor_vec_comm (#n: pos) (a b: BV.bv_t n): Lemma
   (ensures BV.logxor_vec a b == BV.logxor_vec b a)
@@ -118,11 +119,6 @@ let gf2_polynomial = Seq.init #bool 33 (fun i ->
 
 let gf2_polynomial32 = unsnoc gf2_polynomial
 
-type crc32_polynomial = res: U32.t{
-  let res' = U32.v res in
-  forall i. UInt.nth res' i == gf2_polynomial32.[i]
-}
-
 unfold let poly (n: nat{n >= 33}): Tot (p: BV.bv_t n{
   p.[n - 1] == true
 }) =
@@ -195,8 +191,6 @@ let poly_mod_correct_eq (nzeros: pos) (d res: U32.t): Lemma
   let open U32 in
   assert(forall i. UInt.nth (v res) i == (UInt.to_vec (v res)).[i]);
   assert(Seq.equal (poly_mod (zero_vec_l nzeros (UInt.to_vec (U32.v d)))) (UInt.to_vec (v res)))
-
-type table_buf = buf: CB.const_buffer U32.t{CB.length buf == 256}
 
 let sub_table_correct (j: nat{j <= 256}) (nzeros: pos) (h: HS.mem) (buf: table_buf) =
   CB.live h buf /\
@@ -275,19 +269,6 @@ val crc32_data_to_bits_rev: n: pos -> data: Seq.seq U8.t -> Lemma
   (ensures crc32_data_to_bits n data == 
     (zero_vec_l (n * 8) (BV.ones_vec #32)) +@
     (zero_vec_l 32 (data_bits_rev data)))
-
-type crc32_data_dword (a b c d: U8.t) = res: U32.t{
-  let a' = UInt.to_vec (U8.v a) in
-  let b' = UInt.to_vec (U8.v b) in
-  let c' = UInt.to_vec (U8.v c) in
-  let d' = UInt.to_vec (U8.v d) in
-  let r' = UInt.to_vec (U32.v res) in
-  forall (i: nat{i < 32}). {:pattern r'.[i]}
-    (i >= 24 ==> r'.[i] == a'.[i - 24]) /\
-    (16 <= i /\ i < 24 ==> r'.[i] == b'.[i - 16]) /\
-    (8 <= i /\ i < 16 ==> r'.[i] == c'.[i - 8]) /\
-    (i < 8 ==> r'.[i] == d'.[i])
-}
 
 unfold let crc32_dword_seq (a b c d: U8.t) =
   Seq.init 4 (fun i -> match i with | 0 -> a | 1 -> b | 2 -> c | 3 -> d)
