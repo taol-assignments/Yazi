@@ -3,10 +3,13 @@ module Spec.Tree
 module U8 = FStar.UInt8
 module U16 = FStar.UInt16
 module U32 = FStar.UInt32
+module Math = FStar.Math.Lemmas
 
 open FStar.Seq
 open Lib.Seq
 open Yazi.Tree.Types
+open Yazi.Deflate.Constants
+
 include Spec.Heap
 include Spec.Tree.Lemmas
 
@@ -61,64 +64,55 @@ let pqmerge (ts: heap_wf_ts) (node: nat): Pure tree_state_wf
   lemma_pqmerge_main ts node ts' t';
   ts'
 
-// #push-options "--z3refresh --z3rlimit 1024 --fuel 1 --ifuel 1"
-// /// Merge the two trees that have the lowest frequencies.
-// let merge_tree (ts: forest_wf_ts) (node: nat):
-//   Ghost forest_wf_ts
-//   (requires
-//     ts.heap_len > 1 /\
-//     // (forall i. i >= node ==> U8.v (ts.depth).[i] == 0) /\
-//     is_max_id ts node)
-//   (ensures fun ts' ->
-//     ts' == {
-//       ts with
-//       heap = ts'.heap;
-//       heap_len = ts.heap_len - 1;
-//       heap_max = ts.heap_max - 2;
-//       forest = ts'.forest;
-//       depth = ts'.depth;
-//       tree = ts'.tree;
-//     } /\
-//     (forall s. U32.v s <> node ==>
-//       count s (element_seq ts) == count s (element_seq ts')) /\
-//     count (U32.uint_to_t node) (element_seq ts') == 1 /\
-//     permutation nat (forest_symbols ts) (forest_symbols ts')) =
-//   let ts' = pqremove ts in
+#set-options "--z3refresh --z3rlimit 1024 --z3seed 6 --fuel 0 --ifuel 0 --query_stats"
+let build_tree_term (ts: forest_wf_ts) (node: nat):
+  Ghost (partial_wf_ts 2ul)
+  (requires build_tree_pre ts node)
+  (ensures fun ts' -> build_tree_term_post ts node ts') =
+  lemma_pqremove_forest ts node;
+  let ts1 = pqremove ts in
+  let hs = heap_seq ts in
+  let hs1 = intermediate_fseq ts1 in
+  lemma_forest_freq_perm ts hs ts1 hs1;
+  lemma_forest_symbols_perm ts hs ts1 hs1;
+  let ts' = pqmerge ts1 node in
+  calc (==) {
+    ts'.heap_max + 2;
+    =={}
+    ts1.heap_max - 1 + 2;
+    =={}
+    ts.heap_max - 1 - 1 + 2;
+    =={Math.Lemmas.subtraction_is_distributive ts.heap_max 1 1}
+    ts.heap_max - (1 + 1) + 2;
+    =={}
+    ts.heap_max - 2 + 2;
+    =={}
+    ts.heap_max;
+  };
+  ts'
 
-//   let il = U32.v (ts'.heap).[ts'.heap_max] in
-//   let hl = U8.v (ts'.depth).[il] in
-//   let l = (ts'.forest).[il] in
-//   let t1 = ts.tree.(il) <- ({
-//     (ts.tree).[il] with
-//     dad_or_len = U16.uint_to_t node;
-//   }) in
- 
-//   let ir = U32.v (ts'.heap).[1] in
-//   let hr = U8.v (ts'.depth).[ir] in
-//   let r = (ts'.forest).[ir] in
-//   let t2 = t1.(ir) <- ({
-//     (ts.tree).[ir] with
-//     dad_or_len = U16.uint_to_t node;
-//   }) in
- 
-//   let t' = Node l node (freq l + freq r) r in
-//   let dt' = (1 + (if hl >= hr then hl else hr)) % pow2 8 in
-//   let t3 = t2.(node) <- ({
-//     freq_or_code = (t2.[ir]).freq_or_code `U16.add` (t2.[ir]).freq_or_code;
-//     dad_or_len = U16.uint_to_t node;
-//   }) in
-//   admit();
-//   // lemma_wf_forest_symbols_disjoint ts' ts'.heap_max 1;
+#set-options "--z3seed 1"
+let build_tree_rec (ts: forest_wf_ts) (node: nat):
+  Ghost forest_wf_ts
+  (requires build_tree_pre ts node /\ 2 < ts.heap_len)
+  (ensures fun ts' ->
+    let hs = heap_seq ts in
+    let hs' = heap_seq ts' in
+    forest_freq ts hs == forest_freq ts' hs' /\
+    permutation nat (forest_symbols ts hs) (forest_symbols ts' hs') /\
+    build_tree_pre ts' (node + 1)) =
+  let ts1 = build_tree_term ts node in
+  let ts2 = pqdownheap ts1 1ul in
+  lemma_build_tree_rec ts ts1 ts2 node;
+  ts2
 
-//   let heap_max' = ts'.heap_max - 1 in
-//   let heap' = upd ts'.heap heap_max' (U32.uint_to_t ir) in
- 
-//   let ts'' = {
-//     ts' with
-//     heap = heap';
-//     heap_max = heap_max';
-//     forest = upd ts'.forest node t';
-//     depth = ts'.depth.(node) <- (U8.uint_to_t dt');
-//     tree = t3;
-//   } in
-//   pqdownheap ts'' 1ul
+let rec build_tree (ts: forest_wf_ts) (node: nat):
+  Ghost forest_wf_ts
+  (requires build_tree_pre ts node)
+  (ensures fun ts' -> build_tree_post ts node ts')
+  (decreases ts.heap_len) =
+  if 2 < ts.heap_len then
+    let ts1 = build_tree_rec ts node in
+    build_tree ts1 (node + 1)
+  else
+    build_tree_term ts node

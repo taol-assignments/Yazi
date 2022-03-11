@@ -70,7 +70,7 @@ private let parent_corr (ts: intermediate_ts) (i: heap_index ts) =
   ts.heap_max <= i ==> (exists (j: heap_index ts{j < i}).
     U16.v (ts.tree.[i']).dad_or_len == U32.v ts.heap.[j])
 
-private unfold let tree_corr (ts: intermediate_ts) (i: heap_index ts) =
+unfold let tree_corr (ts: intermediate_ts) (i: heap_index ts) =
   child_corr ts i /\ parent_corr ts i
 
 type tree_id_seq (ts: heap_elems_wf_ts) = s: seq U32.t{
@@ -126,21 +126,31 @@ val lemma_forest_symbols_perm:
 /// Auxiliary lemmas for lemma_pqremove_forest and pqmerge_post.
 let lemma_element_seq_tree_index (ts: heap_elems_wf_ts) (i: nat): Lemma
   (requires heap_not_empty ts /\ i < length (element_seq ts))
-  (ensures is_tree_index ts (element_seq ts).[i]) = ()
+  (ensures is_tree_index ts (element_seq ts).[i])
+  [SMTPat (element_seq ts).[i]] = ()
 
 let lemma_intermediate_fseq_tree_index (ts: heap_wf_ts): Lemma
   (requires sorted_not_empty ts)
   (ensures (
     let cs = intermediate_fseq ts in
-    forall i. {:pattern cs.[i]} is_tree_index ts cs.[i])) = ()
+    forall i. {:pattern cs.[i]} is_tree_index ts cs.[i]))
+  [SMTPat (intermediate_fseq ts)] = ()
 
 let lemma_heap_seq_tree_index (ts: heap_elems_wf_ts): Lemma
   (requires heap_not_empty ts)
   (ensures (
     let hs = heap_seq ts in
-    forall i. {:pattern hs.[i]} is_tree_index ts hs.[i])) = ()
+    forall i. {:pattern hs.[i]} is_tree_index ts hs.[i]))
+  [SMTPat (heap_seq ts)] = ()
 
-unfold let pqmerge_pre (ts: heap_wf_ts) (node: nat) =
+/// For all root nodes in the heap area, and the node whose ID is not smaller than
+/// the maximum available node, their parent IDs should be zero.
+unfold let dad_zero (ts: heap_elems_wf_ts) (node: nat) =
+  (forall i. 1 <= i /\ i <= ts.heap_len ==>
+    U16.v (ts.tree.[U32.v ts.heap.[i]]).dad_or_len == 0) /\
+  (forall i. node <= i ==> U16.v (ts.tree.[i]).dad_or_len == 0)
+
+let pqmerge_pre (ts: heap_wf_ts) (node: nat) =
   sorted_not_empty ts /\ node < ts.tree_len /\ is_max_id ts node /\
   ts.heap_len < ts.heap_max - 1 /\
   (let s = intermediate_fseq ts in
@@ -148,8 +158,7 @@ unfold let pqmerge_pre (ts: heap_wf_ts) (node: nat) =
   0 < ff /\ ff < pow2 15 /\
   no_dup (element_seq ts) /\
   no_dup (forest_symbols ts s) /\
-  (forall i. 1 <= i /\ i <= ts.heap_len ==>
-    U16.v (ts.tree.[U32.v ts.heap.[i]]).dad_or_len == 0) /\
+  dad_zero ts node /\
   U16.v (ts.tree.[U32.v ts.heap.[ts.heap_max]]).dad_or_len == 0 /\
   (forall (i: heap_index ts).
     freq_corr ts i /\
@@ -160,11 +169,22 @@ val lemma_is_max_id_map: ts: heap_wf_ts -> node: nat -> i: heap_index ts -> Lemm
   (requires pqmerge_pre ts node)
   (ensures U32.v ts.heap.[i] < node)
 
+val lemma_forest_freq_perm:
+    ts0: heap_elems_wf_ts
+  -> s0: tree_id_seq ts0
+  -> ts1: heap_elems_wf_ts
+  -> s1: tree_id_seq ts1
+  -> Lemma
+  (requires ts0.forest == ts1.forest /\ permutation U32.t s0 s1)
+  (ensures forest_freq ts0 s0 == forest_freq ts1 s1)
+  (decreases length s0)
+
 /// The pre-condition of pqmerge is hold after the call of pqremove.
 val lemma_pqremove_forest: ts: forest_wf_ts -> node: nat -> Lemma
   (requires
     1 < ts.heap_len /\ ts.heap_len < ts.heap_max - 1 /\
-    node < ts.tree_len /\ is_max_id ts node)
+    node < ts.tree_len /\ is_max_id ts node /\
+    dad_zero ts node)
   (ensures pqmerge_pre (pqremove ts) node)
 
 val lemma_forest_freq_plus:
@@ -188,20 +208,23 @@ val lemma_forest_freq_plus:
 /// The heap root is the newly added tree ID. It may not be the smallest element
 /// in the heap.
 #push-options "--z3refresh --z3seed 17 --z3rlimit 256 --fuel 0 --ifuel 0"
-unfold let pqmerge_post (ts: heap_wf_ts) (node: nat) (ts': tree_state_wf): Pure Type0
+let pqmerge_post (ts: heap_wf_ts) (node: nat) (ts': tree_state_wf): Pure Type0
   (requires pqmerge_pre ts node)
   (ensures fun _ -> True) =
   (* The heap should be partial well-formed, and the root element may not be the
      minimum element. *)
+  ts'.heap_len == ts.heap_len /\
   partial_wf ts' 2ul /\ heap_not_empty ts' /\
   heap_sorted ts' /\ sorted_not_empty ts' /\ sorted_lt_heap ts' /\
+  ts'.heap_max == ts.heap_max - 1 /\
+  ts'.tree_len == ts.tree_len /\
   
   (let (es, es') = (element_seq ts, element_seq ts') in
   let n = es'.[0] in
   let hs = intermediate_fseq ts in
-  lemma_element_seq_tree_index ts' ts'.heap_len;
-  lemma_intermediate_fseq_tree_index ts;
-  lemma_heap_seq_tree_index ts';
+  let t' = ts'.forest.[U32.v n] in
+  let l = ts'.forest.[U32.v ts'.heap.[ts.heap_max]] in
+  let r = ts'.forest.[U32.v ts'.heap.[ts'.heap_max]] in
 
   (* The forest symbols should be the permutation of the previous forest symbols,
      and the forest frequencies should be identical as well. *)
@@ -216,7 +239,19 @@ unfold let pqmerge_post (ts: heap_wf_ts) (node: nat) (ts': tree_state_wf): Pure 
 
   (* The newly created tree's ID should equal to node, and all node ID in the
      tree sequence should smaller than node + 1. *)
-  id ts'.forest.[U32.v n] == node /\ is_max_id ts' (node + 1) /\
+  id t' == node /\
+  is_max_id ts' (node + 1) /\
+  freq l + freq r > 0 /\
+  t' == Node l node (freq l + freq r) r /\
+
+  (* All nodes whose ID are larger than node parameter should be zero. *)
+  dad_zero ts' (node + 1) /\
+
+  (* Only a new tree is created. *)
+  (forall i. i <> node ==> ts.forest.[i] == ts'.forest.[i]) /\
+
+  ts.heap.[1] == ts'.heap.[ts'.heap_max] /\
+  (forall i. i <> 1 /\ i <> ts'.heap_max ==> ts'.heap.[i] == ts.heap.[i]) /\
 
   (forall i. freq_corr ts' i /\ tree_corr ts' i))
 
@@ -289,3 +324,96 @@ val lemma_pqmerge_main:
   -> Lemma
   (requires pqmerge_main_pre ts node ts' t')
   (ensures pqmerge_post ts node ts')
+
+#pop-options
+let rec node_count (t: tree): Tot nat  =
+  match t with
+  | Node l _ _ r -> 1 + node_count l + node_count r
+  | _ -> 0
+
+let rec leaf_count (t: tree): Tot nat  =
+  match t with
+  | Node l _ _ r -> leaf_count l + leaf_count r
+  | _ -> 1
+
+val lemma_node_leaf_count: t: tree -> Lemma
+  (ensures node_count t == leaf_count t - 1)
+  [SMTPatOr [[SMTPat (node_count t)]; [SMTPat (leaf_count t)]]]
+
+private let rec forest_node_count' (ts: intermediate_ts) (i: pos{i <= ts.heap_len}): Tot nat =
+  let t = ts.forest.[U32.v ts.heap.[i]] in
+  match i with
+  | 1 -> node_count t
+  | _ -> node_count t + forest_node_count' ts (i - 1)
+
+unfold let forest_node_count (ts: intermediate_ts) = forest_node_count' ts ts.heap_len
+
+private let rec forest_leaf_count' (ts: intermediate_ts) (i: pos{i <= ts.heap_len}): Tot nat =
+  let t = ts.forest.[U32.v ts.heap.[i]] in
+  match i with
+  | 1 -> leaf_count t
+  | _ -> leaf_count t + forest_leaf_count' ts (i - 1)
+
+unfold let forest_leaf_count (ts: intermediate_ts) = forest_leaf_count' ts ts.heap_len
+
+val lemma_forest_node_leaf_count: ts: intermediate_ts -> Lemma
+  (ensures forest_node_count ts == forest_leaf_count ts - ts.heap_len)
+  [SMTPatOr [[SMTPat (forest_node_count ts)]; [SMTPat (forest_leaf_count ts)]]]
+
+let build_tree_pre (ts: forest_wf_ts) (node: nat): Tot Type0 =
+  let flc = forest_leaf_count ts in
+  let fnc = forest_node_count ts in
+  ts.heap_len > 1 /\
+  flc <= ts.tree_len / 2 /\
+  U32.v heap_size - ts.heap_max + ts.heap_len == flc + fnc /\
+  node == ts.tree_len / 2 + fnc + 1 /\
+  node < ts.tree_len /\
+  is_max_id ts node /\
+  dad_zero ts node
+
+#push-options "--z3refresh --z3seed 17 --z3rlimit 256 --fuel 0 --ifuel 0 --query_stats"
+let build_tree_post (ts: forest_wf_ts) (node: nat) (ts': forest_wf_ts): Pure Type0
+  (requires build_tree_pre ts node)
+  (ensures fun _ -> True) =
+  let hs = heap_seq ts in
+  let hs' = heap_seq ts' in
+  ts'.heap_len == 1 /\
+
+  permutation nat (forest_symbols ts hs) (forest_symbols ts' hs') /\
+  forest_freq ts hs == forest_freq ts' hs'
+
+let build_tree_term_post (ts: forest_wf_ts) (node: nat) (ts': partial_wf_ts 2ul): Pure Type0
+  (requires build_tree_pre ts node)
+  (ensures fun _ -> True) =
+    ts'.tree_len == ts.tree_len /\
+    ts'.heap_len + 1 == ts.heap_len /\
+    ts'.heap_max + 2 == ts.heap_max /\
+    heap_not_empty ts' /\ is_forest_wf ts' /\
+    heap_sorted ts' /\ sorted_lt_heap ts' /\
+    is_max_id ts' (node + 1) /\
+    dad_zero ts' (node + 1) /\
+    (let hs = heap_seq ts in let hs' = heap_seq ts' in
+    forest_freq ts hs == forest_freq ts' hs' /\
+    permutation nat (forest_symbols ts hs) (forest_symbols ts' hs'))
+
+val lemma_build_tree_rec:
+    ts0: forest_wf_ts
+  -> ts1: partial_wf_ts 2ul
+  -> ts2: heap_wf_ts
+  -> node: nat
+  -> Lemma
+  (requires
+    2 < ts0.heap_len /\
+    build_tree_pre ts0 node /\
+    build_tree_term_post ts0 node ts1 /\
+    ts2 == pqdownheap ts1 1ul)
+  (ensures (
+    let hs0 = heap_seq ts0 in
+    let hs2 = heap_seq ts2 in
+    let flc2 = forest_leaf_count ts2 in
+    let fnc2 = forest_node_count ts2 in
+    is_forest_wf ts2 /\ is_max_id ts2 (node + 1) /\ dad_zero ts2 (node + 1) /\
+    permutation nat (forest_symbols ts0 hs0) (forest_symbols ts2 hs2) /\
+    forest_freq ts0 hs0 == forest_freq ts2 hs2 /\
+    U32.v heap_size - ts2.heap_max + ts2.heap_len == flc2 + fnc2 /\
+    node + 1 == ts2.tree_len / 2 + fnc2 + 1))

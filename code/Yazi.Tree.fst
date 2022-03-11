@@ -184,6 +184,19 @@ let pqremove (ts: tree_state_t):
 #pop-options
 
 #push-options "--z3refresh --z3seed 1 --z3rlimit 1024 --fuel 1 --ifuel 1 --query_stats"
+let merge_modification (h0: HS.mem) (ts0 ts1: tree_state_t) (h1: HS.mem): Pure Type0
+  (requires SH.tree_state_live h0 ts0)
+  (ensures fun _ -> True) =
+  let ctx = (CB.as_seq h0 ts0.ctx).[0] in
+  B.modifies (
+    B.loc_buffer ctx.heap `B.loc_union`
+    B.loc_buffer ctx.state `B.loc_union`
+    B.loc_buffer ctx.depth `B.loc_union`
+    B.loc_buffer ctx.tree
+  ) h0 h1 /\
+  SH.tree_state_live h1 ts1 /\
+  ts0.ctx == ts1.ctx
+
 inline_for_extraction
 let pqmerge (ts: tree_state_t) (node: U32.t):
   ST.Stack tree_state_t
@@ -192,14 +205,7 @@ let pqmerge (ts: tree_state_t) (node: U32.t):
     SH.heap_wf (SH.g_tree_state h ts) /\
     SH.pqmerge_pre (SH.g_tree_state h ts) (U32.v node))
   (ensures fun h0 ts' h1 ->
-    let ctx = (CB.as_seq h0 ts.ctx).[0] in
-    B.modifies (
-      B.loc_buffer ctx.heap `B.loc_union`
-      B.loc_buffer ctx.state `B.loc_union`
-      B.loc_buffer ctx.depth `B.loc_union`
-      B.loc_buffer ctx.tree
-    ) h0 h1 /\
-    SH.tree_state_live h1 ts' /\
+    merge_modification h0 ts ts' h1 /\
     SH.g_tree_state h1 ts' == SH.pqmerge (SH.g_tree_state h0 ts) (U32.v node)) =
   let h0 = ST.get () in
   let ctx = CB.index ts.ctx 0ul in
@@ -245,3 +251,56 @@ let pqmerge (ts: tree_state_t) (node: U32.t):
     ts with
     forest = f'
   }
+
+let build_tree_pre (h: HS.mem) (ts: tree_state_t) (node: U32.t) =
+  SH.tree_state_live h ts /\
+  (let ts' = SH.g_tree_state h ts in
+  SH.heap_wf ts' /\
+  SH.is_forest_wf ts' /\
+  SH.build_tree_pre ts' (U32.v node))
+
+#push-options "--fuel 0 --ifuel 0"
+inline_for_extraction
+let build_tree_term (ts: tree_state_t) (node: U32.t):
+  ST.Stack tree_state_t
+  (requires fun h -> build_tree_pre h ts node)
+  (ensures fun h0 ts' h1 ->
+    merge_modification h0 ts ts' h1 /\
+    SH.g_tree_state h1 ts' == SH.build_tree_term (SH.g_tree_state h0 ts) (U32.v node)) =
+  let h0 = ST.get () in
+  SH.lemma_pqremove_forest (SH.g_tree_state h0 ts) (U32.v node);
+  let _ = pqremove ts in
+  pqmerge ts node
+ 
+inline_for_extraction
+let build_tree_rec (ts: tree_state_t) (node: U32.t):
+  ST.Stack tree_state_t
+  (requires fun h ->
+    build_tree_pre h ts node /\
+    2 < (SH.g_tree_state h ts).heap_len)
+  (ensures fun h0 ts' h1 ->
+    merge_modification h0 ts ts' h1 /\
+    SH.g_tree_state h1 ts' == SH.build_tree_rec (SH.g_tree_state h0 ts) (U32.v node)) =
+  let ts1 = build_tree_term ts node in
+  pqdownheap ts1 1ul;
+  ts1
+
+#push-options "--z3refresh --z3rlimit 2049 --fuel 1 --ifuel 0 --query_stats"
+let rec build_tree (ts: tree_state_t) (node: U32.t) (heap_len': Ghost.erased nat):
+  ST.Stack tree_state_t
+  (requires fun h ->
+    build_tree_pre h ts node /\
+    (SH.g_tree_state h ts).heap_len == Ghost.reveal heap_len')
+  (ensures fun h0 ts' h1 ->
+    merge_modification h0 ts ts' h1 /\
+    SH.g_tree_state h1 ts' == SH.build_tree (SH.g_tree_state h0 ts) (U32.v node))
+  (decreases heap_len') =
+  let open U32 in
+  let h0 = ST.get () in
+  let heap_len = get_heap_len ts in
+  if 2ul <^ heap_len then begin
+    let ts1 = build_tree_rec ts node in
+    SH.lemma_build_tree_unfold (SH.g_tree_state h0 ts) (U32.v node);
+    build_tree ts1 (node +^ 1ul) (heap_len' - 1)
+  end else
+    build_tree_term ts node

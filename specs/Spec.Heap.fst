@@ -228,19 +228,7 @@ let pqdownheap (ts: tree_state_wf) (i: U32.t{is_internal_index ts i}):
 let pqremove (ts: heap_wf_ts):
   Ghost heap_wf_ts
   (requires ts.heap_len > 1)
-  (ensures fun ts' ->
-    ts' == {
-      ts with
-      heap = ts'.heap;
-      heap_len = ts.heap_len - 1;
-      heap_max = ts.heap_max - 1;
-    } /\
-    heap_not_empty ts' /\
-    sorted_not_empty ts' /\
-    sorted_seq ts' `equal` (cons ts.heap.[1] (sorted_seq ts)) /\
-    permutation U32.t (heap_seq ts) (cons ts'.heap.[ts'.heap_max] (heap_seq ts')) /\
-    permutation U32.t (element_seq ts) (element_seq ts') /\
-    (forall k. k >= ts.heap_len ==> (element_seq ts).[k] == (element_seq ts').[k])) =
+  (ensures fun ts' -> pqremove_post ts ts') =
   lemma_heap_wf_pqremove ts;
   let ts1 = {
     ts with

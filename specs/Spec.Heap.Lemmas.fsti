@@ -106,10 +106,10 @@ let rec heap_sorted' (ts: heap_elems_wf_ts) (i: nat{
   else
     false
 
-unfold let heap_sorted (ts: heap_elems_wf_ts) = heap_sorted' ts ts.heap_max
+let heap_sorted (ts: heap_elems_wf_ts) = heap_sorted' ts ts.heap_max
 
 /// The first element in the sorted area is smaller than all elements in the heap.
-unfold let sorted_lt_heap (ts: heap_elems_wf_ts) =
+let sorted_lt_heap (ts: heap_elems_wf_ts) =
   sorted_not_empty ts ==> (forall i. 1 <= i /\ i <= ts.heap_len ==>
     smaller ts ts.heap.[ts.heap_max] ts.heap.[i])
 
@@ -117,7 +117,7 @@ unfold let sorted_lt_heap (ts: heap_elems_wf_ts) =
 /// element is the smallest element in the heap area. Elements in the sorted area
 /// are sorted as well, and the tree status should satisfy with sorted_lt_heap as
 /// well.
-unfold let heap_wf (ts: tree_state_wf) =
+let heap_wf (ts: tree_state_wf) =
   partial_wf ts 1ul /\ heap_sorted ts /\ heap_not_empty ts /\ sorted_lt_heap ts
   
 type heap_wf_ts = ts: tree_state_wf{heap_wf ts}
@@ -174,3 +174,19 @@ val lemma_heap_wf_pqremove: ts: heap_wf_ts -> Lemma
     partial_wf ts' 2ul /\
     permutation U32.t (heap_seq ts) (cons ts'.heap.[ts'.heap_max] (heap_seq ts')) /\
     permutation U32.t (element_seq ts) (element_seq ts')))
+
+let pqremove_post (ts: heap_wf_ts) (ts': heap_wf_ts): Pure Type0
+  (requires ts.heap_len > 1)
+  (ensures fun _ -> True) =
+  ts' == {
+    ts with
+    heap = ts'.heap;
+    heap_len = ts.heap_len - 1;
+    heap_max = ts.heap_max - 1;
+  } /\
+  heap_not_empty ts' /\
+  sorted_not_empty ts' /\
+  sorted_seq ts' `equal` (cons ts.heap.[1] (sorted_seq ts)) /\
+  permutation U32.t (heap_seq ts) (cons ts'.heap.[ts'.heap_max] (heap_seq ts')) /\
+  permutation U32.t (element_seq ts) (element_seq ts') /\
+  (forall k. k >= ts.heap_len ==> (element_seq ts).[k] == (element_seq ts').[k])
