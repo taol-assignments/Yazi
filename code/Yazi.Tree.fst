@@ -286,6 +286,12 @@ let build_tree_rec (ts: tree_state_t) (node: U32.t):
   ts1
 
 #push-options "--z3refresh --z3rlimit 2049 --fuel 1 --ifuel 0 --query_stats"
+let lemma_build_tree_unfold (ts: SH.forest_wf_ts) (node: nat): Lemma
+  (requires SH.build_tree_pre ts node /\ 2 < ts.heap_len)
+  (ensures
+    SH.build_tree ts node ==
+    SH.build_tree (SH.build_tree_rec ts node) (node + 1)) = ()
+
 let rec build_tree (ts: tree_state_t) (node: U32.t) (heap_len': Ghost.erased nat):
   ST.Stack tree_state_t
   (requires fun h ->
@@ -300,7 +306,7 @@ let rec build_tree (ts: tree_state_t) (node: U32.t) (heap_len': Ghost.erased nat
   let heap_len = get_heap_len ts in
   if 2ul <^ heap_len then begin
     let ts1 = build_tree_rec ts node in
-    SH.lemma_build_tree_unfold (SH.g_tree_state h0 ts) (U32.v node);
+    lemma_build_tree_unfold (SH.g_tree_state h0 ts) (U32.v node);
     build_tree ts1 (node +^ 1ul) (heap_len' - 1)
   end else
     build_tree_term ts node

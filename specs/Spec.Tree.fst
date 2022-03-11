@@ -116,3 +116,4 @@ let rec build_tree (ts: forest_wf_ts) (node: nat):
     build_tree ts1 (node + 1)
   else
     build_tree_term ts node
+
