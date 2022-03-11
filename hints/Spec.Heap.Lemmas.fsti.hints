@@ -1,5 +1,5 @@
 [
-  ")–[MÍ´1öÕØ\u0010@v\u0001òö",
+  "_X5Í*êÉsá≠7¥⁄Íæz",
   [
     [
       "Spec.Heap.Lemmas.tree_state_wf",
@@ -278,7 +278,7 @@
         "refinement_interpretation_Tm_refine_93022a9b1d08c3c004c4dfb8ff863bb4"
       ],
       0,
-      "22dbcf06405632744b644a592fc8557f"
+      "d963bec3e4233b4afa126bb599606897"
     ],
     [
       "Spec.Heap.Lemmas.lemma_heap_seq_upd_perm",
@@ -297,7 +297,7 @@
         "refinement_interpretation_Tm_refine_e010dd37842f0ce406ab763513be157d"
       ],
       0,
-      "9b92c9ccae4d7ee968f301fba6834f52"
+      "b984894f36d70272dcc582c389a16ae3"
     ],
     [
       "Spec.Heap.Lemmas.lemma_non_heap_unmodified",
@@ -312,7 +312,7 @@
         "refinement_interpretation_Tm_refine_e010dd37842f0ce406ab763513be157d"
       ],
       0,
-      "a9d17c142c458a075aa9fae035a12b46"
+      "f1adb7f8a5c4aa5cb9383c2b42198764"
     ],
     [
       "Spec.Heap.Lemmas.lemma_heap_wf",
@@ -336,7 +336,7 @@
         "refinement_interpretation_Tm_refine_ef2abcfc8cb2442b48a4ea57db836abd"
       ],
       0,
-      "b45a102fec82cdb775e7d7bd201a446d"
+      "e8124f69ccbf9a703f12be8cd386afb4"
     ],
     [
       "Spec.Heap.Lemmas.lemma_heap_wf_forall",
@@ -370,7 +370,7 @@
         "typing_FStar.UInt32.v", "typing_Yazi.Deflate.Constants.heap_size"
       ],
       0,
-      "88e503cbeb360d0b3a217b41474934c3"
+      "7312f433d5d89721863473a9d744c224"
     ],
     [
       "Spec.Heap.Lemmas.lemma_heap_wf_pqremove",
@@ -383,6 +383,7 @@
         "equation_Prims.eqtype", "equation_Prims.nat",
         "equation_Prims.squash", "equation_Spec.Heap.Lemmas.heap_elems_wf",
         "equation_Spec.Heap.Lemmas.heap_indexes_wf",
+        "equation_Spec.Heap.Lemmas.heap_wf",
         "equation_Spec.Heap.Lemmas.heap_wf_ts",
         "equation_Spec.Heap.Lemmas.partial_wf",
         "equation_Spec.Heap.Lemmas.tree_state_wf",
@@ -408,13 +409,13 @@
         "projection_inverse_Yazi.Tree.Types.Mktree_state_heap_max",
         "projection_inverse_Yazi.Tree.Types.Mktree_state_tree",
         "projection_inverse_Yazi.Tree.Types.Mktree_state_tree_len",
-        "refinement_interpretation_Tm_refine_1916f08b96e5160bc3d0db87947f1e35",
         "refinement_interpretation_Tm_refine_2ca062977a42c36634b89c1c4f193f79",
         "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_444d3ec43c00faef3fbee9469917de82",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_93022a9b1d08c3c004c4dfb8ff863bb4",
+        "refinement_interpretation_Tm_refine_b06922d1e735f0ae59a8fe9ff32d4a29",
         "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
         "refinement_interpretation_Tm_refine_df81b3f17797c6f405c1dbb191651292",
         "refinement_interpretation_Tm_refine_ef2abcfc8cb2442b48a4ea57db836abd",
@@ -423,7 +424,32 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state__item__heap_len"
       ],
       0,
-      "fe0860b3644c5a17ab4d2e5752e1e2ed"
+      "bc911d32ded887ab063e4e1215e24072"
+    ],
+    [
+      "Spec.Heap.Lemmas.pqremove_post",
+      1,
+      2,
+      1,
+      [
+        "@MaxIFuel_assumption", "@query", "equation_Prims.logical",
+        "equation_Spec.Heap.Lemmas.heap_elems_wf",
+        "equation_Spec.Heap.Lemmas.heap_indexes_wf",
+        "equation_Spec.Heap.Lemmas.heap_wf",
+        "equation_Spec.Heap.Lemmas.heap_wf_ts",
+        "equation_Spec.Heap.Lemmas.partial_wf",
+        "equation_Spec.Heap.Lemmas.tree_state_wf",
+        "fuel_guarded_inversion_Yazi.Tree.Types.tree_state",
+        "primitive_Prims.op_Subtraction",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_heap_len",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_heap_max",
+        "projection_inverse_BoxInt_proj_0",
+        "refinement_interpretation_Tm_refine_93022a9b1d08c3c004c4dfb8ff863bb4",
+        "refinement_interpretation_Tm_refine_b06922d1e735f0ae59a8fe9ff32d4a29",
+        "refinement_interpretation_Tm_refine_d911cea87aba81fea0597171ccf51fd1"
+      ],
+      0,
+      "bad0d111e796909aa851fadc8a4b671f"
     ]
   ]
 ]
