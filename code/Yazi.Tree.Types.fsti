@@ -84,7 +84,7 @@ type bl_count_t = B.lbuffer U16.t (U32.v max_bits + 1)
 type tree_heap_t = B.lbuffer U32.t (2 * U32.v l_codes + 1)
 
 noextract
-type tree_len_t = tl: Ghost.erased nat{tl <= U32.v heap_size}
+type tree_len_t = tl: Ghost.erased pos{tl <= U32.v heap_size}
 
 type tree_depth_t = B.lbuffer U8.t (2 * U32.v l_codes + 1)
 
@@ -113,7 +113,7 @@ type tree_state = {
   depth: seq U8.t;
   heap_len: nat;
   heap_max: nat;
-  tree_len: nat;
+  tree_len: pos;
   forest: forest_seq;
 }
 

@@ -117,3 +117,25 @@ let rec build_tree (ts: forest_wf_ts) (node: nat):
   else
     build_tree_term ts node
 
+#push-options "--fuel 1 --ifuel 1"
+let rec insert_symbols (ts: heap_elems_wf_ts) (i: symbol_index ts):
+  Ghost heap_elems_wf_ts
+  (requires insert_symbols_pre ts i)
+  (ensures fun ts' -> insert_symbols_post ts ts')
+  (decreases ts.tree_len / 2 - i) =
+  let ts' = if U16.v (ts.tree.[i]).freq_or_code > 0 then {
+    ts with
+    heap = ts.heap.(ts.heap_len + 1) <- U32.uint_to_t i;
+    heap_len = ts.heap_len + 1
+  } else
+    ts
+  in
+  if i + 1 < ts.tree_len / 2 then begin
+    if U16.v (ts.tree.[i]).freq_or_code > 0 then
+      lemma_insert_symbols_rec ts i;
+    insert_symbols ts' (i + 1)
+  end else begin
+    if U16.v (ts.tree.[i]).freq_or_code > 0 then
+      lemma_insert_symbols_term ts i;
+    ts'
+  end

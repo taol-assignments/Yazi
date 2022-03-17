@@ -152,7 +152,7 @@ let pqdownheap (ts: tree_state_t) (i: U32.t): ST.Stack unit
 #pop-options
 
 #push-options "--z3refresh --z3rlimit 256 --fuel 0 --ifuel 0"
-inline_for_extraction
+[@ CInline]
 let pqremove (ts: tree_state_t):
   ST.Stack U32.t
   (requires fun h ->
@@ -197,7 +197,6 @@ let merge_modification (h0: HS.mem) (ts0 ts1: tree_state_t) (h1: HS.mem): Pure T
   SH.tree_state_live h1 ts1 /\
   ts0.ctx == ts1.ctx
 
-inline_for_extraction
 let pqmerge (ts: tree_state_t) (node: U32.t):
   ST.Stack tree_state_t
   (requires fun h ->
@@ -310,3 +309,35 @@ let rec build_tree (ts: tree_state_t) (node: U32.t) (heap_len': Ghost.erased nat
     build_tree ts1 (node +^ 1ul) (heap_len' - 1)
   end else
     build_tree_term ts node
+
+#set-options "--fuel 1 --ifuel 1"
+[@ CInline]
+let rec insert_symbols
+  (ts: tree_state_t) (tl: U32.t) (i: U32.t{U32.v i < ts.tree_len / 2}):
+  ST.Stack unit
+  (requires fun h ->
+    SH.tree_state_live h ts /\
+    SH.heap_elems_wf (SH.g_tree_state h ts) /\
+    U32.v tl == (SH.g_tree_state h ts).tree_len /\
+    SH.insert_symbols_pre (SH.g_tree_state h ts) (U32.v i))
+  (ensures fun h0 _ h1 ->
+    let ctx = (CB.as_seq h0 ts.ctx).[0] in
+    B.modifies (B.loc_buffer ctx.heap `B.loc_union` B.loc_buffer ctx.state) h0 h1 /\
+    SH.heap_elems_wf (SH.g_tree_state h1 ts) /\
+    SH.insert_symbols (SH.g_tree_state h0 ts) (U32.v i) == SH.g_tree_state h1 ts)
+  (decreases U32.v tl / 2 - U32.v i) =
+  let open U32 in
+  let h = ST.get () in
+  let ts' = Ghost.hide (SH.g_tree_state h ts) in
+
+  let heap = (CB.index ts.ctx 0ul).heap in
+  let heap_len = get_heap_len ts in
+  heap.(heap_len +^ 1ul) <- i;
+  set_heap_len ts (heap_len +^ 1ul);
+
+  if i +^ 1ul <^ tl /^ 2ul then begin
+    if U16.v (ts'.tree.[U32.v i]).freq_or_code > 0 then
+      SH.lemma_insert_symbols_rec ts' (U32.v i);
+    insert_symbols ts tl (i +^ 1ul)
+  end else
+    ()
