@@ -341,3 +341,24 @@ let rec insert_symbols
     insert_symbols ts tl (i +^ 1ul)
   end else
     ()
+
+[@ CInline ]
+let rec sort_symbols (ts: tree_state_t) (i: U32.t):
+  ST.Stack unit
+  (requires fun h ->
+    SH.tree_state_live h ts /\ (
+    let ts' = SH.g_tree_state h ts in
+    SH.heap_elems_wf ts' /\ SH.is_internal_index ts' i /\ SH.sort_symbols_pre ts' i))
+  (ensures fun h0 _ h1 ->
+    let ctx = (CB.as_seq h0 ts.ctx).[0] in
+    B.modifies (B.loc_buffer ctx.heap) h0 h1 /\
+    SH.tree_state_live h1 ts /\
+    SH.g_tree_state h1 ts == SH.sort_symbols (SH.g_tree_state h0 ts) i) =
+  let open U32 in
+  let h = ST.get () in
+  SH.lemma_sort_symbols (SH.g_tree_state h ts) i;
+  if 1ul <^ i then begin
+    pqdownheap ts i;
+    sort_symbols ts (i -^ 1ul)
+  end else
+    pqdownheap ts i

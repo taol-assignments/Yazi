@@ -1647,7 +1647,7 @@ let insert_symbols_common_cond (ts ts': heap_elems_wf_ts) (i: symbol_index ts) =
   }
 
 #push-options "--fuel 2 --ifuel 2"
-let lemma_insert_symbols_rec_heap_aux
+let lemma_insert_symbols_heap_aux
   (ts ts': heap_elems_wf_ts) (i: symbol_index ts) : Lemma
   (requires insert_symbols_common_cond ts ts' i)
   (ensures
@@ -1665,7 +1665,7 @@ let lemma_insert_symbols_rec_heap_lt
   (requires insert_symbols_common_cond ts ts' i /\ mem j (heap_seq ts'))
   (ensures U32.v j <= i) =
   let hs' = heap_seq ts' in
-  lemma_insert_symbols_rec_heap_aux ts ts' i;
+  lemma_insert_symbols_heap_aux ts ts' i;
   if ts'.heap_len > 1 then begin
     let hs = heap_seq ts in
     assert(forall k. U32.v hs'.[k] <= i);
@@ -1732,7 +1732,7 @@ let lemma_insert_symbols_rec_forest_freq
   (ts ts': heap_elems_wf_ts) (i: symbol_index ts): Lemma
   (requires insert_symbols_common_cond ts ts' i)
   (ensures forest_freq ts' (heap_seq ts') == tree_symbols_freq ts' i) =
-  lemma_insert_symbols_rec_heap_aux ts ts' i;
+  lemma_insert_symbols_heap_aux ts ts' i;
   let i' = U32.uint_to_t i in
   let hs' = heap_seq ts' in
   if ts.heap_len = 0 then
@@ -1764,7 +1764,7 @@ let lemma_insert_symbols_rec_es_disjoint
     heap_not_empty ts /\
     mem j (element_seq ts'))
   (ensures mem j (heap_seq ts) <> mem j (create 1 (U32.uint_to_t i))) =
-  lemma_insert_symbols_rec_heap_aux ts ts' i;
+  lemma_insert_symbols_heap_aux ts ts' i;
   if i > 0 then begin
     let hs = heap_seq ts in
     let i' = U32.uint_to_t i in
@@ -1781,7 +1781,7 @@ let lemma_insert_symbols_rec_es_no_dup
   (requires insert_symbols_common_cond ts ts' i)
   (ensures no_dup (element_seq ts')) =
   if i > 0 then begin
-    lemma_insert_symbols_rec_heap_aux ts ts' i;
+    lemma_insert_symbols_heap_aux ts ts' i;
     forall_intro (move_requires (lemma_insert_symbols_rec_es_disjoint ts ts' i));
     no_dup_append_1 (heap_seq ts) (create 1 (U32.uint_to_t i))
   end
@@ -1798,10 +1798,10 @@ let lemma_insert_symbols_rec_fs_no_dup
     let i' = U32.uint_to_t i in
     let hs = heap_seq ts in
     let hs' = heap_seq ts' in
-    lemma_insert_symbols_rec_heap_aux ts ts' i;
+    lemma_insert_symbols_heap_aux ts ts' i;
     calc (==) {
       count j (forest_symbols ts' hs');
-      =={lemma_insert_symbols_rec_heap_aux ts ts' i}
+      =={lemma_insert_symbols_heap_aux ts ts' i}
       count j (forest_symbols ts' (snoc hs i'));
       =={lemma_forest_symbols_append ts' hs (create 1 i')}
       count j (forest_symbols ts' hs @| forest_symbols ts' (create 1 i'));
@@ -1842,7 +1842,7 @@ let lemma_insert_symbols_rec_len_eq
     let i' = U32.uint_to_t i in
     calc (==) {
       length (forest_symbols ts' (heap_seq ts'));
-      =={lemma_insert_symbols_rec_heap_aux ts ts' i}
+      =={lemma_insert_symbols_heap_aux ts ts' i}
       length (forest_symbols ts' (snoc (heap_seq ts) i'));
       =={}
       length (forest_symbols ts' (heap_seq ts @| create 1 i'));
@@ -1869,7 +1869,7 @@ let lemma_insert_symbols_rec_fs_es_eq
     insert_symbols_common_cond ts ts' i /\
     length (forest_symbols ts' (heap_seq ts')) == length (element_seq ts'))
   (ensures (forest_symbols ts' (heap_seq ts')).[j] == U32.v (element_seq ts').[j]) =
-  lemma_insert_symbols_rec_heap_aux ts ts' i;
+  lemma_insert_symbols_heap_aux ts ts' i;
   if ts.heap_len > 0 then
     lemma_forest_symbols_append ts' (heap_seq ts) (create 1 (U32.uint_to_t i));
   if j < ts'.heap_len - 1 then begin
@@ -1882,7 +1882,7 @@ let lemma_insert_symbols_rec_iff
   (ensures 
     U16.v (ts'.tree.[j]).freq_or_code > 0 <==>
     mem (U32.uint_to_t j) (heap_seq ts')) =
-  lemma_insert_symbols_rec_heap_aux ts ts' i;
+  lemma_insert_symbols_heap_aux ts ts' i;
   if ts.heap_len > 0 then
     lemma_mem_append (heap_seq ts) (create 1 (U32.uint_to_t i))
 
@@ -1906,5 +1906,40 @@ let lemma_insert_symbols_term ts i =
     heap = ts.heap.(ts.heap_len + 1) <- U32.uint_to_t i;
     heap_len = ts.heap_len + 1
   } in
+  lemma_insert_symbols_heap_aux ts ts' i;
   lemma_insert_symbols_forest_wf ts ts' i;
-  forall_intro (move_requires (lemma_insert_symbols_rec_iff ts ts' i))
+  forall_intro (move_requires (lemma_insert_symbols_rec_iff ts ts' i));
+  if ts.heap_len > 0 then
+    lemma_mem_append (heap_seq ts) (create 1 (U32.uint_to_t i))
+
+#set-options "--fuel 0 --ifuel 0"
+let lemma_sort_symbols_rec (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index ts i}):
+  Lemma (requires sort_symbols_pre ts i /\ 1 < U32.v i)
+  (ensures sort_symbols_pre (pqdownheap ts i) (i `U32.sub` 1ul)) =
+  let ts' = pqdownheap ts i in
+  let hs = heap_seq ts in
+  let hs' = heap_seq ts' in
+  lemma_forest_symbols_perm ts' hs' ts hs;
+  lemma_forest_freq_perm ts' hs' ts hs;
+  perm_len (forest_symbols ts hs) (forest_symbols ts' hs')
+
+#set-options "--fuel 1 --ifuel 1 --query_stats"
+let lemma_sort_symbols_term (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index ts i}):
+  Lemma (requires sort_symbols_pre ts i /\ 1 == U32.v i)
+  (ensures (
+    let ts' = pqdownheap ts i in
+    is_forest_wf ts' /\
+    sort_symbols_post ts (pqdownheap ts i))) =
+  let ts' = pqdownheap ts i in
+  let hs = heap_seq ts in
+  let hs' = heap_seq ts' in
+  lemma_forest_symbols_perm ts' hs' ts hs;
+  lemma_forest_freq_perm ts' hs' ts hs;
+  perm_len (forest_symbols ts hs) (forest_symbols ts' hs');
+  lemma_forest_symbols_leaf_count ts'
+
+let lemma_sort_symbols ts i =
+  if 1 < U32.v i then
+    lemma_sort_symbols_rec ts i
+  else
+    lemma_sort_symbols_term ts i

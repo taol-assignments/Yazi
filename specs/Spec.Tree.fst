@@ -139,3 +139,14 @@ let rec insert_symbols (ts: heap_elems_wf_ts) (i: symbol_index ts):
       lemma_insert_symbols_term ts i;
     ts'
   end
+
+let rec sort_symbols (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index ts i}):
+  Ghost forest_wf_ts
+  (requires sort_symbols_pre ts i)
+  (ensures fun ts' -> sort_symbols_post ts ts')
+  (decreases U32.v i) =
+  lemma_sort_symbols ts i;
+  if 1 < U32.v i then
+    sort_symbols (pqdownheap ts i) (i `U32.sub` 1ul)
+  else
+    pqdownheap ts i
