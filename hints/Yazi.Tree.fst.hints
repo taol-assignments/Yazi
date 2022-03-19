@@ -1,5 +1,5 @@
 [
-  "\"\\\"ÂL„qöÅ*ey–êıq",
+  "Èç^fÜ’öéÈ'î\\âl˜",
   [
     [
       "Yazi.Tree.get_heap_len",
@@ -64,7 +64,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__ctx"
       ],
       0,
-      "6938a38bb6332365a43e39de453dd135"
+      "1e0aa14d5607ade95245ff839c5ac914"
     ],
     [
       "Yazi.Tree.set_heap_len",
@@ -135,7 +135,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__ctx"
       ],
       0,
-      "6cce1b32fef1d91f23b955b2bced7152"
+      "12a649ebae08b7e96ac8c29c406d94c0"
     ],
     [
       "Yazi.Tree.get_heap_max",
@@ -165,7 +165,7 @@
         "typing_Yazi.Tree.Types.__proj__Mksort_ctx_t__item__state"
       ],
       0,
-      "0b475857ca150676e7c58c65e53fda11"
+      "dee64562381de5196ce23adf481ec8d4"
     ],
     [
       "Yazi.Tree.set_heap_max",
@@ -236,7 +236,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__ctx"
       ],
       0,
-      "2c53260bb7927afd5f86ef7588ea8e41"
+      "ea50b172a3f660edf09bf85c7230c210"
     ],
     [
       "Yazi.Tree.smaller",
@@ -309,7 +309,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__ctx"
       ],
       0,
-      "04848563da23b169b608e58adf866ab1"
+      "425ed30e175f51513c7e847bfa127f0a"
     ],
     [
       "Yazi.Tree.smallest",
@@ -416,7 +416,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__tree_len"
       ],
       0,
-      "a31d286b2d72684f612550055d6edb0b"
+      "f240fc679afafef522d7056fcbc67f4f"
     ],
     [
       "Yazi.Tree.do_pqdownheap",
@@ -590,7 +590,7 @@
         "unit_inversion", "unit_typing"
       ],
       0,
-      "e3e1899e14bdd7153f999a11ab7e0f96"
+      "16cf842f6c10a78f026d16b3dfc2a8cc"
     ],
     [
       "Yazi.Tree.pqdownheap",
@@ -698,7 +698,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__ctx"
       ],
       0,
-      "34ea89f20eb4f71f82cc513a94322b56"
+      "27cf8ec27c0e8152cd4520c93f78bc60"
     ],
     [
       "Yazi.Tree.pqremove",
@@ -836,7 +836,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__tree_len"
       ],
       0,
-      "556fe134869783d88584a072a0fffaec"
+      "7b114c9128d8bb03ff115e6f499855b6"
     ],
     [
       "Yazi.Tree.merge_modification",
@@ -860,7 +860,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__ctx"
       ],
       0,
-      "d994020743bcfc636f0aeaa3d5845d51"
+      "c2047394244f524cdf53201aeff13256"
     ],
     [
       "Yazi.Tree.pqmerge",
@@ -1085,7 +1085,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__forest"
       ],
       0,
-      "d19e8e5e92b2a2f78b1062179752dcc4"
+      "ad499fce778f7ea6ee0a75fd1a8fd7ce"
     ],
     [
       "Yazi.Tree.build_tree_pre",
@@ -1124,7 +1124,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__ctx"
       ],
       0,
-      "179c4c95fe15b110d6e82deceb6c0554"
+      "13a74196107c926b420d3f8504b493b0"
     ],
     [
       "Yazi.Tree.build_tree_term",
@@ -1222,7 +1222,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__tree_len"
       ],
       0,
-      "b705ad6d798058cc6e738d923c2a8032"
+      "82693391efa4a8672c16b09f20f6d524"
     ],
     [
       "Yazi.Tree.build_tree_rec",
@@ -1365,7 +1365,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__tree_len"
       ],
       0,
-      "fa22debd2b554b74f8d8aa0ac1c0b874"
+      "c8e61533971ca421551190bafebf539f"
     ],
     [
       "Yazi.Tree.lemma_build_tree_unfold",
@@ -1427,7 +1427,7 @@
         "typing_Yazi.Deflate.Constants.heap_size"
       ],
       0,
-      "748e3fd3dd5bd670b4ff657df7d03193"
+      "f209a861ba8ce6325f0d13fb5b22b069"
     ],
     [
       "Yazi.Tree.build_tree",
@@ -1578,7 +1578,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__tree_len"
       ],
       0,
-      "cd8e5a8682588328e5eea75c5432a406"
+      "d70461200f5732580504cd4642482079"
     ],
     [
       "Yazi.Tree.insert_symbols",
@@ -1619,9 +1619,11 @@
         "equation_Spec.Heap.Lemmas.sorted_seq",
         "equation_Spec.Heap.Lemmas.tree_state_wf",
         "equation_Spec.Heap.tree_state_live",
+        "equation_Spec.Tree.Lemmas.forest_init_state",
         "equation_Spec.Tree.Lemmas.insert_symbols_post",
         "equation_Spec.Tree.Lemmas.insert_symbols_pre",
         "equation_Spec.Tree.Lemmas.symbol_index",
+        "equation_Spec.Tree.Lemmas.tree_heap_surjective",
         "equation_Yazi.Deflate.Constants.heap_size",
         "equation_Yazi.Tree.Types.forest_seq", "equation_Yazi.Tree.Types.id",
         "equation_Yazi.Tree.Types.tree_depth_t",
@@ -1744,7 +1746,121 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__tree_len"
       ],
       0,
-      "28a934fdbd4c3d398ce71c26e83fcd14"
+      "12b18500c454737cd64c823658c59bee"
+    ],
+    [
+      "Yazi.Tree.sort_symbols",
+      1,
+      1,
+      1,
+      [
+        "@MaxFuel_assumption", "@MaxIFuel_assumption",
+        "@fuel_correspondence_Spec.Heap.Lemmas.heap_sorted_.fuel_instrumented",
+        "@fuel_correspondence_Spec.Tree.sort_symbols.fuel_instrumented",
+        "@fuel_irrelevance_Spec.Tree.sort_symbols.fuel_instrumented",
+        "@query", "FStar.UInt32_pretyping_2ab3c8ba2d08b0172817fc70b5994868",
+        "Yazi.Tree.Types_pretyping_e0a9572ca4ece8bf7f4e6232fceb2e6f",
+        "b2t_def", "bool_inversion",
+        "equation_FStar.Monotonic.HyperStack.mem",
+        "equation_FStar.UInt.fits", "equation_FStar.UInt.lt",
+        "equation_FStar.UInt.max_int", "equation_FStar.UInt.min_int",
+        "equation_FStar.UInt.size", "equation_FStar.UInt.uint_t",
+        "equation_FStar.UInt32.lt", "equation_LowStar.Buffer.buffer",
+        "equation_LowStar.Buffer.trivial_preorder",
+        "equation_LowStar.ConstBuffer.as_mbuf",
+        "equation_LowStar.ConstBuffer.as_seq",
+        "equation_LowStar.ConstBuffer.length",
+        "equation_LowStar.ConstBuffer.live",
+        "equation_LowStar.ConstBuffer.qbuf_pre",
+        "equation_LowStar.Monotonic.Buffer.disjoint",
+        "equation_LowStar.Monotonic.Buffer.length", "equation_Prims.eqtype",
+        "equation_Prims.nat", "equation_Spec.Heap.Lemmas.element_seq",
+        "equation_Spec.Heap.Lemmas.heap_elems_wf",
+        "equation_Spec.Heap.Lemmas.heap_elems_wf_ts",
+        "equation_Spec.Heap.Lemmas.heap_seq",
+        "equation_Spec.Heap.Lemmas.heap_sorted",
+        "equation_Spec.Heap.Lemmas.heap_wf",
+        "equation_Spec.Heap.Lemmas.is_internal_index",
+        "equation_Spec.Heap.Lemmas.partial_wf",
+        "equation_Spec.Heap.Lemmas.sorted_lt_heap",
+        "equation_Spec.Heap.Lemmas.sorted_seq",
+        "equation_Spec.Heap.Lemmas.tree_state_wf",
+        "equation_Spec.Heap.tree_state_live",
+        "equation_Spec.Tree.Lemmas.sort_symbols_pre",
+        "equation_Yazi.Tree.Types.tree_depth_t",
+        "equation_Yazi.Tree.Types.tree_heap_t",
+        "equation_with_fuel_Spec.Heap.Lemmas.heap_sorted_.fuel_instrumented",
+        "equation_with_fuel_Spec.Tree.sort_symbols.fuel_instrumented",
+        "fuel_guarded_inversion_Yazi.Tree.Types.tree_state_t", "int_typing",
+        "kinding_Yazi.Tree.Types.ct_data@tok",
+        "kinding_Yazi.Tree.Types.sort_ctx_t@tok",
+        "lemma_FStar.HyperStack.ST.lemma_equal_domains_trans",
+        "lemma_FStar.UInt32.uv_inv", "lemma_Lib.Seq.append_empty_seq_r",
+        "lemma_LowStar.Monotonic.Buffer.address_liveness_insensitive_buffer",
+        "lemma_LowStar.Monotonic.Buffer.length_as_seq",
+        "lemma_LowStar.Monotonic.Buffer.loc_includes_refl",
+        "lemma_LowStar.Monotonic.Buffer.modifies_buffer_elim",
+        "lemma_LowStar.Monotonic.Buffer.modifies_liveness_insensitive_buffer_weak",
+        "lemma_LowStar.Monotonic.Buffer.modifies_trans_linear",
+        "primitive_Prims.op_AmpAmp", "primitive_Prims.op_LessThan",
+        "primitive_Prims.op_LessThanOrEqual",
+        "primitive_Prims.op_Subtraction",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_depth",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_forest",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_heap",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_heap_len",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_tree",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_tree_len",
+        "projection_inverse_BoxBool_proj_0",
+        "projection_inverse_BoxInt_proj_0",
+        "projection_inverse_Yazi.Tree.Types.Mktree_state_depth",
+        "projection_inverse_Yazi.Tree.Types.Mktree_state_forest",
+        "projection_inverse_Yazi.Tree.Types.Mktree_state_heap_len",
+        "projection_inverse_Yazi.Tree.Types.Mktree_state_tree",
+        "projection_inverse_Yazi.Tree.Types.Mktree_state_tree_len",
+        "refinement_interpretation_Tm_refine_1c154a239038ca19beef9b86f2f89b96",
+        "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
+        "refinement_interpretation_Tm_refine_445e6239eec44f5e7fe723d46091f958",
+        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
+        "refinement_interpretation_Tm_refine_8a5e7fc0ff2b256a55317e27a4c48d32",
+        "refinement_interpretation_Tm_refine_8d8d678fb04e8c1331f64898859da509",
+        "refinement_interpretation_Tm_refine_93022a9b1d08c3c004c4dfb8ff863bb4",
+        "refinement_interpretation_Tm_refine_a5a0069ac2b057520ac925c1431cacbc",
+        "refinement_interpretation_Tm_refine_a77eea1aea7d0e3baffbdce4f4c0b2dc",
+        "refinement_interpretation_Tm_refine_aa4b3d268075d84252df525db1f85524",
+        "refinement_interpretation_Tm_refine_bdd02f0d796ebaae98b64be1092ae3eb",
+        "refinement_interpretation_Tm_refine_c513dd1ca1c2b17a6ec338ff6bb1c3e4",
+        "refinement_interpretation_Tm_refine_cd04502f0d8ea7735d44614fa755cd3a",
+        "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
+        "refinement_interpretation_Tm_refine_e010dd37842f0ce406ab763513be157d",
+        "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
+        "refinement_interpretation_Tm_refine_f402e0d31f613a506ca5b96384c1889b",
+        "refinement_interpretation_Tm_refine_f5316475ecf02129ec7d9de042e74af4",
+        "typing_FStar.Seq.Base.index", "typing_FStar.Seq.Base.length",
+        "typing_FStar.UInt.fits", "typing_FStar.UInt32.sub",
+        "typing_FStar.UInt32.t", "typing_FStar.UInt32.v",
+        "typing_FStar.UInt8.t", "typing_LowStar.Buffer.trivial_preorder",
+        "typing_LowStar.ConstBuffer.as_mbuf",
+        "typing_LowStar.ConstBuffer.as_qbuf",
+        "typing_LowStar.ConstBuffer.as_seq",
+        "typing_LowStar.ConstBuffer.qbuf_mbuf",
+        "typing_LowStar.ConstBuffer.qbuf_pre",
+        "typing_LowStar.Monotonic.Buffer.g_is_null",
+        "typing_LowStar.Monotonic.Buffer.len",
+        "typing_LowStar.Monotonic.Buffer.loc_buffer",
+        "typing_Spec.Heap.Lemmas.heap_seq",
+        "typing_Spec.Heap.Lemmas.heap_sorted",
+        "typing_Spec.Heap.Lemmas.sorted_seq", "typing_Spec.Heap.pqdownheap",
+        "typing_Yazi.Deflate.Constants.heap_size",
+        "typing_Yazi.Tree.Types.__proj__Mksort_ctx_t__item__depth",
+        "typing_Yazi.Tree.Types.__proj__Mksort_ctx_t__item__heap",
+        "typing_Yazi.Tree.Types.__proj__Mksort_ctx_t__item__state",
+        "typing_Yazi.Tree.Types.__proj__Mksort_ctx_t__item__tree",
+        "typing_Yazi.Tree.Types.__proj__Mktree_state__item__heap_max",
+        "typing_Yazi.Tree.Types.__proj__Mktree_state_t__item__ctx"
+      ],
+      0,
+      "e11740e1c056bfe731c398e03bbf5412"
     ]
   ]
 ]
