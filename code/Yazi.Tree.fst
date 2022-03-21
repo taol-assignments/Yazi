@@ -313,34 +313,49 @@ let rec build_tree (ts: tree_state_t) (node: U32.t) (heap_len': Ghost.erased nat
 #set-options "--fuel 1 --ifuel 1"
 [@ CInline]
 let rec insert_symbols
-  (ts: tree_state_t) (tl: U32.t) (i: U32.t{U32.v i < ts.tree_len / 2}):
-  ST.Stack unit
+  (ts: tree_state_t) (tl: U16.t)
+  (i: U16.t{U16.v i < ts.tree_len / 2}) (max_code: U16.t):
+  ST.Stack U16.t
   (requires fun h ->
     SH.tree_state_live h ts /\
-    SH.heap_elems_wf (SH.g_tree_state h ts) /\
-    U32.v tl == (SH.g_tree_state h ts).tree_len /\
-    SH.insert_symbols_pre (SH.g_tree_state h ts) (U32.v i))
-  (ensures fun h0 _ h1 ->
+    (let ts' = SH.g_tree_state h ts in
+    SH.heap_elems_wf ts' /\
+    U16.v tl == ts'.tree_len /\
+    (U16.v i > 0 ==> U16.v max_code < U16.v i) /\
+    (U16.v i == 0 ==> U16.v max_code == 0) /\
+    SH.insert_symbols_pre ts' (U16.v i) (U16.v max_code)))
+  (ensures fun h0 res h1 ->
     let ctx = (CB.as_seq h0 ts.ctx).[0] in
     B.modifies (B.loc_buffer ctx.heap `B.loc_union` B.loc_buffer ctx.state) h0 h1 /\
     SH.heap_elems_wf (SH.g_tree_state h1 ts) /\
-    SH.insert_symbols (SH.g_tree_state h0 ts) (U32.v i) == SH.g_tree_state h1 ts)
-  (decreases U32.v tl / 2 - U32.v i) =
-  let open U32 in
+    SH.insert_symbols (SH.g_tree_state h0 ts) (U16.v i) (U16.v max_code) ==
+    (SH.g_tree_state h1 ts, U16.v res))
+  (decreases U16.v tl / 2 - U16.v i) =
+  let open U16 in
   let h = ST.get () in
   let ts' = Ghost.hide (SH.g_tree_state h ts) in
 
-  let heap = (CB.index ts.ctx 0ul).heap in
-  let heap_len = get_heap_len ts in
-  heap.(heap_len +^ 1ul) <- i;
-  set_heap_len ts (heap_len +^ 1ul);
+  let tree = (CB.index ts.ctx 0ul).tree in
+  let freq = (tree.(Cast.uint16_to_uint32 i)).freq_or_code in
+  if freq >^ 0us then begin
+    let heap = (CB.index ts.ctx 0ul).heap in
+    let heap_len = get_heap_len ts in
+    heap.(heap_len `U32.add` 1ul) <- Cast.uint16_to_uint32 i;
+    set_heap_len ts (heap_len `U32.add` 1ul)
+  end;
 
-  if i +^ 1ul <^ tl /^ 2ul then begin
-    if U16.v (ts'.tree.[U32.v i]).freq_or_code > 0 then
-      SH.lemma_insert_symbols_rec ts' (U32.v i);
-    insert_symbols ts tl (i +^ 1ul)
-  end else
-    ()
+  if i +^ 1us <^ tl /^ 2us then
+    if freq >^ 0us then begin
+      SH.lemma_insert_symbols_rec ts' (v i) (v max_code);
+      insert_symbols ts tl (i +^ 1us) i
+    end else
+      insert_symbols ts tl (i +^ 1us) max_code
+  else
+    if freq >^ 0us then begin
+      SH.lemma_insert_symbols_term ts' (v i) (v max_code);
+      i
+    end else
+      max_code
 
 [@ CInline ]
 let rec sort_symbols (ts: tree_state_t) (i: U32.t):

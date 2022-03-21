@@ -118,10 +118,11 @@ let rec build_tree (ts: forest_wf_ts) (node: nat):
     build_tree_term ts node
 
 #push-options "--fuel 1 --ifuel 1"
-let rec insert_symbols (ts: heap_elems_wf_ts) (i: symbol_index ts):
-  Ghost heap_elems_wf_ts
-  (requires insert_symbols_pre ts i)
-  (ensures fun ts' -> insert_symbols_post ts ts')
+let rec insert_symbols
+  (ts: heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i):
+  Ghost (heap_elems_wf_ts * nat)
+  (requires insert_symbols_pre ts i max_code)
+  (ensures fun res -> insert_symbols_post ts res)
   (decreases ts.tree_len / 2 - i) =
   let ts' = if U16.v (ts.tree.[i]).freq_or_code > 0 then {
     ts with
@@ -130,15 +131,18 @@ let rec insert_symbols (ts: heap_elems_wf_ts) (i: symbol_index ts):
   } else
     ts
   in
-  if i + 1 < ts.tree_len / 2 then begin
-    if U16.v (ts.tree.[i]).freq_or_code > 0 then
-      lemma_insert_symbols_rec ts i;
-    insert_symbols ts' (i + 1)
-  end else begin
-    if U16.v (ts.tree.[i]).freq_or_code > 0 then
-      lemma_insert_symbols_term ts i;
-    ts'
-  end
+  if i + 1 < ts.tree_len / 2 then
+    if U16.v (ts.tree.[i]).freq_or_code > 0 then begin
+      lemma_insert_symbols_rec ts i max_code;
+      insert_symbols ts' (i + 1) i
+    end else
+      insert_symbols ts' (i + 1) max_code
+  else
+    if U16.v (ts.tree.[i]).freq_or_code > 0 then begin
+      lemma_insert_symbols_term ts i max_code;
+      (ts', i)
+    end else
+      (ts', max_code)
 
 let rec sort_symbols (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index ts i}):
   Ghost forest_wf_ts
@@ -150,3 +154,55 @@ let rec sort_symbols (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index ts i}):
     sort_symbols (pqdownheap ts i) (i `U32.sub` 1ul)
   else
     pqdownheap ts i
+
+#push-options "--fuel 2 --ifuel 1"
+let rec init_forest_seq (tree: seq ct_data) (i: index_t tree):
+  Tot (s: forest_seq{
+    length s == i + 1 /\
+    (forall j.
+      Leaf? s.[j] /\
+      symbols s.[j] == create 1 j /\ j <= i /\
+      (U16.v (tree.[j]).freq_or_code > 0 ==>
+        freq s.[j] == U16.v (tree.[j]).freq_or_code) /\
+      (U16.v (tree.[j]).freq_or_code == 0 ==> freq s.[j] == 1))
+  }) =
+  let f = U16.v (tree.[i]).freq_or_code in
+  let node = if f > 0 then Leaf i f else Leaf i 1 in
+  assert(symbols node == create 1 i);
+  match i with
+  | 0 -> create 1 node
+  | _ -> snoc (init_forest_seq tree (i - 1)) node
+#pop-options
+
+let build_huffman_tree
+  (tree_len: nat{2 <= tree_len /\ tree_len <= U32.v heap_size})
+  (tree: seq ct_data{length tree == tree_len})
+  (heap: seq U32.t{length heap = U32.v heap_size}):
+  Ghost forest_wf_ts
+  (requires
+    0 < tree_symbols_freq tree (tree_len / 2 - 1) /\
+    tree_symbols_freq tree (tree_len / 2 - 1) < pow2 15 /\
+    (forall i. U16.v (tree.[i]).dad_or_len == 0))
+  (ensures fun ts' ->
+    ts'.heap_len == 1 /\ ts'.tree == tree /\
+    (forall i. U16.v (tree.[i]).freq_or_code > 0 ==>
+      mem i (forest_symbols ts' (heap_seq ts')))) =
+  let ts = {
+    heap = heap;
+    tree = tree;
+    depth = init (U32.v heap_size) (fun _ -> 0uy);
+    heap_len = 0;
+    heap_max = U32.v heap_size;
+    tree_len = tree_len;
+    forest = init_forest_seq tree (tree_len - 1);
+  } in
+  let (ts1, max_code) = insert_symbols ts 0 0 in
+  if ts1.heap_len >= 2 then begin
+    let ts2 = sort_symbols ts1 (U32.uint_to_t (ts1.heap_len / 2)) in
+    let ts3 = build_tree ts2 (ts2.tree_len / 2 + 1) in
+    admit();
+    ts3
+  end else begin
+    admit();
+    ts1
+  end

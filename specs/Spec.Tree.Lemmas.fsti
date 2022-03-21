@@ -418,17 +418,17 @@ val lemma_build_tree_rec:
     U32.v heap_size - ts2.heap_max + ts2.heap_len == flc2 + fnc2 /\
     node + 1 == ts2.tree_len / 2 + fnc2 + 1))
 
-type symbol_index (ts: tree_state_wf) = i: nat{i < ts.tree_len / 2}
+type symbol_index (tree: seq ct_data) = i: nat{i < length tree / 2}
 
 /// The sum of frequencies of the symbols in the tree array.
-let rec tree_symbols_freq (ts: heap_elems_wf_ts) (i: symbol_index ts) : Tot nat =
+let rec tree_symbols_freq (tree: seq ct_data) (i: symbol_index tree) : Tot nat =
   if i = 0 then
-    U16.v (ts.tree.[i]).freq_or_code 
+    U16.v (tree.[i]).freq_or_code 
   else
-    U16.v (ts.tree.[i]).freq_or_code + tree_symbols_freq ts (i - 1)
+    U16.v (tree.[i]).freq_or_code + tree_symbols_freq tree (i - 1)
 
 private let tree_heap_surjective (ts: heap_elems_wf_ts{heap_not_empty ts}) =
-  forall (j: symbol_index ts).
+  forall (j: symbol_index ts.tree).
     U16.v (ts.tree.[j]).freq_or_code > 0 <==>
     mem (U32.uint_to_t j) (heap_seq ts)
 
@@ -438,37 +438,56 @@ private let forest_init_state (ts: heap_elems_wf_ts) =
   forall j.
     Leaf? ts.forest.[j] /\
     id ts.forest.[j] == j /\
-    freq ts.forest.[j] == U16.v (ts.tree.[j]).freq_or_code /\
+    (U16.v (ts.tree.[j]).freq_or_code > 0 ==>
+      freq ts.forest.[j] == U16.v (ts.tree.[j]).freq_or_code) /\
+    (U16.v (ts.tree.[j]).freq_or_code == 0 ==>
+      freq ts.forest.[j] == 1) /\
     U16.v (ts.tree.[j]).dad_or_len == 0
 
-let insert_symbols_pre (ts: heap_elems_wf_ts) (i: symbol_index ts) =
-  let tsf = tree_symbols_freq ts (ts.tree_len / 2 - 1) in
+type max_code_t (#ts: heap_elems_wf_ts) (i: symbol_index ts.tree) = n: nat{
+  (i > 0 ==> n < i) /\ (i == 0 ==> n == 0)
+}
+
+let insert_symbols_pre
+  (ts: heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i) =
+  let tsf = tree_symbols_freq ts.tree (ts.tree_len / 2 - 1) in
   ts.heap_len <= i /\ ts.heap_max == U32.v heap_size /\
   0 < tsf /\ tsf < pow2 15 /\
   forest_init_state ts /\
-  (ts.heap_len == 0 /\ i > 0 ==> tree_symbols_freq ts (i - 1) == 0) /\
+  (ts.heap_len == 0 /\ i > 0 ==> tree_symbols_freq ts.tree (i - 1) == 0) /\
   (heap_not_empty ts ==>
-    forest_freq ts (heap_seq ts) == tree_symbols_freq ts (i - 1) /\
+    forest_freq ts (heap_seq ts) == tree_symbols_freq ts.tree (i - 1) /\
     is_forest_wf ts /\
     length (forest_symbols ts (heap_seq ts)) == length (element_seq ts) /\
     (forall j. (forest_symbols ts (heap_seq ts)).[j] == U32.v (element_seq ts).[j]) /\
-    (forall j. mem j (heap_seq ts) ==> U32.v j < i) /\
+    (forall j. mem j (heap_seq ts) ==> U32.v j <= max_code) /\
     (forall (j: nat{j < i}).
       U16.v (ts.tree.[j]).freq_or_code > 0 <==>
       mem (U32.uint_to_t j) (heap_seq ts)))
 
-let insert_symbols_post (ts: heap_elems_wf_ts) (ts': heap_elems_wf_ts) =
+let insert_symbols_post (ts: heap_elems_wf_ts) (res: (heap_elems_wf_ts & nat)) =
+  let (ts', max_code) = res in
   ts' == {
     ts with
     heap = ts'.heap;
     heap_len = ts'.heap_len
-  } /\ heap_not_empty ts' /\ is_forest_wf ts' /\ tree_heap_surjective ts' /\
-  forest_init_state ts' /\ ts'.heap_len <= ts'.tree_len / 2 /\
-  (forall j. mem j (heap_seq ts') ==> U32.v j < ts'.tree_len / 2)
+  } /\
+  ts'.heap_len <= ts'.tree_len / 2 /\
+  forest_init_state ts' /\
+  (heap_not_empty ts' ==> 
+    is_forest_wf ts' /\
+    tree_heap_surjective ts' /\
+    length (forest_symbols ts' (heap_seq ts')) == length (element_seq ts') /\
+    (forall j. mem j (heap_seq ts') ==> U32.v j < ts'.tree_len / 2) /\
+    (forall j. mem j (heap_seq ts') ==> U32.v j <= max_code))
 
-val lemma_insert_symbols_rec: ts: heap_elems_wf_ts -> i: symbol_index ts -> Lemma
+val lemma_insert_symbols_rec:
+    ts: heap_elems_wf_ts
+  -> i: symbol_index ts.tree
+  -> max_code: max_code_t i
+  -> Lemma
   (requires
-    insert_symbols_pre ts i /\
+    insert_symbols_pre ts i max_code /\
     i + 1 < ts.tree_len / 2 /\
     U16.v (ts.tree.[i]).freq_or_code > 0)
   (ensures (
@@ -477,12 +496,16 @@ val lemma_insert_symbols_rec: ts: heap_elems_wf_ts -> i: symbol_index ts -> Lemm
       heap = ts.heap.(ts.heap_len + 1) <- U32.uint_to_t i;
       heap_len = ts.heap_len + 1
     } in
-    insert_symbols_pre ts' (i + 1)
+    insert_symbols_pre ts' (i + 1) i
   ))
 
-val lemma_insert_symbols_term: ts: heap_elems_wf_ts -> i: symbol_index ts -> Lemma
+val lemma_insert_symbols_term:
+    ts: heap_elems_wf_ts
+  -> i: symbol_index ts.tree
+  -> max_code: max_code_t i
+  -> Lemma
   (requires
-    insert_symbols_pre ts i /\
+    insert_symbols_pre ts i max_code /\
     i + 1 = ts.tree_len / 2 /\
     U16.v (ts.tree.[i]).freq_or_code > 0)
   (ensures (
@@ -491,7 +514,7 @@ val lemma_insert_symbols_term: ts: heap_elems_wf_ts -> i: symbol_index ts -> Lem
       heap = ts.heap.(ts.heap_len + 1) <- U32.uint_to_t i;
       heap_len = ts.heap_len + 1
     } in
-    insert_symbols_post ts ts'
+    insert_symbols_post ts (ts', i)
   ))
 
 let sort_symbols_pre (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index ts i}) =

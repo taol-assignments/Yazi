@@ -1622,23 +1622,24 @@ let lemma_build_tree_rec ts0 ts1 ts2 node =
 
 #push-options "--fuel 1 --ifuel 1"
 let rec lemma_tree_symbols_freq_eq
-  (ts0 ts1: heap_elems_wf_ts) (i: symbol_index ts0): Lemma
+  (ts0 ts1: heap_elems_wf_ts) (i: symbol_index ts0.tree): Lemma
   (requires ts0.tree == ts1.tree)
-  (ensures tree_symbols_freq ts0 i == tree_symbols_freq ts1 i) =
+  (ensures tree_symbols_freq ts0.tree i == tree_symbols_freq ts1.tree i) =
   if 0 < i then lemma_tree_symbols_freq_eq ts0 ts1 (i - 1)
 
 let rec lemma_tree_symbols_freq_le
-  (ts: heap_elems_wf_ts) (i j: symbol_index ts): Lemma
+  (ts: heap_elems_wf_ts) (i j: symbol_index ts.tree): Lemma
   (requires i <= j)
-  (ensures tree_symbols_freq ts i <= tree_symbols_freq ts j)
+  (ensures tree_symbols_freq ts.tree i <= tree_symbols_freq ts.tree j)
   (decreases j - i) =
   match j - i with
   | 0 -> ()
   | _ -> lemma_tree_symbols_freq_le ts (i + 1) j
 #pop-options
 
-let insert_symbols_common_cond (ts ts': heap_elems_wf_ts) (i: symbol_index ts) =
-  insert_symbols_pre ts i /\
+let insert_symbols_common_cond
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i) =
+  insert_symbols_pre ts i max_code /\
   U16.v (ts.tree.[i]).freq_or_code > 0 /\
   ts' == {
     ts with
@@ -1648,8 +1649,8 @@ let insert_symbols_common_cond (ts ts': heap_elems_wf_ts) (i: symbol_index ts) =
 
 #push-options "--fuel 2 --ifuel 2"
 let lemma_insert_symbols_heap_aux
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts) : Lemma
-  (requires insert_symbols_common_cond ts ts' i)
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code)
   (ensures
     (ts'.heap_len == 1 ==> heap_seq ts' == create 1 (U32.uint_to_t i)) /\
     (ts'.heap_len > 1 ==> heap_seq ts' == snoc (heap_seq ts) (U32.uint_to_t i))) =
@@ -1661,11 +1662,12 @@ let lemma_insert_symbols_heap_aux
     assert(hs' `equal` snoc hs (U32.uint_to_t i))
 
 let lemma_insert_symbols_rec_heap_lt
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts) (j: U32.t): Lemma
-  (requires insert_symbols_common_cond ts ts' i /\ mem j (heap_seq ts'))
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i)
+  (j: U32.t): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code /\ mem j (heap_seq ts'))
   (ensures U32.v j <= i) =
   let hs' = heap_seq ts' in
-  lemma_insert_symbols_heap_aux ts ts' i;
+  lemma_insert_symbols_heap_aux ts ts' i max_code;
   if ts'.heap_len > 1 then begin
     let hs = heap_seq ts in
     assert(forall k. U32.v hs'.[k] <= i);
@@ -1674,8 +1676,9 @@ let lemma_insert_symbols_rec_heap_lt
 
 #set-options "--fuel 2 --ifuel 1"
 let rec lemma_insert_symbols_forest_freq_eq 
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts) (j: pos{j <= ts.heap_len}): Lemma
-  (requires insert_symbols_common_cond ts ts' i /\ heap_not_empty ts)
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i)
+  (j: pos{j <= ts.heap_len}): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code /\ heap_not_empty ts)
   (ensures (
     let hs' = slice (heap_seq ts) 0 j in
     forest_freq ts hs' == forest_freq ts' hs')) =
@@ -1690,7 +1693,7 @@ let rec lemma_insert_symbols_forest_freq_eq
       forest_freq ts hs'' + forest_freq ts (create 1 hs'.[j - 1]);
       =={lemma_forest_freq_single ts hs'.[j - 1]}
       forest_freq ts hs'' + freq ts.forest.[U32.v hs'.[j - 1]];
-      =={lemma_insert_symbols_forest_freq_eq ts ts' i (j - 1)}
+      =={lemma_insert_symbols_forest_freq_eq ts ts' i max_code (j - 1)}
       forest_freq ts' hs'' + freq ts'.forest.[U32.v hs'.[j - 1]];
       =={lemma_forest_freq_single ts' hs'.[j - 1]}
       forest_freq ts' hs'' + forest_freq ts' (create 1 hs'.[j - 1]);
@@ -1701,8 +1704,9 @@ let rec lemma_insert_symbols_forest_freq_eq
     }
 
 let rec lemma_insert_symbols_forest_symbols_eq 
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts) (j: pos{j <= ts.heap_len}): Lemma
-  (requires insert_symbols_common_cond ts ts' i /\ heap_not_empty ts)
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i)
+  (j: pos{j <= ts.heap_len}): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code /\ heap_not_empty ts)
   (ensures (
     let hs' = slice (heap_seq ts) 0 j in
     forest_symbols ts hs' == forest_symbols ts' hs')) =
@@ -1717,7 +1721,7 @@ let rec lemma_insert_symbols_forest_symbols_eq
       (forest_symbols ts hs'') @| forest_symbols ts (create 1 hs'.[j - 1]);
       =={lemma_forest_symbols_single ts hs'.[j - 1]}
       (forest_symbols ts hs'') @| create 1 (U32.v hs'.[j - 1]);
-      =={lemma_insert_symbols_forest_symbols_eq ts ts' i (j - 1)}
+      =={lemma_insert_symbols_forest_symbols_eq ts ts' i max_code (j - 1)}
       forest_symbols ts' hs'' @| create 1 (U32.v hs'.[j - 1]);
       =={lemma_forest_symbols_single ts' hs'.[j - 1]}
       (forest_symbols ts' hs'') @| forest_symbols ts' (create 1 hs'.[j - 1]);
@@ -1729,10 +1733,10 @@ let rec lemma_insert_symbols_forest_symbols_eq
 
 #set-options "--fuel 1 --ifuel 1"
 let lemma_insert_symbols_rec_forest_freq
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts): Lemma
-  (requires insert_symbols_common_cond ts ts' i)
-  (ensures forest_freq ts' (heap_seq ts') == tree_symbols_freq ts' i) =
-  lemma_insert_symbols_heap_aux ts ts' i;
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code)
+  (ensures forest_freq ts' (heap_seq ts') == tree_symbols_freq ts'.tree i) =
+  lemma_insert_symbols_heap_aux ts ts' i max_code;
   let i' = U32.uint_to_t i in
   let hs' = heap_seq ts' in
   if ts.heap_len = 0 then
@@ -1745,26 +1749,27 @@ let lemma_insert_symbols_rec_forest_freq
       forest_freq ts' (snoc hs i');
       =={lemma_forest_freq_append ts' hs (create 1 i')}
       forest_freq ts' hs + forest_freq ts' (create 1 i');
-      =={lemma_insert_symbols_forest_freq_eq ts ts' i ts.heap_len}
+      =={lemma_insert_symbols_forest_freq_eq ts ts' i max_code ts.heap_len}
       forest_freq ts hs + forest_freq ts' (create 1 i');
       =={lemma_forest_freq_single ts' i'}
       forest_freq ts hs + U16.v (ts'.tree.[i]).freq_or_code;
       =={}
-      tree_symbols_freq ts (i - 1) + U16.v (ts'.tree.[i]).freq_or_code;
+      tree_symbols_freq ts.tree (i - 1) + U16.v (ts'.tree.[i]).freq_or_code;
       =={lemma_tree_symbols_freq_eq ts ts' (i - 1)}
-      tree_symbols_freq ts' (i - 1) + U16.v (ts'.tree.[i]).freq_or_code;
+      tree_symbols_freq ts'.tree (i - 1) + U16.v (ts'.tree.[i]).freq_or_code;
       =={}
-      tree_symbols_freq ts' i;
+      tree_symbols_freq ts'.tree i;
     }
 
 let lemma_insert_symbols_rec_es_disjoint
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts) (j: U32.t): Lemma
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i)
+  (j: U32.t): Lemma
   (requires
-    insert_symbols_common_cond ts ts' i /\
+    insert_symbols_common_cond ts ts' i max_code /\
     heap_not_empty ts /\
     mem j (element_seq ts'))
   (ensures mem j (heap_seq ts) <> mem j (create 1 (U32.uint_to_t i))) =
-  lemma_insert_symbols_heap_aux ts ts' i;
+  lemma_insert_symbols_heap_aux ts ts' i max_code;
   if i > 0 then begin
     let hs = heap_seq ts in
     let i' = U32.uint_to_t i in
@@ -1777,19 +1782,23 @@ let lemma_insert_symbols_rec_es_disjoint
 
 #set-options "--fuel 2 --ifuel 1"
 let lemma_insert_symbols_rec_es_no_dup
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts): Lemma
-  (requires insert_symbols_common_cond ts ts' i)
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code)
   (ensures no_dup (element_seq ts')) =
   if i > 0 then begin
-    lemma_insert_symbols_heap_aux ts ts' i;
-    forall_intro (move_requires (lemma_insert_symbols_rec_es_disjoint ts ts' i));
-    no_dup_append_1 (heap_seq ts) (create 1 (U32.uint_to_t i))
+    lemma_insert_symbols_heap_aux ts ts' i max_code;
+    if ts.heap_len > 0 then  begin
+      forall_intro (move_requires
+        (lemma_insert_symbols_rec_es_disjoint ts ts' i max_code));
+      no_dup_append_1 (heap_seq ts) (create 1 (U32.uint_to_t i))
+    end
   end
 
 let lemma_insert_symbols_rec_fs_no_dup
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts) (j: nat): Lemma
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i)
+  (j: nat): Lemma
   (requires
-    insert_symbols_common_cond ts ts' i /\
+    insert_symbols_common_cond ts ts' i max_code /\
     heap_not_empty ts)
   (ensures
     mem j (forest_symbols ts' (heap_seq ts')) ==>
@@ -1798,10 +1807,10 @@ let lemma_insert_symbols_rec_fs_no_dup
     let i' = U32.uint_to_t i in
     let hs = heap_seq ts in
     let hs' = heap_seq ts' in
-    lemma_insert_symbols_heap_aux ts ts' i;
+    lemma_insert_symbols_heap_aux ts ts' i max_code;
     calc (==) {
       count j (forest_symbols ts' hs');
-      =={lemma_insert_symbols_heap_aux ts ts' i}
+      =={lemma_insert_symbols_heap_aux ts ts' i max_code}
       count j (forest_symbols ts' (snoc hs i'));
       =={lemma_forest_symbols_append ts' hs (create 1 i')}
       count j (forest_symbols ts' hs @| forest_symbols ts' (create 1 i'));
@@ -1809,7 +1818,7 @@ let lemma_insert_symbols_rec_fs_no_dup
       count j (forest_symbols ts' hs @| create 1 i);
       =={lemma_append_count_aux j (forest_symbols ts' hs) (create 1 i)}
       count j (forest_symbols ts' hs) + count j (create 1 i);
-      =={lemma_insert_symbols_forest_symbols_eq ts ts' i ts.heap_len}
+      =={lemma_insert_symbols_forest_symbols_eq ts ts' i max_code ts.heap_len}
       count j (forest_symbols ts hs) + count j (create 1 i);
     };
     if count j (forest_symbols ts hs) = 1 then
@@ -1817,32 +1826,43 @@ let lemma_insert_symbols_rec_fs_no_dup
   end
 
 let lemma_insert_symbols_rec_forest_freq_upper_bound
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts): Lemma
-  (requires insert_symbols_common_cond ts ts' i)
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code)
   (ensures
     0 < forest_freq ts' (heap_seq ts') /\
     forest_freq ts' (heap_seq ts') < pow2 15) =
-  lemma_insert_symbols_rec_forest_freq ts ts' i;
+  lemma_insert_symbols_rec_forest_freq ts ts' i max_code;
   lemma_tree_symbols_freq_eq ts ts' i;
   lemma_tree_symbols_freq_le ts i (ts.tree_len / 2 - 1)
 
-let lemma_insert_symbols_forest_wf
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts): Lemma
-  (requires insert_symbols_common_cond ts ts' i)
-  (ensures is_forest_wf ts') =
-  lemma_insert_symbols_rec_es_no_dup ts ts' i;
-  forall_intro (move_requires (lemma_insert_symbols_rec_fs_no_dup ts ts' i));
-  lemma_insert_symbols_rec_forest_freq_upper_bound ts ts' i
+let lemma_insert_symbols_freq_corr
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i)
+  (j: pos{j <= ts'.heap_len}): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code)
+  (ensures freq_corr ts' j) =
+  if ts.heap_len > 0 then begin
+    lemma_heap_seq ts' j;
+    if j < ts'.heap_len then lemma_insert_symbols_heap_aux ts ts' i max_code
+  end
 
-let lemma_insert_symbols_rec_len_eq
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts): Lemma
-  (requires insert_symbols_common_cond ts ts' i)
+let lemma_insert_symbols_forest_wf
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code)
+  (ensures is_forest_wf ts') =
+  lemma_insert_symbols_rec_es_no_dup ts ts' i max_code;
+  forall_intro (move_requires (lemma_insert_symbols_rec_fs_no_dup ts ts' i max_code));
+  forall_intro (move_requires (lemma_insert_symbols_freq_corr ts ts' i max_code));
+  lemma_insert_symbols_rec_forest_freq_upper_bound ts ts' i max_code
+
+let lemma_insert_symbols_len_eq
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code)
   (ensures length (forest_symbols ts' (heap_seq ts')) == length (element_seq ts')) =
-  if i > 0 then begin
+  if i > 0 && ts.heap_len > 0 then begin
     let i' = U32.uint_to_t i in
     calc (==) {
       length (forest_symbols ts' (heap_seq ts'));
-      =={lemma_insert_symbols_heap_aux ts ts' i}
+      =={lemma_insert_symbols_heap_aux ts ts' i max_code}
       length (forest_symbols ts' (snoc (heap_seq ts) i'));
       =={}
       length (forest_symbols ts' (heap_seq ts @| create 1 i'));
@@ -1851,7 +1871,7 @@ let lemma_insert_symbols_rec_len_eq
       =={}
       length (forest_symbols ts' (heap_seq ts)) +
       length (forest_symbols ts' (create 1 i'));
-      =={lemma_insert_symbols_forest_symbols_eq ts ts' i ts.heap_len}
+      =={lemma_insert_symbols_forest_symbols_eq ts ts' i max_code ts.heap_len}
       length (forest_symbols ts (heap_seq ts)) +
       length (forest_symbols ts' (create 1 i'));
       =={}
@@ -1864,53 +1884,77 @@ let lemma_insert_symbols_rec_len_eq
   end
 
 let lemma_insert_symbols_rec_fs_es_eq
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts) (j: nat{j < ts'.heap_len}): Lemma
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i)
+  (j: nat{j < ts'.heap_len}): Lemma
   (requires
-    insert_symbols_common_cond ts ts' i /\
+    insert_symbols_common_cond ts ts' i max_code /\
     length (forest_symbols ts' (heap_seq ts')) == length (element_seq ts'))
   (ensures (forest_symbols ts' (heap_seq ts')).[j] == U32.v (element_seq ts').[j]) =
-  lemma_insert_symbols_heap_aux ts ts' i;
+  lemma_insert_symbols_heap_aux ts ts' i max_code;
   if ts.heap_len > 0 then
     lemma_forest_symbols_append ts' (heap_seq ts) (create 1 (U32.uint_to_t i));
-  if j < ts'.heap_len - 1 then begin
-    lemma_insert_symbols_forest_symbols_eq ts ts' i ts.heap_len
-  end
+  if j < ts'.heap_len - 1 then
+    lemma_insert_symbols_forest_symbols_eq ts ts' i max_code ts.heap_len
+
+let rec lemma_tree_symbols_freq_zero
+  (ts: heap_elems_wf_ts) (i: symbol_index ts.tree): Lemma
+  (requires tree_symbols_freq ts.tree i == 0)
+  (ensures forall j. j <= i ==> U16.v (ts.tree.[j]).freq_or_code == 0)
+  (decreases i) =
+  match i with
+  | 0 -> ()
+  | _ -> lemma_tree_symbols_freq_zero ts (i - 1)
 
 let lemma_insert_symbols_rec_iff
-  (ts ts': heap_elems_wf_ts) (i: symbol_index ts) (j: nat{j < i + 1}): Lemma
-  (requires insert_symbols_common_cond ts ts' i)
+  (ts ts': heap_elems_wf_ts) (i: symbol_index ts.tree) (max_code: max_code_t i)
+  (j: nat{j <= i}): Lemma
+  (requires insert_symbols_common_cond ts ts' i max_code)
   (ensures 
     U16.v (ts'.tree.[j]).freq_or_code > 0 <==>
     mem (U32.uint_to_t j) (heap_seq ts')) =
-  lemma_insert_symbols_heap_aux ts ts' i;
+  lemma_insert_symbols_heap_aux ts ts' i max_code;
   if ts.heap_len > 0 then
     lemma_mem_append (heap_seq ts) (create 1 (U32.uint_to_t i))
+  else if i > 0 then
+    lemma_tree_symbols_freq_zero ts (i - 1)
 
-let lemma_insert_symbols_rec ts i =
+let lemma_insert_symbols_rec ts i max_code =
   let ts' = {
     ts with
     heap = ts.heap.(ts.heap_len + 1) <- U32.uint_to_t i;
     heap_len = ts.heap_len + 1
   } in
-  forall_intro (move_requires (lemma_insert_symbols_rec_heap_lt ts ts' i));
+  forall_intro (move_requires (lemma_insert_symbols_rec_heap_lt ts ts' i max_code));
   lemma_tree_symbols_freq_eq ts ts' (ts.tree_len / 2 - 1);
-  lemma_insert_symbols_rec_forest_freq ts ts' i;
-  lemma_insert_symbols_rec_len_eq ts ts' i;
-  lemma_insert_symbols_forest_wf ts ts' i;
-  forall_intro (move_requires (lemma_insert_symbols_rec_fs_es_eq ts ts' i));
-  forall_intro (move_requires (lemma_insert_symbols_rec_iff ts ts' i))
+  lemma_insert_symbols_rec_forest_freq ts ts' i max_code;
+  lemma_insert_symbols_len_eq ts ts' i max_code;
+  lemma_insert_symbols_forest_wf ts ts' i max_code;
+  forall_intro (move_requires (lemma_insert_symbols_rec_fs_es_eq ts ts' i max_code));
+  forall_intro (move_requires (lemma_insert_symbols_rec_iff ts ts' i max_code))
 
-let lemma_insert_symbols_term ts i =
+let lemma_insert_symbols_term ts i max_code =
   let ts' = {
     ts with
     heap = ts.heap.(ts.heap_len + 1) <- U32.uint_to_t i;
     heap_len = ts.heap_len + 1
   } in
-  lemma_insert_symbols_heap_aux ts ts' i;
-  lemma_insert_symbols_forest_wf ts ts' i;
-  forall_intro (move_requires (lemma_insert_symbols_rec_iff ts ts' i));
+  lemma_insert_symbols_heap_aux ts ts' i max_code;
+  lemma_insert_symbols_forest_wf ts ts' i max_code;
+  forall_intro (move_requires (lemma_insert_symbols_rec_iff ts ts' i max_code));
+  lemma_insert_symbols_len_eq ts ts' i max_code;
   if ts.heap_len > 0 then
     lemma_mem_append (heap_seq ts) (create 1 (U32.uint_to_t i))
+
+let lemma_sort_symbols_freq_corr
+  (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index ts i}) (j: heap_index ts): Lemma
+  (requires sort_symbols_pre ts i)
+  (ensures freq_corr (pqdownheap ts i) j) =
+  let ts' = pqdownheap ts i in
+  let j' = ts'.heap.[j] in
+  lemma_heap_seq ts' j;
+  assert(mem j' (heap_seq ts'));
+  assert(U32.v j' < ts'.tree_len / 2);
+  assert(U16.v (ts'.tree.[U32.v j']).freq_or_code > 0)
 
 #set-options "--fuel 0 --ifuel 0"
 let lemma_sort_symbols_rec (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index ts i}):
@@ -1921,7 +1965,8 @@ let lemma_sort_symbols_rec (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index ts
   let hs' = heap_seq ts' in
   lemma_forest_symbols_perm ts' hs' ts hs;
   lemma_forest_freq_perm ts' hs' ts hs;
-  perm_len (forest_symbols ts hs) (forest_symbols ts' hs')
+  perm_len (forest_symbols ts hs) (forest_symbols ts' hs');
+  forall_intro (move_requires (lemma_sort_symbols_freq_corr ts i))
 
 #set-options "--fuel 1 --ifuel 1 --query_stats"
 let lemma_sort_symbols_term (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index ts i}):
@@ -1936,7 +1981,8 @@ let lemma_sort_symbols_term (ts: heap_elems_wf_ts) (i: U32.t{is_internal_index t
   lemma_forest_symbols_perm ts' hs' ts hs;
   lemma_forest_freq_perm ts' hs' ts hs;
   perm_len (forest_symbols ts hs) (forest_symbols ts' hs');
-  lemma_forest_symbols_leaf_count ts'
+  lemma_forest_symbols_leaf_count ts';
+  forall_intro (move_requires (lemma_sort_symbols_freq_corr ts i))
 
 let lemma_sort_symbols ts i =
   if 1 < U32.v i then
