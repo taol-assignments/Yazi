@@ -1,5 +1,5 @@
 [
-  "\u0010áb\u0019Ñ\u000b’G§‰#ÚÈ¹Ör",
+  "©<«Û(„ÇÏ\u0002\u0016˜\u001dfÃF–",
   [
     [
       "Spec.Tree.Lemmas.left",
@@ -1285,13 +1285,10 @@
       [
         "@MaxIFuel_assumption", "@query",
         "Prims_pretyping_ae567c2fb75be05905677af440075565", "b2t_def",
-        "binder_x_481237f671bda639fb4ffa397edb11a6_1",
-        "binder_x_ad35db392a08ca6b12ecca1eca08a492_0",
+        "binder_x_1261af553047bfdb6a2c77c02479017c_1",
         "equation_FStar.UInt.fits", "equation_FStar.UInt.min_int",
         "equation_FStar.UInt.size", "equation_FStar.UInt.uint_t",
-        "equation_Prims.nat", "equation_Spec.Heap.Lemmas.heap_elems_wf_ts",
-        "equation_Spec.Heap.Lemmas.tree_state_wf",
-        "equation_Spec.Tree.Lemmas.symbol_index",
+        "equation_Prims.nat", "equation_Spec.Tree.Lemmas.symbol_index",
         "function_token_typing_Prims.__cache_version_number__",
         "int_inversion", "int_typing", "primitive_Prims.op_Addition",
         "primitive_Prims.op_AmpAmp", "primitive_Prims.op_Division",
@@ -1299,15 +1296,13 @@
         "primitive_Prims.op_Subtraction",
         "projection_inverse_BoxBool_proj_0",
         "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_031ac113090bd526e957683c92ee21a0",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "refinement_interpretation_Tm_refine_93022a9b1d08c3c004c4dfb8ff863bb4",
-        "refinement_interpretation_Tm_refine_e010dd37842f0ce406ab763513be157d",
+        "refinement_interpretation_Tm_refine_b753f300888ab6c894fec472ed11887e",
         "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
         "well-founded-ordering-on-nat"
       ],
       0,
-      "6f985dae954737199b510797cd440e22"
+      "c9123c108ed3d0fefc92a0f9b373c875"
     ],
     [
       "Spec.Tree.Lemmas.tree_heap_surjective",
@@ -1321,22 +1316,24 @@
         "equation_FStar.UInt.uint_t", "equation_Prims.nat",
         "equation_Spec.Heap.Lemmas.heap_elems_wf",
         "equation_Spec.Heap.Lemmas.heap_elems_wf_ts",
+        "equation_Spec.Heap.Lemmas.heap_indexes_wf",
         "equation_Spec.Heap.Lemmas.tree_state_wf",
         "equation_Spec.Tree.Lemmas.symbol_index", "int_inversion",
         "primitive_Prims.op_AmpAmp", "primitive_Prims.op_Division",
         "primitive_Prims.op_LessThanOrEqual",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_tree",
         "projection_inverse_BoxBool_proj_0",
         "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_031ac113090bd526e957683c92ee21a0",
         "refinement_interpretation_Tm_refine_4ee1219d166d23fefd989fcb9779b940",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_93022a9b1d08c3c004c4dfb8ff863bb4",
+        "refinement_interpretation_Tm_refine_b753f300888ab6c894fec472ed11887e",
         "refinement_interpretation_Tm_refine_e010dd37842f0ce406ab763513be157d",
         "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
         "typing_FStar.UInt32.v", "typing_Yazi.Deflate.Constants.heap_size"
       ],
       0,
-      "5d541a7240a65ea52e492c3968127b70"
+      "87f84bc614c2b6ad443be2bf9ccafd04"
     ],
     [
       "Spec.Tree.Lemmas.forest_init_state",
@@ -1345,7 +1342,7 @@
       0,
       [ "@query" ],
       0,
-      "36b16196b475ea749eeb885bcb023bcf"
+      "cd9bcf28c830fe1c6a6fa15347899ea9"
     ],
     [
       "Spec.Tree.Lemmas.insert_symbols_pre",
@@ -1369,11 +1366,12 @@
         "primitive_Prims.op_AmpAmp", "primitive_Prims.op_Division",
         "primitive_Prims.op_LessThanOrEqual",
         "primitive_Prims.op_Subtraction",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_tree",
         "projection_inverse_BoxBool_proj_0",
         "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_031ac113090bd526e957683c92ee21a0",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_93022a9b1d08c3c004c4dfb8ff863bb4",
+        "refinement_interpretation_Tm_refine_b753f300888ab6c894fec472ed11887e",
         "refinement_interpretation_Tm_refine_c1424615841f28cac7fc34e92b7ff33c",
         "refinement_interpretation_Tm_refine_cd04502f0d8ea7735d44614fa755cd3a",
         "refinement_interpretation_Tm_refine_e010dd37842f0ce406ab763513be157d",
@@ -1382,7 +1380,7 @@
         "typing_Yazi.Deflate.Constants.heap_size"
       ],
       0,
-      "8174e3c996225eef6bc04c277f731bc5"
+      "7835eec2e2a575daf95d1236f53d9957"
     ],
     [
       "Spec.Tree.Lemmas.insert_symbols_post",
@@ -1390,26 +1388,16 @@
       0,
       0,
       [
-        "@MaxIFuel_assumption", "@query", "b2t_def",
-        "equation_FStar.UInt.fits", "equation_FStar.UInt.min_int",
-        "equation_FStar.UInt.size", "equation_FStar.UInt.uint_t",
-        "equation_Prims.nat", "equation_Spec.Heap.Lemmas.heap_elems_wf",
+        "@MaxIFuel_assumption", "@query",
+        "equation_Spec.Heap.Lemmas.heap_elems_wf",
         "equation_Spec.Heap.Lemmas.heap_elems_wf_ts",
-        "equation_Spec.Heap.Lemmas.tree_state_wf",
-        "equation_Spec.Tree.Lemmas.symbol_index", "int_inversion",
-        "primitive_Prims.op_AmpAmp", "primitive_Prims.op_Division",
-        "primitive_Prims.op_LessThanOrEqual",
-        "projection_inverse_BoxBool_proj_0",
-        "projection_inverse_BoxInt_proj_0",
-        "refinement_interpretation_Tm_refine_031ac113090bd526e957683c92ee21a0",
-        "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
-        "refinement_interpretation_Tm_refine_93022a9b1d08c3c004c4dfb8ff863bb4",
-        "refinement_interpretation_Tm_refine_e010dd37842f0ce406ab763513be157d",
-        "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
-        "typing_FStar.UInt32.v", "typing_Yazi.Deflate.Constants.heap_size"
+        "lemma_Spec.Tree.Lemmas.lemma_heap_seq_tree_index",
+        "proj_equation_Yazi.Tree.Types.Mktree_state_heap_len",
+        "projection_inverse_Yazi.Tree.Types.Mktree_state_heap_len",
+        "refinement_interpretation_Tm_refine_e010dd37842f0ce406ab763513be157d"
       ],
       0,
-      "91556f3e9e8c086b4678f1651bbcc2b6"
+      "9e98758309d8dd845535f612404d13a5"
     ],
     [
       "Spec.Tree.Lemmas.lemma_insert_symbols_rec",
@@ -1429,6 +1417,7 @@
         "equation_Spec.Heap.Lemmas.heap_indexes_wf",
         "equation_Spec.Heap.Lemmas.tree_state_wf",
         "equation_Spec.Tree.Lemmas.insert_symbols_pre",
+        "equation_Spec.Tree.Lemmas.max_code_t",
         "equation_Spec.Tree.Lemmas.symbol_index",
         "equation_Yazi.Deflate.Constants.heap_size",
         "equation_Yazi.Deflate.Constants.l_codes",
@@ -1458,25 +1447,26 @@
         "projection_inverse_Yazi.Tree.Types.Mktree_state_heap_max",
         "projection_inverse_Yazi.Tree.Types.Mktree_state_tree",
         "projection_inverse_Yazi.Tree.Types.Mktree_state_tree_len",
-        "refinement_interpretation_Tm_refine_031ac113090bd526e957683c92ee21a0",
         "refinement_interpretation_Tm_refine_2ca062977a42c36634b89c1c4f193f79",
         "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_444d3ec43c00faef3fbee9469917de82",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_93022a9b1d08c3c004c4dfb8ff863bb4",
+        "refinement_interpretation_Tm_refine_b753f300888ab6c894fec472ed11887e",
         "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
         "refinement_interpretation_Tm_refine_df81b3f17797c6f405c1dbb191651292",
         "refinement_interpretation_Tm_refine_e010dd37842f0ce406ab763513be157d",
         "refinement_interpretation_Tm_refine_ef2abcfc8cb2442b48a4ea57db836abd",
         "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
-        "typing_FStar.Seq.Base.index", "typing_FStar.UInt32.t",
-        "typing_FStar.UInt32.v", "typing_Yazi.Deflate.Constants.heap_size",
+        "refinement_interpretation_Tm_refine_fcfbca7fd0205ff123d0702c00cc1ffe",
+        "typing_FStar.UInt32.t", "typing_FStar.UInt32.v",
+        "typing_Yazi.Deflate.Constants.heap_size",
         "typing_Yazi.Tree.Types.__proj__Mktree_state__item__heap",
         "typing_Yazi.Tree.Types.__proj__Mktree_state__item__heap_len"
       ],
       0,
-      "7e8efa9611c264009fdd32975fa38faf"
+      "17dde49a36f6cd35bd4ae37617b44bc0"
     ],
     [
       "Spec.Tree.Lemmas.lemma_insert_symbols_term",
@@ -1497,6 +1487,7 @@
         "equation_Spec.Heap.Lemmas.heap_indexes_wf",
         "equation_Spec.Heap.Lemmas.tree_state_wf",
         "equation_Spec.Tree.Lemmas.insert_symbols_pre",
+        "equation_Spec.Tree.Lemmas.max_code_t",
         "equation_Spec.Tree.Lemmas.symbol_index",
         "equation_Yazi.Deflate.Constants.heap_size",
         "equation_Yazi.Deflate.Constants.l_codes",
@@ -1526,25 +1517,26 @@
         "projection_inverse_Yazi.Tree.Types.Mktree_state_heap_max",
         "projection_inverse_Yazi.Tree.Types.Mktree_state_tree",
         "projection_inverse_Yazi.Tree.Types.Mktree_state_tree_len",
-        "refinement_interpretation_Tm_refine_031ac113090bd526e957683c92ee21a0",
         "refinement_interpretation_Tm_refine_2ca062977a42c36634b89c1c4f193f79",
         "refinement_interpretation_Tm_refine_2de20c066034c13bf76e9c0b94f4806c",
         "refinement_interpretation_Tm_refine_414d0a9f578ab0048252f8c8f552b99f",
         "refinement_interpretation_Tm_refine_444d3ec43c00faef3fbee9469917de82",
         "refinement_interpretation_Tm_refine_542f9d4f129664613f2483a6c88bc7c2",
         "refinement_interpretation_Tm_refine_93022a9b1d08c3c004c4dfb8ff863bb4",
+        "refinement_interpretation_Tm_refine_b753f300888ab6c894fec472ed11887e",
         "refinement_interpretation_Tm_refine_d83f8da8ef6c1cb9f71d1465c1bb1c55",
         "refinement_interpretation_Tm_refine_df81b3f17797c6f405c1dbb191651292",
         "refinement_interpretation_Tm_refine_e010dd37842f0ce406ab763513be157d",
         "refinement_interpretation_Tm_refine_ef2abcfc8cb2442b48a4ea57db836abd",
         "refinement_interpretation_Tm_refine_f13070840248fced9d9d60d77bdae3ec",
+        "refinement_interpretation_Tm_refine_fcfbca7fd0205ff123d0702c00cc1ffe",
         "typing_FStar.Seq.Base.index", "typing_FStar.UInt32.t",
         "typing_FStar.UInt32.v", "typing_Yazi.Deflate.Constants.heap_size",
         "typing_Yazi.Tree.Types.__proj__Mktree_state__item__heap",
         "typing_Yazi.Tree.Types.__proj__Mktree_state__item__heap_len"
       ],
       0,
-      "86f0276e1c98cc08cc30cf92b5fc926b"
+      "36959e4658e28555ac4ea500e09ada89"
     ],
     [
       "Spec.Tree.Lemmas.sort_symbols_pre",
@@ -1579,7 +1571,7 @@
         "typing_Yazi.Deflate.Constants.heap_size"
       ],
       0,
-      "a61e46ffb1735624110b8220885eaf5a"
+      "d5fc97013ecca202a79a68c706d1a193"
     ],
     [
       "Spec.Tree.Lemmas.sort_symbols_post",
@@ -1604,7 +1596,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state__item__tree_len"
       ],
       0,
-      "8560cba11d10b0b088c39f19d70ee5af"
+      "381f98053a0af58d40f80807f29a5876"
     ],
     [
       "Spec.Tree.Lemmas.lemma_sort_symbols",
@@ -1666,7 +1658,7 @@
         "typing_Yazi.Tree.Types.__proj__Mktree_state__item__heap_max"
       ],
       0,
-      "397623df6415b3217cf6794a2106ab7b"
+      "6df77ab297d90cccd8804d8ab16bda98"
     ]
   ]
 ]
