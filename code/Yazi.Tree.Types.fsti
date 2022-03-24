@@ -16,7 +16,7 @@ open Yazi.Deflate.Constants
 /// Prefix-free code tree.
 noextract
 type tree = 
-  | Node: left: tree -> id: nat-> freq: pos -> right: tree -> tree
+  | Node: left: tree -> id: nat -> freq: pos -> right: tree -> tree
   | Leaf: symbol: nat -> freq: pos -> tree
 
 noextract

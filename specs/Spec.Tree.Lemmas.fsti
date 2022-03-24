@@ -540,3 +540,52 @@ val lemma_sort_symbols:
     is_forest_wf ts' /\
     (1 < U32.v i ==> sort_symbols_pre (pqdownheap ts i) (i `U32.sub` 1ul)) /\
     (1 == U32.v i ==> sort_symbols_post ts (pqdownheap ts i))))
+
+#set-options "--fuel 1 --ifuel 1"
+let rec is_sub_tree (a b: wf_tree): Tot bool =
+  match (a = b, a) with
+  | (true, _) -> true
+  | (_, Node l _ _ r) ->
+    (match l = b || r = b with
+    | true -> true
+    | false -> is_sub_tree l b || is_sub_tree r b)
+  | _ -> false
+
+type sub_wf_tree (p: wf_tree) = t: wf_tree{is_sub_tree p t}
+
+let rec sub_tree_depth (p: wf_tree) (c: sub_wf_tree p): Tot nat =
+  match (p = c, p) with
+  | (true, _) -> 0
+  | (_, Node l _ _ r) ->
+    match (l = c || r = c, is_sub_tree l c, is_sub_tree r c) with
+    | (true, _, _) -> 1
+    | (_, true, _) -> 1 + sub_tree_depth l c
+    | _ -> 1 + sub_tree_depth r c
+
+let is_parent_child (p c: wf_tree) = Node? p /\ (left p == c \/ right p == c)
+
+let rec lemma_is_sub_tree_trans (t p c: wf_tree): Lemma
+  (requires is_sub_tree t p /\ is_parent_child p c)
+  (ensures is_sub_tree t c)
+  [SMTPat (is_sub_tree t p); SMTPat (is_parent_child p c)] =
+  match t = p with
+  | true -> ()
+  | _ ->
+    match (is_sub_tree (left t) p, is_sub_tree (right t) p) with
+    | (true, _) -> lemma_is_sub_tree_trans (left t) p c
+    | _ -> lemma_is_sub_tree_trans (right t) p c
+
+#set-options "--fuel 2 --ifuel 2"
+let rec lemma_sub_tree_depth (t p c: wf_tree): Lemma
+  (requires is_sub_tree t p /\ is_parent_child p c)
+  (ensures sub_tree_depth t c == sub_tree_depth t p + 1) =
+  match t = p with
+  | true -> ()
+  | _ -> 
+    assume(is_sub_tree (left t) p <> is_sub_tree (right t) p);
+    assume(left t <> c /\ right t <> c);
+    match (is_sub_tree (left t) p, is_sub_tree (right t) p) with
+    | (true, _) ->
+      lemma_sub_tree_depth (left t) p c;
+      lemma_is_sub_tree_trans (left t) p c
+    | _ -> admit(); lemma_sub_tree_depth (right t) p c
