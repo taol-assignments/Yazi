@@ -1,8 +1,9 @@
 module Lib.Rational
 
 module Math = FStar.Math.Lemmas
+open FStar.Mul
 
-#set-options "--fuel 0 --ifuel 0"
+#set-options "--z3refresh --fuel 0 --ifuel 0"
 let plus_assoc a b c =
   assert(num (b +$ c) == num b * den c + den b * num c);
   assert(den (b +$ c) == den b * den c)
@@ -74,3 +75,38 @@ let distributivity_add_left a b c =
     =${}
     a *$ (b +$ c);
   }
+
+let mul_eq_l a b a' = assert_norm(a *$ b =$ a' *$ b)
+
+let mul_eq_r a b b' =
+  mul_comm a b;
+  mul_comm a b'
+
+#set-options "--fuel 1"
+let qpow2_double_sum n =
+  if n >= 0 then
+    Math.Lemmas.pow2_double_sum n
+  else begin
+    calc (==) {
+      qpow2 n +$ qpow2 n =$ qpow2 (n + 1);
+      =={}
+      (1, pow2 (-n)) +$ (1, pow2 (-n)) =$ qpow2 (n + 1);
+      =={}
+      (pow2 (-n) + pow2 (-n), (pow2 (-n)) * (pow2 (-n))) =$ qpow2 (n + 1);
+      =={Math.Lemmas.pow2_double_sum (-n)}
+      (pow2 (-n + 1), (pow2 (-n)) * (pow2 (-n))) =$ qpow2 (n + 1);
+      =={Math.Lemmas.pow2_plus (-n) (-n)}
+      (pow2 (-n + 1), pow2 (-n * 2)) =$ qpow2 (n + 1);
+    };
+    if n < -1 then
+      calc (==) {
+        (pow2 (-n + 1), pow2 (-n * 2)) =$ qpow2 (n + 1);
+        =={}
+        (pow2 (-n + 1), pow2 (-n * 2)) =$ (1, pow2 (-n - 1));
+        =={}
+        pow2 (-n + 1) * pow2 (-n - 1) = pow2 (-n * 2);
+        =={Math.Lemmas.pow2_plus (-n + 1) (-n - 1)}
+        pow2 (-n * 2) = pow2 (-n * 2);
+      }
+  end
+

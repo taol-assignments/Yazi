@@ -204,7 +204,7 @@ let lemma_unfold_solution_snoc_leaf (s: seq item) (i: item) (j: nat): Lemma
       snoc (unfold_solution s j) i;
     }
 
-#push-options "--fuel 1 --ifuel 0 --query_stats --z3refresh --z3rlimit 512 --z3seed 8"
+#push-options "--fuel 1 --ifuel 0 --query_stats --z3refresh --z3rlimit 512 --z3seed 18"
 let lemma_snoc_leaf_monotone_elem
   #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w true) (j: package_index_t prev false)
@@ -256,11 +256,70 @@ let lemma_snoc_leaf_filter
     base';
   }
 
+#push-options "--fuel 1 --ifuel 1"
+let rec lemma_solution_sum'_append (s1 s2: seq item): Lemma
+  (ensures solution_sum' s1 +$ solution_sum' s2 =$ solution_sum' (s1 @| s2))
+  (decreases length s1) =
+  match length s1 with
+  | 0 -> lemma_empty s1; append_empty_l s2
+  | _ ->
+    calc (=$) {
+      solution_sum' s1 +$ solution_sum' s2;
+      =${}
+      (qpow2 (-exp s1.[0]) +$ (solution_sum' (tail s1)) +$ solution_sum' s2);
+      =${plus_assoc (qpow2 (-exp s1.[0])) (solution_sum' (tail s1)) (solution_sum' s2)}
+      qpow2 (-exp s1.[0]) +$ (solution_sum' (tail s1) +$ solution_sum' s2);
+      =${lemma_solution_sum'_append (tail s1) s2}
+      qpow2 (-exp s1.[0]) +$ (solution_sum' ((tail s1) @| s2));
+      =${assert(((tail s1) @| s2) `equal` (tail (s1 @| s2)))}
+      qpow2 (-exp s1.[0]) +$ (solution_sum' (tail (s1 @| s2)));
+      =${}
+      solution_sum' (s1 @| s2);
+    }
+#pop-options
+
+#push-options "--fuel 2 --ifuel 2"
+let lemma_solution_sum'_single (i: item): Lemma
+  (ensures solution_sum' (create 1 i) =$ qpow2 (-exp i)) = ()
+#pop-options
+
+let lemma_solution_sum_snoc_leaf
+  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  (i: leaf_index_t w true) (j: package_index_t prev false)
+  (x: intermidiate_solution prev i j): Lemma
+  (ensures (
+    let x' = snoc x (Leaf i (lo - 1) w.[i]) in
+    solution_sum hi (lo - 1) x' =$ qpow2 (-(lo - 1)) *$ (of_int (length x')))) =
+  let l = Leaf i (lo - 1) w.[i] in
+  let x' = snoc x l in
+  let sol = unfold_solution x (hi - (lo - 1)) in
+  let sol' = unfold_solution x' (hi - (lo - 1)) in
+  lemma_filter_leaves_snoc_leaf x l;
+  calc (=$) {
+    solution_sum hi (lo - 1) x' ;
+    =${}
+    solution_sum' sol';
+    =${lemma_unfold_solution_snoc_leaf x l (hi - (lo - 1))}
+    solution_sum' (sol @| (create 1 l));
+    =${lemma_solution_sum'_append sol (create 1 l)}
+    solution_sum' sol +$ solution_sum' (create 1 l);
+    =${lemma_solution_sum'_single l}
+    (qpow2 (-(lo - 1)) *$ (of_int (length x))) +$ qpow2 (-(lo - 1));
+    =${}
+    (qpow2 (-(lo - 1)) *$ (of_int (length x))) +$ (qpow2 (-(lo - 1)) *$ one);
+    =${distributivity_add_left (qpow2 (-(lo - 1))) (of_int (length x)) one}
+    qpow2 (-(lo - 1)) *$ (of_int (length x) +$ one);
+    =${mul_eq_r (qpow2 (-(lo - 1))) (of_int (length x) +$ one) (of_int (length x + 1))}
+    qpow2 (-(lo - 1)) *$ (of_int (length x + 1));
+    =${}
+    qpow2 (-(lo - 1)) *$ (of_int (length x'));
+  }
+
 let lemma_snoc_leaf_solution_wf
   #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w true) (j: package_index_t prev false)
   (x: intermidiate_solution prev i j)
-  (k: nat{k <= length x + 1}) : Lemma
+  (k: nat{2 <= k /\ k <= length x + 1}) : Lemma
   (ensures (
     let x' = snoc x (Leaf i (lo - 1) w.[i]) in
     solution_wf hi (lo - 1) (slice w 0 (i + 1)) x' k)) =
@@ -269,7 +328,8 @@ let lemma_snoc_leaf_solution_wf
   if k = length x' then begin
     forall_intro (move_requires (lemma_snoc_leaf_monotone_elem prev i j x));
     no_dup_count_one sol';
-    lemma_snoc_leaf_filter prev i j x
+    lemma_snoc_leaf_filter prev i j x;
+    lemma_solution_sum_snoc_leaf prev i j x
   end else
     assert(slice x' 0 k `equal` slice x 0 k)
 
@@ -426,11 +486,82 @@ let lemma_snoc_package_count_one
   else
     count_neq sol sol'.[k]
 
+let rec lemma_solution_sum'_base_set #e #w (b: base_set e w): Lemma
+  (ensures solution_sum' b =$ qpow2 (-e) *$ of_int (length w))
+  (decreases length b) =
+  match length b with
+  | 0 | 1 -> ()
+  | 2 ->
+    calc (=$) {
+      solution_sum' b;
+      =={}
+      qpow2 (-e) +$ solution_sum' (tail b);
+      =={}
+      qpow2 (-e) +$ qpow2 (-e) +$ solution_sum' (tail (tail b));
+      =={lemma_empty (tail (tail b))}
+      qpow2 (-e) +$ qpow2 (-e);
+      =${}
+      qpow2 (-e) *$ of_int 2;
+    }
+  | _ ->
+    let b' = slice b 0 (length b - 1) in
+    calc (=$) {
+      solution_sum' b;
+      =={assert(b `equal` (b' @| create 1 (last b)))}
+      solution_sum' (b' @| create 1 (last b));
+      =${lemma_solution_sum'_append b' (create 1 (last b))}
+      solution_sum' b' +$ solution_sum' (create 1 (last b));
+      =${lemma_solution_sum'_single (last b)}
+      solution_sum' b' +$ qpow2 (-e);
+      =${lemma_solution_sum'_base_set #e #(slice w 0 (length b - 1)) b'}
+      (qpow2 (-e) *$ of_int (length b - 1)) +$ (qpow2 (-e) *$ one);
+      =${distributivity_add_left (qpow2 (-e)) (of_int (length b - 1)) one}
+      qpow2 (-e) *$ of_int (length b);
+    }
+
+let lemma_solution_sum_snoc_package
+  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  (i: leaf_index_t w false) (j: package_index_t prev true)
+  (x: intermidiate_solution prev i j): Lemma
+  (ensures (
+    let x' = snoc x (Package prev.[j] prev.[j + 1]) in
+    solution_sum hi (lo - 1) x' =$ qpow2 (-(lo - 1)) *$ (of_int (length x')))) =
+  let p = Package prev.[j] prev.[j + 1] in
+  let x' = snoc x p in
+  let prev' = slice prev 0 (j + 2) in
+  calc (=$) {
+    solution_sum hi (lo - 1) x';
+    =={}
+    solution_sum' (unfold_solution x' (hi - (lo - 1)));
+    =={lemma_unfold_packages_snoc_package x prev.[j] prev.[j + 1]}
+    solution_sum' ((unfold_solution prev' (hi - lo)) @| filter_leaves x');
+    =${lemma_solution_sum'_append (unfold_solution prev' (hi - lo)) (filter_leaves x')}
+    solution_sum' (unfold_solution prev' (hi - lo)) +$
+    solution_sum' (filter_leaves x');
+    =${}
+    (qpow2 (-lo) *$ of_int (j + 2)) +$ solution_sum' (filter_leaves x');
+    =={lemma_filter_leaves_snoc_package x p}
+    (qpow2 (-lo) *$ of_int (j + 2)) +$ solution_sum' (filter_leaves x);
+    =={assert(solution_wf hi (lo - 1) (slice w 0 i) x (length x))}
+    (qpow2 (-lo) *$ of_int (j + 2)) +$
+    solution_sum' (make_base_set (lo - 1) (slice w 0 i));
+    =${lemma_solution_sum'_base_set (make_base_set (lo - 1) (slice w 0 i))}
+    (qpow2 (-lo) *$ of_int (j + 2)) +$ (qpow2 (-(lo - 1)) *$ of_int i);
+    =${qpow2_mult_even (-lo) (j + 2)}
+    (qpow2 (-(lo - 1)) *$ of_int ((j + 2) / 2)) +$ (qpow2 (-(lo - 1)) *$ of_int i);
+    =${distributivity_add_left (qpow2 (-(lo - 1))) (of_int ((j + 2) / 2)) (of_int i)}
+    (qpow2 (-(lo - 1)) *$ of_int (i + (j + 2) / 2));
+    =={}
+    (qpow2 (-(lo - 1)) *$ of_int (i + (j + 1 * 2) / 2));
+    =={Math.Lemmas.lemma_div_plus j 1 2}
+    (qpow2 (-(lo - 1)) *$ of_int (length x'));
+  }
+
 let lemma_snoc_package_solution_wf
   #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev true)
   (x: intermidiate_solution prev i j)
-  (k: nat{k <= length x + 1}): Lemma
+  (k: nat{2 <= k /\ k <= length x + 1}): Lemma
   (requires package_smaller (lo - 1) w prev i j)
   (ensures (
     let x' = snoc x (Package prev.[j] prev.[j + 1]) in
@@ -443,7 +574,8 @@ let lemma_snoc_package_solution_wf
     forall_intro (move_requires (lemma_snoc_package_count_one prev i j x));
     no_dup_count_one #item sol';
     assert(solution_wf hi (lo - 1) (slice w 0 i) x (length x));
-    lemma_filter_leaves_snoc_package x p
+    lemma_filter_leaves_snoc_package x p;
+    lemma_solution_sum_snoc_package prev i j x
   end else
     assert (slice x' 0 k `equal` slice x 0 k)
 

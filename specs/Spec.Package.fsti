@@ -107,13 +107,23 @@ val lemma_weight_seq_slice: w: weight_seq -> i: nat -> j: nat -> Lemma
   (decreases j)
   [SMTPat (wseq_sorted (slice w i j))]
 
+private let rec solution_sum' (s: seq item): Tot rat (decreases length s) =
+  match length s with
+  | 0 -> zero
+  | _ -> qpow2 (-exp s.[0]) +$ solution_sum' (tail s)
+
+let solution_sum (hi: pos) (lo: pos{hi >= lo}) (s: seq item{
+  length (unfold_solution s (hi - lo)) > 0
+}): Tot rat = solution_sum' (unfold_solution s (hi - lo))
+
 unfold let solution_wf
   (hi: pos) (lo: pos{hi >= lo}) (w: weight_seq)
-  (s: item_seq lo{length s >= 2}) (i: nat{i <= length s}): Tot Type0 =
+  (s: item_seq lo{length s >= 2}) (i: nat{2 <= i /\ i <= length s}): Tot Type0 =
   let s' = slice s 0 i in
   let l = length (filter_leaves s') in
   2 <= l /\ l <= length w /\
   filter_leaves s' == make_base_set lo (slice w 0 l) /\
+  solution_sum hi lo s' =$ qpow2 (-lo) *$ (of_int i) /\
   monotone (unfold_solution s' (hi - lo)) (slice w 0 l) hi lo
 
 unfold let top2_leaf (#e: pos) (s: item_seq e) (w: weight_seq) =
