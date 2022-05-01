@@ -8,6 +8,85 @@ let plus_assoc a b c =
   assert(num (b +$ c) == num b * den c + den b * num c);
   assert(den (b +$ c) == den b * den c)
 
+let sub_eq_l a b b' =
+  calc (==) {
+    (num b * den a) * den a * den b';
+    =={Math.Lemmas.paren_mul_right (num b * den a) (den a) (den b')}
+    (num b * den a) * (den a * den b');
+    =={
+      Math.Lemmas.swap_mul (den a) (num b);
+      Math.Lemmas.swap_mul (den b') (den a)
+    }
+    (den a * num b) * (den b' * den a);
+    =={Math.Lemmas.paren_add_right (den a * num b) (den b') (den a)}
+    (den a * num b) * den b' * den a;
+    =={Math.Lemmas.paren_add_left (den a) (num b) (den b')}
+    den a * (num b * den b') * den a;
+    =={}
+    den a * (num b' * den b) * den a;
+    =={
+      Math.Lemmas.paren_mul_left (num a * den b) (den a) (den b');
+      Math.Lemmas.paren_mul_right (num b') (den b) (den a);
+      Math.Lemmas.paren_mul_left (den a) (num b') (den b * den a)
+    }
+    (den a * num b') * (den b * den a);
+    =={Math.swap_mul (den a * num b') (den b * den a)}
+    (den b * den a) * (den a * num b');
+  };
+  calc (==) {
+    (num a * den b) * den a * den b';
+    =={
+      Math.Lemmas.paren_mul_left (num a) (den b) (den a);
+      Math.Lemmas.paren_mul_right (num a) (den b) (den a)
+    }
+    num a * (den b * den a) * den b';
+    =={Math.Lemmas.swap_mul (num a) (den b * den a)}
+    (den b * den a) * num a * den b';
+    =={Math.Lemmas.paren_mul_right (den b * den a) (num a) (den b')}
+    (den b * den a) * (num a * den b');
+  };
+  calc (==) {
+    (num a * den b - num b * den a) * (den a * den b');
+    =={}
+    (num a * den b) * den a * den b' - (num b * den a) * den a * den b';
+    =={}
+    (den b * den a) * (num a * den b') - (den b * den a) * (den a * num b');
+    =={}
+    (den b * den a) * (num a * den b' - den a * num b');
+  }
+
+let sub_plus_l a b c =
+  calc (=$) {
+    (a -$ b) +$ c;
+    =${}
+    (a +$ (zero -$ b)) +$ c;
+    =${plus_assoc a (zero -$ b) c}
+    a +$ ((zero -$ b) +$ c);
+    =${}
+    a +$ (c +$ (zero -$ b));
+    =${}
+    a +$ (c -$ b);
+    =${sub_neg a c b}
+    a -$ (b -$ c);
+  }
+
+let sub_plus_r a b c =
+  calc (=$) {
+    a +$ (b -$ c);
+    =${}
+    a +$ ((b -$ c) +$ zero);
+    =${sub_plus_l b c zero}
+    a +$ (b -$ (c -$ zero));
+    =${sub_neg b zero c}
+    a +$ (b +$ (zero -$ c));
+    =${plus_assoc a b (zero -$ c)}
+    (a +$ b) +$ (zero -$ c);
+    =${sub_neg (a +$ b) zero c}
+    (a +$ b) -$ (c -$ zero);
+    =${}
+    (a +$ b) -$ c;
+  }
+
 let distributivity_add_left a b c =
   calc (=$) {
     (a *$ b) +$ (a *$ c);

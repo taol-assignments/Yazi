@@ -85,6 +85,16 @@ let disjoint (#a: eqtype) (s1 s2: seq a) =
     (mem x s1 ==> mem x s2 = false) /\
     (mem x s2 ==> mem x s1 = false)
 
+private let no_dup_count_one_aux (#a: eqtype) (s: seq a) (t: a): Lemma
+  (requires mem t s)
+  (ensures exists i. s.[i] == t) = mem_index t s
+
+let no_dup_count_one (#a: eqtype) (s: seq a): Lemma
+  (requires forall i. count s.[i] s == 1)
+  (ensures no_dup s) =
+    let open FStar.Classical in
+    forall_intro (move_requires (no_dup_count_one_aux s))
+
 let rec not_mem_forall (#a: eqtype) (v: a) (s: seq a): Lemma
   (requires forall i. v <> s.[i])
   (ensures mem v s == false)
@@ -294,4 +304,63 @@ let permutation_middle (#t: eqtype) (a b: seq t): Lemma
 let slice_middle (#t: eqtype) (s: seq t) (i: index_t s): Lemma
   (ensures slice s 0 i @| create 1 s.[i] @| slice s (i + 1) (length s) == s) =
   assert(equal (slice s 0 i @| create 1 s.[i] @| slice s (i + 1) (length s)) s)
-  
+
+// let subset (#t: eqtype) (s b: seq t) = forall a. count a s <= count a b
+
+// let subset_trans (#t: eqtype) (a b c: seq t): Lemma
+//   (requires a `subset` b /\ b `subset` c)
+//   (ensures a `subset` c)
+//   [SMTPat (a `subset` b); SMTPat (b `subset` c)] = ()
+
+// let rec remove (#t: eqtype) (s: seq t) (a: t{mem a s}):
+//   Tot (s': seq t{
+//     length s' == length s - 1 /\
+//     (forall b. (b <> a ==> count b s == count b s') /\
+//       (b == a ==> count b s - 1 == count b s'))
+//   }) (decreases length s) =
+//   match length s with
+//   | 1 -> empty #t
+//   | _ ->
+//     lemma_tl s.[0] (tail s);
+//     if s.[0] = a then
+//       tail s
+//     else begin
+//       lemma_append_count (create 1 s.[0]) (remove (tail s) a);
+//       cons s.[0] (remove (tail s) a)
+//     end
+
+// let cons_remove_subset (#t: eqtype) (a: t) (s s': seq t): Lemma
+//   (requires length s > 1 /\ mem a s /\ s' `subset` remove s a)
+//   (ensures cons a s' `subset` s)
+//   [SMTPat (cons a s' `subset` s)] =
+//   lemma_append_count (create 1 a) s'
+
+// let remove_subset (#t: eqtype) (s: seq t) (a: t): Lemma
+//   (requires mem a s)
+//   (ensures remove s a `subset` s)
+//   [SMTPat (remove s a)] = ()
+
+// let rec dup_index (#t: eqtype) (s: seq t) (a: t): Lemma
+//   (requires count a s > 1)
+//   (ensures exists i. i > index_of s a /\ s.[i] == s.[index_of s a])
+//   (decreases length s) =
+//   match s.[0] = a with
+//   | true ->
+//     let j = index_of (tail s) a in
+//     assert(0 <> j + 1 /\ s.[0] == s.[j + 1])
+//   | _ -> dup_index (tail s) a
+
+// let rec index_dup (#t: eqtype) (s: seq t) (i j: index_t s): Lemma
+//   (requires i < j /\ s.[i] == s.[j])
+//   (ensures count s.[i] s > 1)
+//   (decreases i) =
+//   match i with
+//   | 0 ->
+//     calc (==) {
+//       count s.[i] s;
+//       =={}
+//       1 + count s.[i] (tail s);
+//     };
+//     assert((tail s).[j - 1] == s.[j]);
+//     count_index (tail s)
+//   | _ -> index_dup (tail s) (i - 1) (j - 1)

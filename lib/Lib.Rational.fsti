@@ -98,7 +98,7 @@ let plus_eq_r (a b b': rat): Lemma
 
 let plus_comm (a b: rat): Lemma
   (ensures a +$ b =$ b +$ a)
-  (* [SMTPat (a +$ b)] *) = ()
+  [SMTPat (a +$ b)] = ()
 
 let plus_zero_l (a: rat): Lemma
   (ensures zero +$ a =$ a)
@@ -119,10 +119,22 @@ val plus_assoc: a: rat -> b: rat -> c: rat -> Lemma
 
 let (-$) (a b: rat): Tot rat = (num a * den b - num b * den a, den a * den b)
 
-let sub_eq (a b: rat): Lemma
-  (requires a =$ b)
-  (ensures a -$ b =$ zero)
-  (* [SMTPat (a -$ b =$ zero)] *) = ()
+val sub_eq_l: a: rat -> b: rat -> b': rat -> Lemma
+  (requires b =$ b')
+  (ensures a -$ b' =$ a -$ b)
+  [SMTPat (a -$ b' =$ a -$ b)]
+
+let sub_comm (a b c: rat): Lemma
+  (ensures a +$ (b -$ c) == (a -$ c) +$ b) = ()
+
+let sub_neg (a b c: rat): Lemma
+  (ensures a +$ (b -$ c) == a -$ (c -$ b)) = ()
+
+val sub_plus_l: a: rat -> b: rat -> c: rat -> Lemma
+  (ensures (a -$ b) +$ c =$ a -$ (b -$ c))
+
+val sub_plus_r: a: rat -> b: rat -> c: rat -> Lemma
+  (ensures a +$ (b -$ c) =$ (a +$ b) -$ c)
 
 let op_Star_Dollar (a b: rat): Tot rat = (num a * num b, den a * den b)
 
@@ -251,6 +263,27 @@ let qpow2 (n: int): Tot rat =
 val qpow2_double_sum: n: int -> Lemma
   (ensures qpow2 n +$ qpow2 n =$ qpow2 (n + 1))
   [SMTPat (qpow2 n +$ qpow2 n)]
+
+let qpow2_minus (n: int): Lemma
+  (ensures qpow2 n -$ qpow2 (n - 1) =$ qpow2 (n - 1))
+  [SMTPat (qpow2 n -$ qpow2 (n - 1))] =
+  if n > 0 then
+    Math.Lemmas.pow2_double_sum (n - 1)
+  else
+    calc (=$) {
+      qpow2 n -$ qpow2 (n - 1);
+      =${assert_norm(qpow2 0 == (1, pow2 0))}
+      (1, pow2 (-n)) -$ (1, pow2 (-(n - 1)));
+      =${}
+      (pow2 (-(n - 1)) - pow2 (-n), pow2 (-n) * pow2 (-(n - 1)));
+      =${
+        Math.Lemmas.pow2_double_sum (-n);
+        Math.Lemmas.pow2_plus (-n) (-(n - 1))
+      }
+      (pow2 (-n), pow2 (-2 * n + 1));
+      =${Math.Lemmas.pow2_plus (-n) (-(n - 1))}
+      (1, pow2 (-(n - 1)));
+    }
 
 let qpow2_mult_even (n: int) (m: nat): Lemma
   (requires m % 2 == 0)

@@ -127,10 +127,10 @@ unfold let solution_wf
   monotone (unfold_solution s' (hi - lo)) (slice w 0 l) hi lo
 
 unfold let top2_leaf (#e: pos) (s: item_seq e) (w: weight_seq) =
-  (length s > 0 /\ length w > 0 ==> s.[0] == Leaf 0 e w.[0]) /\
-  (length s > 1 /\ length w > 1 ==> s.[1] == Leaf 1 e w.[1])
+  length s >= 2 /\ s.[0] == Leaf 0 e w.[0] /\ s.[1] == Leaf 1 e w.[1]
 
 type solution (hi: pos) (lo: pos{hi >= lo}) (w: weight_seq) = s: item_seq lo {
+  // length s <= 2 * length w - 2 /\
   length (filter_leaves s) == length w /\
   weight_sorted s /\
   top2_leaf s w /\
@@ -240,3 +240,63 @@ let rec merge
     lemma_snoc_leaf prev i j x;
     merge prev (i + 1) j (snoc x (Leaf i (lo - 1) w.[i]))
   | (false, false) -> x
+
+let rec max_exp 
+  (s: seq item{forall i. Leaf? s.[i]}) (i: nat):
+  Tot (e: nat{
+    (forall l. mem l s /\ item_id l == i ==> exp l <= e) /\
+    (e > 0 ==> (exists j. exp s.[j] == e /\ item_id s.[j] == i))
+  }) (decreases length s) =
+  match length s with
+  | 0 -> 0
+  | _ ->
+    if item_id s.[0] = i then
+      Math.Lib.max (exp s.[0]) (max_exp (tail s) i)
+    else
+      max_exp (tail s) i
+
+val lemma_max_exp_gt_zero:
+    #hi: pos
+  -> #lo: pos{hi >= lo}
+  -> #w: weight_seq
+  -> s: solution hi lo w
+  -> id: index_t w
+  -> Lemma (ensures max_exp (unfold_solution s (hi - lo)) id > 0)
+
+[@"opaque_to_smt"] 
+let solution_len
+  (#hi: pos) (#w: weight_seq) (s: solution hi 1 w): Tot (l: seq nat{
+    length l == length w /\
+    (forall i. l.[i] > 0 /\ l.[i] == max_exp (unfold_solution s (hi - 1)) i)
+  }) =
+  let open FStar.Classical in
+  let res = init (length w) (fun i -> max_exp (unfold_solution s (hi - 1)) i) in
+  forall_intro (lemma_max_exp_gt_zero s);
+  res
+
+val lemma_init_merge_seq:
+    #hi: pos
+  -> #lo: pos{1 < lo /\ lo <= hi}
+  -> #w: weight_seq
+  -> prev: solution hi lo w
+  -> Lemma
+  (ensures (
+    let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
+    let w' = slice w 0 2 in
+    length x == 2 /\
+    filter_leaves x == x /\
+    weight_sorted x /\
+    top2_leaf #(lo - 1) x w' /\
+    solution_wf hi (lo - 1) w' x 2 /\
+    unfold_packages x == empty #item /\
+    merge_invariant (lo - 1) w prev 2 0 x))
+
+let rec package_merge
+  #hi (#lo: pos{lo <= hi}) #w (prev: solution hi lo w):
+  Tot (solution hi 1 w) (decreases lo) =
+  match lo with
+  | 1 -> prev
+  | _ ->
+    let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
+    lemma_init_merge_seq prev;
+    package_merge #hi #(lo - 1) #w (merge prev 2 0 x)

@@ -3,6 +3,7 @@ module Spec.Package
 open FStar.Seq
 open FStar.Classical
 open FStar.Squash
+open Spec.Kraft
 
 let rec lemma_weight_seq_lt (w: weight_seq) (i j: index_t w): Lemma
   (requires i < j)
@@ -204,7 +205,50 @@ let lemma_unfold_solution_snoc_leaf (s: seq item) (i: item) (j: nat): Lemma
       snoc (unfold_solution s j) i;
     }
 
-#push-options "--fuel 1 --ifuel 0 --query_stats --z3refresh --z3rlimit 512 --z3seed 18"
+let rec lemma_unfold_packages_all_leaves (s: seq item): Lemma
+  (requires forall i. Leaf? s.[i])
+  (ensures unfold_packages s == empty #item)
+  (decreases length s) =
+  match length s with
+  | 0 -> ()
+  | _ -> lemma_unfold_packages_all_leaves (tail s)
+
+let rec lemma_unfold_solution_empty (i: nat): Lemma
+  (ensures unfold_solution (empty #item) i == empty #item) =
+  match i with
+  | 0 -> ()
+  | _ -> lemma_unfold_solution_empty (i - 1)
+
+let rec lemma_filter_leaves_equal (s: seq item): Lemma
+  (requires forall i. Leaf? s.[i])
+  (ensures filter_leaves s == s)
+  (decreases length s) =
+  match length s with
+  | 0 -> lemma_empty s
+  | _ -> lemma_filter_leaves_equal (tail s)
+
+let lemma_unfold_solution_leaf (s: seq item) (i: nat): Lemma
+  (requires forall j. Leaf? s.[j])
+  (ensures unfold_solution s i == s) = 
+  match i with
+  | 0 -> lemma_filter_leaves_equal s
+  | _ ->
+    calc (==) {
+      unfold_solution s i;
+      =={}
+      (unfold_solution (unfold_packages s) (i - 1)) @| filter_leaves s;
+      =={
+        lemma_unfold_packages_all_leaves s;
+        lemma_unfold_solution_empty (i - 1)
+      }
+      empty #item @| filter_leaves s;
+      =={append_empty_l (filter_leaves s)}
+      filter_leaves s;
+      =={lemma_filter_leaves_equal s}
+      s;
+    }
+
+#push-options "--fuel 1 --ifuel 0 --query_stats --z3refresh --z3rlimit 1024 --z3seed 7"
 let lemma_snoc_leaf_monotone_elem
   #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w true) (j: package_index_t prev false)
@@ -282,6 +326,56 @@ let rec lemma_solution_sum'_append (s1 s2: seq item): Lemma
 let lemma_solution_sum'_single (i: item): Lemma
   (ensures solution_sum' (create 1 i) =$ qpow2 (-exp i)) = ()
 #pop-options
+
+let rec lemma_solution_sum'_perm (s1 s2: seq item): Lemma
+  (requires permutation item s1 s2)
+  (ensures solution_sum' s1 =$ solution_sum' s2)
+  (decreases length s1) =
+  match length s1 with
+  | 0 -> ()
+  | _ ->
+    let i = index_of s2 s1.[0] in
+    calc (=$) {
+      solution_sum' s1;
+      =${}
+      qpow2 (-exp s1.[0]) +$ solution_sum' (tail s1);
+      =${
+        permutation_middle s1 s2;
+        lemma_solution_sum'_perm
+          (tail s1)
+          (slice s2 0 i @| slice s2 (i + 1) (length s2))
+      }
+      qpow2 (-exp s1.[0]) +$ solution_sum' (slice s2 0 i @| slice s2 (i + 1) (length s2));
+      =${lemma_solution_sum'_single s2.[i]}
+      solution_sum' (create 1 s2.[i]) +$
+      solution_sum' (slice s2 0 i @| slice s2 (i + 1) (length s2));
+      =${lemma_solution_sum'_append (slice s2 0 i) (slice s2 (i + 1) (length s2))}
+      solution_sum' (create 1 s2.[i]) +$
+      (solution_sum' (slice s2 0 i) +$
+      solution_sum' (slice s2 (i + 1) (length s2)));
+      =${
+        plus_assoc
+          (solution_sum' (create 1 s2.[i]))
+          (solution_sum' (slice s2 0 i))
+          (solution_sum' (slice s2 (i + 1) (length s2)))
+      }
+      solution_sum' (slice s2 0 i) +$
+      solution_sum' (create 1 s2.[i]) +$
+      solution_sum' (slice s2 (i + 1) (length s2));
+      =${
+        lemma_solution_sum'_append (slice s2 0 i) (create 1 s2.[i]);
+        assert(snoc (slice s2 0 i) s2.[i] `equal` slice s2 0 (i + 1))
+      }
+      solution_sum' (slice s2 0 (i + 1)) +$
+      solution_sum' (slice s2 (i + 1) (length s2));
+      =${
+        lemma_solution_sum'_append
+          (slice s2 0 (i + 1))
+          (slice s2 (i + 1) (length s2));
+        assert((slice s2 0 (i + 1) @| slice s2 (i + 1) (length s2)) `equal` s2)
+      }
+      solution_sum' s2;
+    }
 
 let lemma_solution_sum_snoc_leaf
   #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
@@ -426,7 +520,7 @@ let lemma_package_lt_leaf
           lemma_weight_seq_lt w i lp
         end)
 
-#set-options "--z3seed 111"
+#set-options "--z3seed 88"
 let lemma_snoc_package_monotone_elem
   #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev true)
@@ -486,6 +580,7 @@ let lemma_snoc_package_count_one
   else
     count_neq sol sol'.[k]
 
+#push-options "--fuel 1 --ifuel 0"
 let rec lemma_solution_sum'_base_set #e #w (b: base_set e w): Lemma
   (ensures solution_sum' b =$ qpow2 (-e) *$ of_int (length w))
   (decreases length b) =
@@ -556,6 +651,7 @@ let lemma_solution_sum_snoc_package
     =={Math.Lemmas.lemma_div_plus j 1 2}
     (qpow2 (-(lo - 1)) *$ of_int (length x'));
   }
+#pop-options
 
 let lemma_snoc_package_solution_wf
   #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
@@ -600,3 +696,358 @@ let lemma_snoc_package #hi #lo #w prev i j x =
   lemma_filter_leaves_snoc_package x p;
   lemma_weight_sorted_snoc x p;
   lemma_unfold_packages_snoc_package x prev.[j] prev.[j + 1]
+
+let rec make_leaf_col
+  #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w)
+  (i: index_t w) (j: pos{lo <= j /\ j <= hi}):
+  Tot (s: seq item{
+    length s == j - lo + 1 /\
+    (forall k.
+      Leaf? s.[k] /\
+      item_id s.[k] == i /\
+      exp s.[k] == j - k /\
+      item_weight s.[k] == w.[i])
+  }) (decreases j) =
+  let l = Leaf i j w.[i] in
+  let x = create 1 l in
+  if j = lo then
+    x
+  else begin
+    let xs = make_leaf_col s i (j - 1) in
+    lemma_mem_append x xs;
+    cons l xs
+  end
+
+let rec lemma_make_leaf_col_count_one
+  #hi (#lo: pos{hi >= lo}) #w (prev: solution hi lo w)
+  (i: index_t w) (j: pos{lo <= j /\ j <= hi})
+  (k: index_t (make_leaf_col prev i j)): Lemma
+  (ensures count (make_leaf_col prev i j).[k] (make_leaf_col prev i j) == 1)
+  (decreases j) =
+  if j > lo then 
+    let col = make_leaf_col prev i j in
+    let col' = make_leaf_col prev i (j - 1) in
+    if k = 0 then begin
+      assert(forall l. l <> k ==> col.[l] <> col.[k]);
+      count_neq col' col.[k];
+      lemma_append_count (create 1 col.[0]) col'
+    end else begin
+      lemma_tl col.[0] col';
+      lemma_make_leaf_col_count_one prev i (j - 1) (k - 1)
+    end
+
+let lemma_make_leaf_col_no_dup
+  #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w)
+  (i: index_t w) (j: pos{lo <= j /\ j <= hi}): Lemma
+  (ensures no_dup (make_leaf_col s i j)) =
+  forall_intro (lemma_make_leaf_col_count_one s i j);
+  no_dup_count_one (make_leaf_col s i j)
+
+let rec lemma_max_exp_gt_zero_aux
+  (s: seq item) (i: index_t s) (id: nat) (e: pos): Lemma
+  (requires (forall j. Leaf? s.[j]) /\ item_id s.[i] == id /\ exp s.[i] == e)
+  (ensures max_exp s id > 0)
+  (decreases i) =
+  match i with
+  | 0 -> ()
+  | _ -> lemma_max_exp_gt_zero_aux (tail s) (i - 1) id e
+
+let rec lemma_filter_leaves_len_gt (s: seq item): Lemma
+  (ensures length s >= length (filter_leaves s))
+  (decreases length s) =
+  match length s with
+  | 0 -> ()
+  | _ -> lemma_filter_leaves_len_gt (tail s)
+
+let lemma_solution_len_gt_two
+  #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w): Lemma
+  (ensures length s >= 2) =
+  lemma_filter_leaves_len_gt s
+
+let lemma_max_exp_gt_zero #hi #lo #w s id =
+  let sol = unfold_solution s (hi - lo) in
+  lemma_solution_len_gt_two s;
+  assert(solution_wf hi lo w s (length s));
+  if hi = lo then
+    lemma_max_exp_gt_zero_aux sol id id hi
+  else
+    let offset = length (unfold_solution (unfold_packages s) (hi - lo - 1)) in
+    lemma_max_exp_gt_zero_aux sol (id + offset) id lo
+
+let rec make_monotone_array
+  #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w) (i: index_t w):
+  Tot (seq item) (decreases length w - i) =
+  let sol = unfold_solution s (hi - lo) in
+
+  lemma_max_exp_gt_zero s i;
+  lemma_solution_len_gt_two s;
+  assert(solution_wf hi lo w s (length s));
+
+  if i = length w - 1 then
+    make_leaf_col s i (max_exp sol i)
+  else
+    make_leaf_col s i (max_exp sol i) @| make_monotone_array s (i + 1)
+
+let rec lemma_monotone_array
+  #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w)
+  (i: index_t w) (j: index_t (make_monotone_array s i)): Lemma
+  (ensures (
+    let s' = make_monotone_array s i in
+    Leaf? s'.[j] /\
+    i <= item_id s'.[j] /\ item_id s'.[j] < length w /\
+    item_weight s'.[j] == w.[item_id s'.[j]]))
+  (decreases length w - i) =
+  let s' = make_monotone_array s i in
+  let sol = unfold_solution s (hi - lo) in
+  lemma_max_exp_gt_zero s i;
+  lemma_solution_len_gt_two s;
+  assert(solution_wf hi lo w s (length s));
+  let maxe = max_exp sol i in
+
+  if i < length w - 1 then
+    let col = make_leaf_col s i maxe in
+    if j >= length col then lemma_monotone_array s (i + 1) (j - length col)
+
+let rec lemma_monotone_col_mem
+  #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w)
+  (i: index_t w) (j k: pos): Lemma
+  (requires
+    hi >= j /\ j >= k /\ k >= lo /\
+    mem (Leaf i j w.[i]) (unfold_solution s (hi - lo)))
+  (ensures mem (Leaf i k w.[i]) (unfold_solution s (hi - lo)))
+  (decreases j - k) =
+  let sol = unfold_solution s (hi - lo) in
+  lemma_max_exp_gt_zero s i;
+  lemma_solution_len_gt_two s;
+  assert(solution_wf hi lo w s (length s));
+  if j > k then begin
+    mem_index (Leaf i j w.[i]) sol;
+    lemma_monotone_col_mem s i (j - 1) k
+  end
+
+let rec lemma_make_leaf_col_not_mem
+  #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w)
+  (i: index_t w) (j: pos{lo <= j /\ j <= hi}) (l: item): Lemma
+  (requires mem l (make_leaf_col s i j) == false)
+  (ensures
+    Leaf? l == false \/
+    item_id l <> i \/
+    exp l < lo \/ exp l > j \/
+    item_weight l <> w.[i])
+  (decreases j) =
+  let col = make_leaf_col s i j in
+  if lo < j then begin
+    lemma_mem_append (create 1 (Leaf i j w.[i])) (make_leaf_col s i (j - 1));
+    lemma_make_leaf_col_not_mem s i (j - 1) l
+  end
+
+let rec lemma_make_monotone_array_count
+  #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w)
+  (i: index_t w) (l: item): Lemma
+  (requires Leaf? l ==> item_id l >= i)
+  (ensures count l (make_monotone_array s i) == count l (unfold_solution s (hi - lo)))
+  (decreases length w - i) =
+  let sol = unfold_solution s (hi - lo) in
+  let sol' = make_monotone_array s i in
+  lemma_max_exp_gt_zero s i;
+  lemma_solution_len_gt_two s;
+  assert(solution_wf hi lo w s (length s));
+  let maxe = max_exp sol i in
+
+  lemma_make_leaf_col_no_dup s i maxe;
+  let col = make_leaf_col s i maxe in
+  if Leaf? l = false then begin
+    forall_intro (move_requires (lemma_monotone_array s i));
+    count_neq sol' l;
+    count_neq sol l
+  end else if item_id l = i then  begin
+    if i < length w - 1 then begin
+      forall_intro (move_requires (lemma_monotone_array s (i + 1)));
+      lemma_append_count_aux l col (make_monotone_array s (i + 1))
+    end;
+    if count l sol' = 1 then begin
+      mem_index l sol';
+      lemma_monotone_col_mem s i maxe (exp l)
+    end else begin
+      if i < length w - 1 then
+        count_neq (make_monotone_array s (i + 1)) l;
+      lemma_make_leaf_col_not_mem s i maxe l;
+      if count l sol = 1 then mem_index l sol
+    end
+  end else
+    if mem l col then
+      mem_index l col
+    else if i < length w - 1 then begin
+      lemma_append_count_aux l col (make_monotone_array s (i + 1));
+      lemma_make_monotone_array_count s (i + 1) l
+    end else begin
+      lemma_make_leaf_col_not_mem s i maxe l;
+      if count l sol = 1 then mem_index l sol
+    end
+
+let lemma_make_monotone_array_perm
+  #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w): Lemma
+  (ensures permutation item (make_monotone_array s 0) (unfold_solution s (hi - lo))) =
+  forall_intro (move_requires (lemma_make_monotone_array_count s 0))
+
+let rec lemma_make_leaf_col_sum #hi #w (s: solution hi 1 w) (i: index_t w) (j: pos): Lemma
+  (requires j <= max_exp (unfold_solution s (hi - 1)) i)
+  (ensures (
+    assert(solution_wf hi 1 w s (length s));
+    solution_sum' (make_leaf_col s i j) =$ one -$ qpow2 (-j))) =
+  assert(solution_wf hi 1 w s (length s));
+  let s' = make_leaf_col s i j in
+  match j with
+  | 1 ->
+    calc (=$) {
+      solution_sum' s';
+      =${}
+      qpow2 (-exp s'.[0]) +$ solution_sum' (tail s');
+      =${}
+      qpow2 (-j);
+      =${}
+      qpow2 0 -$ qpow2 (-j);
+      =${assert_norm(qpow2 0 =$ one)}
+      one -$ qpow2 (-j);
+    }
+  | _ -> 
+    calc (=$) {
+      solution_sum' s';
+      =${}
+      qpow2 (-exp s'.[0]) +$ solution_sum' (tail s');
+      =${lemma_tl s'.[0] (make_leaf_col s i (j - 1))}
+      qpow2 (-exp s'.[0]) +$ solution_sum' (make_leaf_col s i (j - 1));
+      =${lemma_make_leaf_col_sum s i (j - 1)}
+      qpow2 (-j) +$ (one -$ qpow2 (-(j - 1)));
+      =${sub_comm (qpow2 (-j)) one (qpow2 (-(j - 1)))}
+      one +$ (qpow2 (-j) -$ qpow2 (-(j - 1)));
+      =${sub_neg one (qpow2 (-j)) (qpow2 (-(j - 1)))}
+      one -$ (qpow2 (-(j - 1)) -$ qpow2 (-j));
+      =${qpow2_minus (-(j - 1))}
+      one -$ qpow2 (-j);
+    }
+
+let rec lemma_monotone_array_kraft_sum
+  #hi #w (s: solution hi 1 w) (i: index_t w): Lemma
+  (ensures
+    solution_sum' (make_monotone_array s i) =$
+    of_int (length w - i) -$ kraft_sum (slice (solution_len s) i (length w)))
+  (decreases length w - i) =
+  let sol = unfold_solution s (hi - 1) in
+  let mexp = max_exp sol i in
+  lemma_solution_len_gt_two s;
+  assert(solution_wf hi 1 w s (length s));
+  lemma_max_exp_gt_zero s i;
+
+  if i = length w - 1 then
+    calc (=$) {
+      solution_sum' (make_monotone_array s i);
+      =${}
+      solution_sum' (make_leaf_col s i mexp);
+      =${lemma_make_leaf_col_sum s i mexp}
+      one -$ qpow2 (-mexp);
+      =${}
+      of_int (length w - i) -$ qpow2 (-mexp);
+      =${}
+      of_int (length w - i) -$ (qpow2 (-mexp) +$ kraft_sum (empty #nat));
+      =${lemma_tl mexp (empty #nat)}
+      of_int (length w - i) -$ (kraft_sum (cons mexp (empty #nat)));
+      =${}
+      of_int (length w - i) -$ (kraft_sum (create 1 mexp));
+      =${assert(slice (solution_len s) i (length w) `equal` create 1 mexp)}
+      of_int (length w - i) -$ kraft_sum (slice (solution_len s) i (length w));
+    }
+  else
+    let ks = kraft_sum (slice (solution_len s) i (length w)) in
+    let ks' = kraft_sum (slice (solution_len s) (i + 1) (length w)) in
+    let n' = of_int (length w - (i + 1)) in
+    calc (=$) {
+      solution_sum' (make_monotone_array s i);
+      =${}
+      solution_sum' (make_leaf_col s i mexp @| make_monotone_array s (i + 1));
+      =${
+        lemma_solution_sum'_append
+          (make_leaf_col s i mexp) (make_monotone_array s (i + 1))
+      }
+      solution_sum' (make_leaf_col s i mexp) +$
+      solution_sum' (make_monotone_array s (i + 1));
+      =${
+        lemma_make_leaf_col_sum s i mexp;
+        lemma_monotone_array_kraft_sum s (i + 1)
+      }
+      (one -$ qpow2 (-mexp)) +$ (n' -$ ks');
+      =${sub_plus_l one (qpow2 (-mexp)) (n' -$ ks')}
+      one -$ ((qpow2 (-mexp)) -$ (n' -$ ks'));
+      =${sub_plus_l (qpow2 (-mexp)) n' ks'}
+      one -$ ((qpow2 (-mexp) -$ n') +$ ks');
+      =${plus_comm ((qpow2 (-mexp)) -$ n') ks'}
+      one -$ (ks' +$ ((qpow2 (-mexp)) -$ n'));
+      =${sub_plus_r ks' (qpow2 (-mexp)) n'}
+      one -$ ((ks' +$ (qpow2 (-mexp))) -$ n');
+      =${}
+      one -$ (ks -$ n');
+      =${}
+      one +$ (n' -$ ks);
+      =${sub_plus_r one n' ks}
+      (one +$ n') -$ ks;
+      =${}
+      of_int (length w - i) -$ ks;
+    }
+
+#push-options "--fuel 3 --ifuel 2 --z3rlimit 1024 --z3seed 3"
+let lemma_init_merge_seq #hi #lo #w prev =
+  let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
+  let w' = slice w 0 2 in
+  assert(filter_leaves x `equal` x);
+  assert(filter_leaves x `equal` make_base_set (lo - 1) (slice w 0 2));
+  lemma_unfold_packages_all_leaves x;
+  lemma_unfold_solution_leaf x (hi - (lo - 1));
+  assert(
+    length x == 2 /\
+    filter_leaves x == x /\
+    weight_sorted x /\
+    top2_leaf #(lo - 1) x w' /\
+    solution_wf hi (lo - 1) w' x 2 /\
+    unfold_packages x == empty #item /\
+    merge_invariant (lo - 1) w prev 2 0 x)
+#pop-options
+
+let rec log2 (a: pos): Tot (e: nat{
+  pow2 e >= a /\ (forall e'. pow2 e' >= a ==> e' >= e)
+}) =
+  match (a, a % 2) with
+  | (1, _) -> 0
+  | (_, 0) -> 1 + log2 (a / 2)
+  | (_, 1) -> 1 + log2 (a / 2 + 1)
+
+#push-options "--ifuel 0 --z3seed 111 --z3rlimit 1024"
+let rec lemma_merge_len
+  #hi (#lo: pos{lo <= hi}) #w (prev: solution hi lo w): Lemma
+  (requires (
+    let n = length w in
+    let e = Math.Lib.max 0 ((log2 n) - (hi - lo)) in
+    n <= pow2 hi /\ length prev >= 2 * n - pow2 e))
+  (ensures length (package_merge prev) >= 2 * length w - 2)
+  (decreases lo) =
+  let n = length w in
+  match lo with
+  | 1 -> ()
+  | _ ->
+    let e = Math.Lib.max 0 ((log2 n) - (hi - lo)) in
+    let e' = Math.Lib.max 0 ((log2 n) - (hi - (lo - 1))) in
+    let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
+    lemma_init_merge_seq prev;
+    let x' = merge prev 2 0 x in
+    lemma_merge_len x'
+#pop-options
+
+// let lemma_solution_slice #hi #w (s: solution hi 1 w) (i: nat): Lemma
+//   (requires i <= length s)
+//   (ensures (
+//   ))
+  
+// let rec lemma_merge_kraft_series #hi #w (s: solution hi 1 w): Lemma
+//   (ensures (
+//     let s' = slice s 0 (2 * length w - 2) in
+//     kraft_sum (solution_len s) =$ one)) =
+//   admit()
