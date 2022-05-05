@@ -427,6 +427,25 @@ let lemma_snoc_leaf_solution_wf
   end else
     assert(slice x' 0 k `equal` slice x 0 k)
 
+let lemma_snoc_leaf_package_gt_div2
+  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  (i: leaf_index_t w true) (j: package_index_t prev false)
+  (x: intermidiate_solution prev i j)
+  (k: index_t (snoc x (Leaf i (lo - 1) w.[i]))): Lemma
+  (requires leaf_smaller (lo - 1) w prev i j)
+  (ensures (
+    let x' = snoc x (Leaf i (lo - 1) w.[i]) in
+    package_gt_div2 w x' k)) =
+  let x' = snoc x (Leaf i (lo - 1) w.[i]) in
+  if k % 2 = 0 && k + 1 < length x' then
+    if k = length x' - 2 then
+      if k / 2 + 1 < i then
+        lemma_weight_seq_lt w (k / 2 + 1) i
+      else
+        assert(k == 2 * (i - 1))
+    else 
+      assert(package_gt_div2 (slice w 0 i) x k)
+
 let rec lemma_weight_sorted_snoc (s: seq item) (i: item): Lemma
   (requires weight_sorted s /\ (length s > 0 ==> item_weight (last s) <= item_weight i))
   (ensures weight_sorted (snoc s i))
@@ -457,7 +476,9 @@ let lemma_snoc_leaf_merge_invariant
 
 let lemma_snoc_leaf #hi #lo #w prev i j x =
   let l = Leaf i (lo - 1) w.[i] in
+  lemma_mem_append x (create 1 l);
   lemma_snoc_leaf_filter prev i j x;
+  forall_intro (move_requires (lemma_snoc_leaf_package_gt_div2 prev i j x));
   forall_intro (move_requires (lemma_snoc_leaf_solution_wf prev i j x));
   lemma_unfold_packages_snoc_leaf x l;
   lemma_weight_sorted_snoc x l;
@@ -661,10 +682,12 @@ let lemma_snoc_package_solution_wf
   (requires package_smaller (lo - 1) w prev i j)
   (ensures (
     let x' = snoc x (Package prev.[j] prev.[j + 1]) in
+    assert(package_gt_div2 w prev j);
     solution_wf hi (lo - 1) (slice w 0 i) x' k)) =
   let p = Package prev.[j] prev.[j + 1] in
   let x' = snoc x p in
   let sol' = unfold_solution x' (hi - lo + 1) in
+  assert(package_gt_div2 w prev j);
   if k = length x' then begin
     forall_intro (move_requires (lemma_snoc_package_monotone_elem prev i j x));
     forall_intro (move_requires (lemma_snoc_package_count_one prev i j x));
@@ -689,8 +712,36 @@ let lemma_snoc_package_merge_invariant
     lemma_weight_sorted_lt prev (j + 1) (j + 3)
   end
 
+let lemma_snoc_package_gt_div2
+  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  (i: leaf_index_t w false) (j: package_index_t prev true)
+  (x: intermidiate_solution prev i j)
+  (k: index_t (snoc x (Package prev.[j] prev.[j + 1]))): Lemma
+  (requires package_smaller (lo - 1) w prev i j)
+  (ensures (
+    let x' = snoc x (Package prev.[j] prev.[j + 1]) in
+    assert(package_gt_div2 w prev j);
+    package_gt_div2 (slice w 0 i) x' k)) =
+  let p = Package prev.[j] prev.[j + 1] in
+  let x' = snoc x p in
+  if k % 2 = 0 && k + 1 < length x' then
+    if k = length x' - 2 then begin
+      assert(k / 2 + 1 == (i + j / 2 + 1) / 2);
+      if k / 2 + 1 = i then begin
+        assert(j / 2 + 1 == i /\ length x' == 2 * i);
+        assert(package_gt_div2 w prev j);
+        assert(item_weight p > w.[i])
+      end else if k / 2 + 1 < i - 1 then
+        lemma_weight_seq_lt w (k / 2 + 1) (i - 1)
+    end else 
+      assert(package_gt_div2 (slice w 0 i) x k)
+
 let lemma_snoc_package #hi #lo #w prev i j x =
   let p = Package prev.[j] prev.[j + 1] in
+  let x' = snoc x p in
+  assert(package_gt_div2 w prev j);
+  lemma_mem_append x (create 1 p);
+  forall_intro (move_requires (lemma_snoc_package_gt_div2 prev i j x));
   forall_intro (move_requires (lemma_snoc_package_solution_wf prev i j x));
   lemma_snoc_package_merge_invariant prev i j x;
   lemma_filter_leaves_snoc_package x p;
@@ -700,13 +751,13 @@ let lemma_snoc_package #hi #lo #w prev i j x =
 let rec make_leaf_col
   #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w)
   (i: index_t w) (j: pos{lo <= j /\ j <= hi}):
-  Tot (s: seq item{
-    length s == j - lo + 1 /\
+  Tot (s': seq item{
+    length s' == j - lo + 1 /\
     (forall k.
-      Leaf? s.[k] /\
-      item_id s.[k] == i /\
-      exp s.[k] == j - k /\
-      item_weight s.[k] == w.[i])
+      Leaf? s'.[k] /\
+      item_id s'.[k] == i /\
+      exp s'.[k] == j - k /\
+      item_weight s'.[k] == w.[i])
   }) (decreases j) =
   let l = Leaf i j w.[i] in
   let x = create 1 l in
@@ -1021,13 +1072,13 @@ let rec log2 (a: pos): Tot (e: nat{
   | (_, 1) -> 1 + log2 (a / 2 + 1)
 
 #push-options "--ifuel 0 --z3seed 111 --z3rlimit 1024"
-let rec lemma_merge_len
+let rec lemma_do_package_merge_len_lower_bound
   #hi (#lo: pos{lo <= hi}) #w (prev: solution hi lo w): Lemma
   (requires (
     let n = length w in
     let e = Math.Lib.max 0 ((log2 n) - (hi - lo)) in
     n <= pow2 hi /\ length prev >= 2 * n - pow2 e))
-  (ensures length (package_merge prev) >= 2 * length w - 2)
+  (ensures length (do_package_merge prev) >= 2 * length w - 2)
   (decreases lo) =
   let n = length w in
   match lo with
@@ -1038,14 +1089,193 @@ let rec lemma_merge_len
     let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
     lemma_init_merge_seq prev;
     let x' = merge prev 2 0 x in
-    lemma_merge_len x'
+    lemma_do_package_merge_len_lower_bound x'
 #pop-options
 
-// let lemma_solution_slice #hi #w (s: solution hi 1 w) (i: nat): Lemma
-//   (requires i <= length s)
-//   (ensures (
-//   ))
-  
+let lemma_merge_last_not_package
+  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  (i: leaf_index_t w false) (j: package_index_t prev false)
+  (x: intermidiate_solution prev i j): Lemma
+  (requires length (merge prev i j x) > 2 * length w - 2)
+  (ensures Package? (last (merge prev i j x))) =
+  let x' = merge prev i j x in
+  let n = length w in
+  if Leaf? (last x') then begin
+    let p = Package prev.[2 * n - 4] prev.[2 * n - 3] in
+    assert(package_gt_div2 w prev (2 * n - 4));
+    mem_index p x';
+    exists_elim
+      (False)
+      (get_proof (exists k. x'.[k] == p))
+      (fun k -> if k < length x' - 1 then
+        lemma_weight_sorted_lt x' k (length x' - 1))
+  end
+
+let rec lemma_do_package_merge_last_not_package
+  #hi (#lo: pos{1 < lo /\ lo <= hi}) #w (prev: solution hi lo w): Lemma
+  (requires length (do_package_merge prev) > 2 * length w - 2)
+  (ensures Package? (last (do_package_merge prev)))
+  (decreases lo) =
+  let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
+  lemma_init_merge_seq prev;
+  match lo with
+  | 2 -> 
+    calc (==) {
+      do_package_merge prev;
+      =={}
+      do_package_merge #hi #(lo - 1) #w (merge prev 2 0 x);
+      =={}
+      merge prev 2 0 x;
+    };
+    lemma_merge_last_not_package prev 2 0 x
+  | _ -> lemma_do_package_merge_last_not_package #hi #(lo - 1) #w (merge prev 2 0 x)
+
+let rec lemma_weight_sorted_base_seq (e: pos) (w: weight_seq) (i: index_t w): Lemma
+  (ensures (
+    let w' = make_base_set e w in
+    weight_sorted (slice w' i (length w'))))
+  (decreases length w - i) =
+  let w' = make_base_set e w in
+  if i < length w' - 1 then begin
+    lemma_weight_seq_lt w i (i + 1);
+    lemma_weight_sorted_base_seq e w (i + 1)
+  end
+
+let lemma_base_set_package_gt_div2 (e: pos) (w: weight_seq) (i: index_t w): Lemma
+  (ensures package_gt_div2 w (make_base_set e w) i) =
+  if i > 0 && i % 2 = 0 && i + 1 < length w then
+    lemma_weight_seq_lt w (i / 2 + 1) (i + 1)
+
+let rec lemma_filter_leaves_base_set (e: pos) (w: weight_seq) (i: nat): Lemma
+  (requires 2 <= i /\ i <= length w)
+  (ensures (
+    let w' = make_base_set e w in
+    let w'' = slice w' 0 i in
+    filter_leaves w'' == make_base_set e (slice w 0 i)))
+  (decreases i) =
+  let w' = make_base_set e w in
+  let w'' = slice w' 0 i in
+  match i with
+  | 2 ->
+    calc (==) {
+      filter_leaves w'';
+      =={}
+      cons w''.[0] (filter_leaves (tail w''));
+      =={}
+      cons w''.[0] (cons w''.[1] (filter_leaves (empty #item)));
+      =={}
+      cons w''.[0] (cons w''.[1] (empty #item));
+      =={append_empty_r (create 1 w''.[1])}
+      cons w''.[0] (create 1 w''.[1]);
+    };
+    assert(make_base_set e (slice w 0 i) `equal` filter_leaves w'')
+  | _ ->
+    calc (==) {
+      filter_leaves w'';
+      =={}
+      filter_leaves (snoc (slice w' 0 (i - 1)) (last w''));
+      =={lemma_filter_leaves_snoc_leaf (slice w' 0 (i - 1)) (last w'')}
+      snoc (filter_leaves (slice w' 0 (i - 1))) (last w'');
+      =={lemma_filter_leaves_base_set e w (i - 1)}
+      snoc (make_base_set e (slice w 0 (i - 1))) (last w'');
+      =={
+        assert(
+          snoc (make_base_set e (slice w 0 (i - 1))) (last w'') `equal`
+          make_base_set e (slice w 0 i))
+      }
+      make_base_set e (slice w 0 i);
+    }
+
+let rec lemma_solution_sum'_base_set_slice (e: pos) (w: weight_seq) (i: nat{
+    i <= length (make_base_set e w)
+  }): Lemma
+  (ensures solution_sum' (slice (make_base_set e w) 0 i) =$ qpow2 (-e) *$ of_int i)
+  (decreases i) =
+  let w' = make_base_set e w in
+  match i with
+  | 0 -> ()
+  | _ ->
+    calc (=$) {
+      solution_sum' (slice w' 0 i);
+      =${}
+      solution_sum' (snoc (slice w' 0 (i - 1)) w'.[i - 1]);
+      =${lemma_solution_sum'_append (slice w' 0 (i - 1)) (create 1 w'.[i - 1])}
+      solution_sum' (slice w' 0 (i - 1)) +$ solution_sum' (create 1 w'.[i - 1]);
+      =${lemma_solution_sum'_single w'.[i - 1]}
+      solution_sum' (slice w' 0 (i - 1)) +$ qpow2 (-e);
+      =${lemma_solution_sum'_base_set_slice e w (i - 1)}
+      (qpow2 (-e) *$ of_int (i - 1)) +$ qpow2 (-e) *$ one;
+      =${distributivity_add_left (qpow2 (-e)) (of_int (i - 1)) one}
+      qpow2 (-e) *$ of_int i;
+    }
+
+let rec lemma_base_set_count_one (e: pos) (w: weight_seq)
+  (i: nat{i <= length (make_base_set e w)}) (j: nat{j < i}): Lemma
+  (ensures (
+    let w' = slice (make_base_set e w) 0 i in
+    count w'.[j] w' == 1))
+  (decreases i - j) =
+  let w' = slice (make_base_set e w) 0 i in
+  if j + 1 = i then
+    if i = 1 then
+      count_create 1 w'.[j] w'.[j]
+    else begin
+      let w'' = slice w' 0 (i - 1) in
+      count_neq w'' w'.[j];
+      lemma_append_count_aux w'.[j] w'' (create 1 w'.[j]);
+      assert(snoc w'' w'.[j] `equal` w')
+    end
+  else begin
+    let w'' = slice w' 0 (i - 1) in
+    count_create 1 w'.[i - 1] w'.[j];
+    lemma_base_set_count_one e w (i - 1) j;
+    lemma_append_count_aux w'.[j] w'' (create 1 w'.[i - 1]);
+    assert(snoc w'' w'.[i - 1] `equal` w')
+  end
+
+let lemma_base_set_monotone_elem (e: pos) (w: weight_seq) 
+  (i: nat{2 <= i /\ i <= length (make_base_set e w)}) (j: nat{j < i}): Lemma
+  (ensures (
+    let w' = slice (make_base_set e w) 0 i in
+    monotone_elem w' (slice w 0 i) e e j)) =
+  let w' = make_base_set e w in
+  let w'' = slice w' 0 i in
+  if j > 0 then
+    assert(w'.[j - 1] == w''.[j - 1])
+  else
+    assert(item_id w''.[j] == 0)
+
+let lemma_monotone_base_set (e: pos) (w: weight_seq) (i: nat{
+    2 <= i /\ i <= length (make_base_set e w)
+  }): Lemma
+  (ensures (
+    let w' = slice (make_base_set e w) 0 i in
+    monotone (unfold_solution w' 0) (slice w 0 i) e e
+  )) =
+  let w' = slice (make_base_set e w) 0 i in
+  lemma_filter_leaves_equal w';
+  forall_intro (lemma_base_set_count_one e w i);
+  no_dup_count_one w';
+  forall_intro (lemma_base_set_monotone_elem e (slice w 0 i) i)
+
+let lemma_base_set_solution_wf (e: pos) (w: weight_seq) (i: nat{
+    2 <= i /\ i <= length (make_base_set e w)
+  }): Lemma
+  (ensures solution_wf e e w (make_base_set e w) i) =
+  let w' = make_base_set e w in
+  let w'' = slice w' 0 i in
+  lemma_filter_leaves_equal w'';
+  lemma_filter_leaves_base_set e w i;
+  lemma_solution_sum'_base_set_slice e w i;
+  lemma_monotone_base_set e w i
+
+let lemma_base_set_solution hi w =
+  let x = make_base_set hi w in
+  lemma_filter_leaves_equal x;
+  lemma_weight_sorted_base_seq hi w 0;
+  forall_intro (lemma_base_set_package_gt_div2 hi w);
+  forall_intro (move_requires (lemma_base_set_solution_wf hi w))
+
 // let rec lemma_merge_kraft_series #hi #w (s: solution hi 1 w): Lemma
 //   (ensures (
 //     let s' = slice s 0 (2 * length w - 2) in

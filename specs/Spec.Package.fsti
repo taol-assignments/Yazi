@@ -118,7 +118,8 @@ let solution_sum (hi: pos) (lo: pos{hi >= lo}) (s: seq item{
 
 unfold let solution_wf
   (hi: pos) (lo: pos{hi >= lo}) (w: weight_seq)
-  (s: item_seq lo{length s >= 2}) (i: nat{2 <= i /\ i <= length s}): Tot Type0 =
+  (s: item_seq lo{2 <= length s /\ length s < 2 * length w})
+  (i: nat{2 <= i /\ i <= length s}): Tot Type0 =
   let s' = slice s 0 i in
   let l = length (filter_leaves s') in
   2 <= l /\ l <= length w /\
@@ -129,11 +130,17 @@ unfold let solution_wf
 unfold let top2_leaf (#e: pos) (s: item_seq e) (w: weight_seq) =
   length s >= 2 /\ s.[0] == Leaf 0 e w.[0] /\ s.[1] == Leaf 1 e w.[1]
 
+let package_gt_div2 (w: weight_seq) (s: seq item{
+  length s < 2 * length w
+ }) (j: index_t s) =
+  j % 2 == 0 /\ j + 1 < length s ==> item_weight (Package s.[j] s.[j + 1]) > w.[j / 2 + 1]
+
 type solution (hi: pos) (lo: pos{hi >= lo}) (w: weight_seq) = s: item_seq lo {
-  // length s <= 2 * length w - 2 /\
   length (filter_leaves s) == length w /\
+  length s < 2 * length w /\
   weight_sorted s /\
   top2_leaf s w /\
+  (forall j. package_gt_div2 w s j) /\
   (forall i. solution_wf hi lo w s i)
 }
 
@@ -164,8 +171,12 @@ type intermidiate_solution
   (i: leaf_index_t w false) (j: package_index_t prev false) =
   s: solution hi (lo - 1) (slice w 0 i) {
     length s == i + j / 2 /\
+    item_weight (last s) >= w.[i - 1] /\
     unfold_packages s == slice prev 0 j /\
-    merge_invariant (lo - 1) w prev i j s
+    merge_invariant (lo - 1) w prev i j s /\
+    (Leaf? (last s) ==> item_weight (last s) == w.[i - 1]) /\
+    // (j > 0 ==> mem (Package prev.[j - 2] prev.[j - 1]) s)
+    (j == length prev / 2 * 2 ==> mem (Package prev.[j - 2] prev.[j - 1]) s)
   }
 
 let leaf_smaller
@@ -175,6 +186,7 @@ let leaf_smaller
   j < length prev - 1 ==>
     item_weight base.[i] <= item_weight prev.[j] + item_weight prev.[j + 1]
 
+#set-options "--fuel 1 --ifuel 1 --z3refresh --z3rlimit 128"
 val lemma_snoc_leaf:
   #hi: pos -> #lo: intermidiate_exp hi -> #w: weight_seq -> prev: solution hi lo w ->
   i: leaf_index_t w true -> j: package_index_t prev false ->
@@ -186,7 +198,11 @@ val lemma_snoc_leaf:
     length (filter_leaves x') == i + 1 /\
     weight_sorted x' /\
     top2_leaf #(lo - 1) x' w' /\
+    (forall k. package_gt_div2 w' x' k) /\
     (forall k. solution_wf hi (lo - 1) w' x' k) /\
+    Leaf? (last x') /\
+    item_weight (last x') == w.[i] /\
+    (j == length prev / 2 * 2 ==> mem (Package prev.[j - 2] prev.[j - 1]) x') /\
     length x' == (i + 1) + j / 2 /\
     unfold_packages x' == slice prev 0 j /\
     merge_invariant (lo - 1) w prev (i + 1) j x'))
@@ -198,7 +214,6 @@ let package_smaller
   i < length w ==>
     item_weight base.[i] > item_weight prev.[j] + item_weight prev.[j + 1]
 
-#set-options "--fuel 1 --ifuel 1 --z3rlimit 128"
 val lemma_snoc_package:
   #hi: pos -> #lo: intermidiate_exp hi -> #w: weight_seq -> prev: solution hi lo w ->
   i: leaf_index_t w false -> j: package_index_t prev true ->
@@ -208,21 +223,32 @@ val lemma_snoc_package:
     let x' = snoc x (Package prev.[j] prev.[j + 1]) in
     let w' = slice w 0 i in
     length (filter_leaves x') == i /\
+    length x' < 2 * length w' /\
     weight_sorted x' /\
     top2_leaf #(lo - 1) x' w' /\
+    (forall k. package_gt_div2 w' x' k) /\
     (forall k. solution_wf hi (lo - 1) w' x' k) /\
+    Leaf? (last x') == false /\
     length x' == i + (j + 2) / 2 /\
+    mem (Package prev.[j] prev.[j + 1]) x' /\
     unfold_packages x' == slice prev 0 (j + 2) /\
     merge_invariant (lo - 1) w prev i (j + 2) x'))
 
+#push-options "--fuel 1 --ifuel 0 --z3seed 2 --z3rlimit 1024 --query_stats"
 let rec merge
   #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev false)
   (x: intermidiate_solution prev i j):
   Tot (s: solution hi (lo - 1) w {
-    length s == length w + length prev / 2
+    length s == length w + length prev / 2 /\
+    (Leaf? (last s) ==> item_weight (last s) == last w) /\
+    mem (Package prev.[length prev / 2 * 2 - 2] prev.[length prev / 2 * 2 - 1]) s
   }) (decreases %[length w - i; length prev - j]) =
-  match (i < length w, j + 1 < length prev) with
+  let n = length w in
+  match (i < n, j + 1 < length prev) with
+  | (false, false) ->
+    assert(slice w 0 i == w);
+    x
   | (true, true) ->
     let l = Leaf i (lo - 1) w.[i] in
     let p = Package prev.[j] prev.[j + 1] in
@@ -239,7 +265,7 @@ let rec merge
   | (true, false) ->
     lemma_snoc_leaf prev i j x;
     merge prev (i + 1) j (snoc x (Leaf i (lo - 1) w.[i]))
-  | (false, false) -> x
+#pop-options
 
 let rec max_exp 
   (s: seq item{forall i. Leaf? s.[i]}) (i: nat):
@@ -287,11 +313,12 @@ val lemma_init_merge_seq:
     filter_leaves x == x /\
     weight_sorted x /\
     top2_leaf #(lo - 1) x w' /\
+    package_gt_div2 w x 0 /\
     solution_wf hi (lo - 1) w' x 2 /\
     unfold_packages x == empty #item /\
     merge_invariant (lo - 1) w prev 2 0 x))
 
-let rec package_merge
+let rec do_package_merge
   #hi (#lo: pos{lo <= hi}) #w (prev: solution hi lo w):
   Tot (solution hi 1 w) (decreases lo) =
   match lo with
@@ -299,4 +326,18 @@ let rec package_merge
   | _ ->
     let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
     lemma_init_merge_seq prev;
-    package_merge #hi #(lo - 1) #w (merge prev 2 0 x)
+    do_package_merge #hi #(lo - 1) #w (merge prev 2 0 x)
+
+val lemma_base_set_solution: hi: pos -> w: weight_seq -> Lemma
+  (ensures (
+    let x = make_base_set hi w in
+    length (filter_leaves x) == length w /\
+    length x < 2 * length w /\
+    weight_sorted x /\
+    top2_leaf x w /\
+    (forall j. package_gt_div2 w x j) /\
+    (forall i. solution_wf hi hi w x i)
+  ))
+
+// let package_merge (max_len: pos) (w: weight_seq{length w <= pow2 max_len}):
+  // Tot (solution max_len 1 w) =
