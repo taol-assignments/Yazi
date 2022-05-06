@@ -119,6 +119,11 @@ val plus_assoc: a: rat -> b: rat -> c: rat -> Lemma
 
 let (-$) (a b: rat): Tot rat = (num a * den b - num b * den a, den a * den b)
 
+val sub_eq_l_rev: a: rat -> b: rat -> b': rat -> Lemma
+  (requires a -$ b' =$ a -$ b)
+  (ensures b =$ b')
+  [SMTPat (a -$ b' =$ a -$ b)]
+
 val sub_eq_l: a: rat -> b: rat -> b': rat -> Lemma
   (requires b =$ b')
   (ensures a -$ b' =$ a -$ b)

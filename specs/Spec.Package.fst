@@ -815,7 +815,8 @@ let lemma_solution_len_gt_two
   (ensures length s >= 2) =
   lemma_filter_leaves_len_gt s
 
-let lemma_max_exp_gt_zero #hi #lo #w s id =
+let lemma_max_exp_gt_zero #hi #lo #w (s: solution hi lo w) (id: index_t w): Lemma
+  (ensures max_exp (unfold_solution s (hi - lo)) id > 0) =
   let sol = unfold_solution s (hi - lo) in
   lemma_solution_len_gt_two s;
   assert(solution_wf hi lo w s (length s));
@@ -824,6 +825,11 @@ let lemma_max_exp_gt_zero #hi #lo #w s id =
   else
     let offset = length (unfold_solution (unfold_packages s) (hi - lo - 1)) in
     lemma_max_exp_gt_zero_aux sol (id + offset) id lo
+
+let lemma_max_exp_range #hi #lo #w s id =
+  let e = max_exp (unfold_solution s (hi - lo)) id in
+  lemma_max_exp_gt_zero s id;
+  assert(solution_wf hi lo w s (length s))
 
 let rec make_monotone_array
   #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w) (i: index_t w):
@@ -1063,23 +1069,8 @@ let lemma_init_merge_seq #hi #lo #w prev =
     merge_invariant (lo - 1) w prev 2 0 x)
 #pop-options
 
-let rec log2 (a: pos): Tot (e: nat{
-  pow2 e >= a /\ (forall e'. pow2 e' >= a ==> e' >= e)
-}) =
-  match (a, a % 2) with
-  | (1, _) -> 0
-  | (_, 0) -> 1 + log2 (a / 2)
-  | (_, 1) -> 1 + log2 (a / 2 + 1)
-
 #push-options "--ifuel 0 --z3seed 111 --z3rlimit 1024"
-let rec lemma_do_package_merge_len_lower_bound
-  #hi (#lo: pos{lo <= hi}) #w (prev: solution hi lo w): Lemma
-  (requires (
-    let n = length w in
-    let e = Math.Lib.max 0 ((log2 n) - (hi - lo)) in
-    n <= pow2 hi /\ length prev >= 2 * n - pow2 e))
-  (ensures length (do_package_merge prev) >= 2 * length w - 2)
-  (decreases lo) =
+let rec lemma_do_package_merge_len_lower_bound #hi #lo #w prev =
   let n = length w in
   match lo with
   | 1 -> ()
@@ -1276,8 +1267,78 @@ let lemma_base_set_solution hi w =
   forall_intro (lemma_base_set_package_gt_div2 hi w);
   forall_intro (move_requires (lemma_base_set_solution_wf hi w))
 
-// let rec lemma_merge_kraft_series #hi #w (s: solution hi 1 w): Lemma
-//   (ensures (
-//     let s' = slice s 0 (2 * length w - 2) in
-//     kraft_sum (solution_len s) =$ one)) =
-//   admit()
+let lemma_do_package_merge_div2_gt (max_len: pos) (w: weight_seq) (j: nat{
+    j < length w * 2 - 2
+  }): Lemma
+  (requires (
+    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    length w <= pow2 max_len /\ length s == 2 * length w - 1))
+  (ensures (
+    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    let s' = slice s 0 (length s - 1) in
+    package_gt_div2 w s' j
+  )) =
+  let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+  let s' = slice s 0 (length s - 1) in
+  if j % 2 = 0 && j + 1 < length s' then
+    assert(package_gt_div2 w s j)
+
+let lemma_do_package_merge_solution_wf (max_len: pos) (w: weight_seq) (j: pos{
+    2 <= j /\ j <= length w * 2 - 2
+  }): Lemma
+  (requires (
+    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    length w <= pow2 max_len /\ length s == 2 * length w - 1))
+  (ensures (
+    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    let s' = slice s 0 (length s - 1) in
+    solution_wf max_len 1 w s' j
+  )) = 
+  let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+  let s' = slice s 0 (length s - 1) in
+  assert(solution_wf max_len 1 w s j)
+
+let rec lemma_weight_sorted_head (s: seq item) (i: nat{i <= length s}): Lemma
+  (requires weight_sorted s)
+  (ensures weight_sorted (slice s 0 i))
+  (decreases i) =
+  match i with
+  | 0 -> ()
+  | _ ->
+    lemma_weight_sorted_head s (i - 1);
+    if i - 2 >= 0 then lemma_weight_sorted_lt s (i - 2) (i - 1);
+    lemma_weight_sorted_snoc (slice s 0 (i - 1)) s.[i - 1]
+
+let lemma_do_package_merge_slice max_len w =
+  let w' = make_base_set max_len w in
+  let s = do_package_merge #max_len #max_len #w w' in
+  let s' = slice s 0 (length s - 1) in
+  lemma_do_package_merge_last_not_package #max_len #max_len #w w';
+  lemma_filter_leaves_snoc_package s' (last s);
+  forall_intro (move_requires (lemma_do_package_merge_div2_gt max_len w));
+  forall_intro (move_requires (lemma_do_package_merge_solution_wf max_len w));
+  lemma_weight_sorted_head s (length s - 1)
+
+let lemma_package_merge max_len w =
+  let n = length w in
+  let s = package_merge max_len w in
+  let sl = solution_len s in
+  let us = unfold_solution s (max_len - 1) in
+  let ma = make_monotone_array s 0 in
+  calc (=$) {
+    of_int n -$ one;
+    =${assert_norm(of_int (n - 1) =$ of_int n -$ one)}
+    of_int (n - 1);
+    =${assert_norm(of_int (n - 1) =$ qpow2 (-1) *$ of_int (2 * n - 2))}
+    qpow2 (-1) *$ of_int (2 * n - 2);
+    =${assert(solution_wf max_len 1 w s (length s))}
+    solution_sum max_len 1 s;
+    =${
+      lemma_make_monotone_array_perm s;
+      lemma_solution_sum'_perm us ma
+    }
+    solution_sum' ma;
+    =${lemma_monotone_array_kraft_sum s 0}
+    of_int n -$ kraft_sum sl;
+  }
+

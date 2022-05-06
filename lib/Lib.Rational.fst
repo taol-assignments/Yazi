@@ -8,6 +8,97 @@ let plus_assoc a b c =
   assert(num (b +$ c) == num b * den c + den b * num c);
   assert(den (b +$ c) == den b * den c)
 
+let sub_eq_l_rev_aux (a b b': rat): Lemma
+  (requires a -$ b' =$ a -$ b)
+  (ensures (num b * den a) * (den a * den b') == (num b' * den a) * (den a * den b)) =
+  let c = a -$ b in
+  let c' = a -$ b' in
+  calc (==) {
+    (num a * den b) * (den a * den b') - (num b * den a) * (den a * den b');
+    =={}
+    (num a * den b - num b * den a) * (den a * den b');
+    =={}
+    num c * den c';
+    =={}
+    num c' * den c;
+    =={}
+    (num a * den b' - num b' * den a) * (den a * den b);
+    =={}
+    (num a * den b') * (den a * den b) - (num b' * den a) * (den a * den b);
+    =={Math.Lemmas.swap_mul (den a) (den b)}
+    (num a * den b') * (den b * den a) - (num b' * den a) * (den a * den b);
+    =={Math.Lemmas.paren_mul_right (num a * den b') (den b) (den a)}
+    (num a * den b') * den b * den a - (num b' * den a) * (den a * den b);
+    =={Math.Lemmas.paren_mul_left (num a) (den b') (den b)}
+    num a * den b' * den b * den a - (num b' * den a) * (den a * den b);
+    =={Math.Lemmas.paren_mul_right (num a) (den b') (den b)}
+    num a * (den b' * den b) * den a - (num b' * den a) * (den a * den b);
+    =={Math.Lemmas.swap_mul (den b') (den b)}
+    num a * (den b * den b') * den a - (num b' * den a) * (den a * den b);
+    =={Math.Lemmas.paren_mul_right (num a) (den b * den b') (den a)}
+    num a * ((den b * den b') * den a) - (num b' * den a) * (den a * den b);
+    =={
+      Math.Lemmas.paren_mul_left (den b) (den b') (den a);
+      Math.Lemmas.paren_mul_right (den b) (den b') (den a);
+      Math.Lemmas.swap_mul (den b') (den a)
+    }
+    num a * (den b * (den a * den b')) - (num b' * den a) * (den a * den b);
+    =={Math.Lemmas.paren_mul_left (num a) (den b) (den a * den b')}
+    (num a * den b) * (den a * den b') - (num b' * den a) * (den a * den b);
+  }
+
+let int_mul_eq (a b c: int): Lemma
+  (requires a * b == a * c /\ a <> 0)
+  (ensures b == c) = ()
+
+let sub_eq_l_rev a b b' =
+  calc (==) {
+    (den a * den a) * (num b * den b');
+    =={Math.Lemmas.paren_mul_left (den a) (den a) (num b * den b')}
+    den a * den a * (num b * den b');
+    =={
+      Math.Lemmas.paren_mul_left (den a) (num b) (den b');
+      Math.Lemmas.paren_mul_right (den a) (num b) (den b')
+    }
+    den a * ((den a * num b) * den b');
+    =={Math.Lemmas.swap_mul (num b) (den a)}
+    den a * ((num b * den a) * den b');
+    =={Math.Lemmas.paren_mul_left (num b) (den a) (den b')}
+    den a * (num b * den a * den b');
+    =={Math.Lemmas.paren_mul_right (num b) (den a) (den b')}
+    den a * (num b * (den a * den b'));
+    =={Math.Lemmas.paren_mul_right (den a) (num b) (den a * den b')}
+    den a * num b * (den a * den b');
+    =={Math.Lemmas.paren_mul_left (den a) (num b) (den a * den b')}
+    (den a * num b) * (den a * den b');
+    =={Math.Lemmas.swap_mul (den a) (num b)}
+    (num b * den a) * (den a * den b');
+    =={sub_eq_l_rev_aux a b b'}
+    (num b' * den a) * (den a * den b);
+    =={Math.Lemmas.swap_mul (num b') (den a)}
+    (den a * num b') * (den a * den b);
+    =={
+      Math.Lemmas.paren_mul_left (den a) (num b') (den a * den b);
+      Math.Lemmas.paren_mul_right (den a) (num b') (den a * den b)
+    }
+    den a * (num b' * (den a * den b));
+    =={
+      Math.Lemmas.paren_mul_left (num b') (den a) (den b);
+      Math.Lemmas.paren_mul_right (num b') (den a) (den b)
+    }
+    den a * ((num b' * den a) * den b);
+    =={Math.Lemmas.swap_mul (num b') (den a)}
+    den a * ((den a * num b') * den b);
+    =={
+      Math.Lemmas.paren_mul_left (den a) (num b') (den b);
+      Math.Lemmas.paren_mul_right (den a) (num b') (den b);
+      Math.Lemmas.paren_mul_right (den a) (den a) (num b' * den b);
+      Math.Lemmas.paren_mul_left (den a * den a) (num b') (den b)
+    }
+    (den a * den a) * (num b' * den b);
+  };
+  int_mul_eq (den a * den a) (num b * den b') (num b' * den b)
+
 let sub_eq_l a b b' =
   calc (==) {
     (num b * den a) * den a * den b';

@@ -4,6 +4,7 @@ open FStar.Mul
 open FStar.Seq
 open Lib.Rational
 open Lib.Seq
+open Spec.Kraft
 
 type item_t = 
   | Leaf: id: nat -> exp: pos -> weight: pos -> item_t
@@ -267,9 +268,7 @@ let rec merge
     merge prev (i + 1) j (snoc x (Leaf i (lo - 1) w.[i]))
 #pop-options
 
-let rec max_exp 
-  (s: seq item{forall i. Leaf? s.[i]}) (i: nat):
-  Tot (e: nat{
+let rec max_exp (s: seq item{forall i. Leaf? s.[i]}) (i: nat): Tot (e: nat{
     (forall l. mem l s /\ item_id l == i ==> exp l <= e) /\
     (e > 0 ==> (exists j. exp s.[j] == e /\ item_id s.[j] == i))
   }) (decreases length s) =
@@ -281,23 +280,28 @@ let rec max_exp
     else
       max_exp (tail s) i
 
-val lemma_max_exp_gt_zero:
+val lemma_max_exp_range:
     #hi: pos
   -> #lo: pos{hi >= lo}
   -> #w: weight_seq
   -> s: solution hi lo w
   -> id: index_t w
-  -> Lemma (ensures max_exp (unfold_solution s (hi - lo)) id > 0)
+  -> Lemma
+  (ensures (
+    let e = max_exp (unfold_solution s (hi - lo)) id in
+    0 < e /\ e <= hi))
 
 [@"opaque_to_smt"] 
 let solution_len
   (#hi: pos) (#w: weight_seq) (s: solution hi 1 w): Tot (l: seq nat{
     length l == length w /\
-    (forall i. l.[i] > 0 /\ l.[i] == max_exp (unfold_solution s (hi - 1)) i)
+    (forall i.
+      l.[i] > 0 /\ l.[i] <= hi /\
+      l.[i] == max_exp (unfold_solution s (hi - 1)) i)
   }) =
   let open FStar.Classical in
   let res = init (length w) (fun i -> max_exp (unfold_solution s (hi - 1)) i) in
-  forall_intro (lemma_max_exp_gt_zero s);
+  forall_intro (lemma_max_exp_range s);
   res
 
 val lemma_init_merge_seq:
@@ -328,6 +332,23 @@ let rec do_package_merge
     lemma_init_merge_seq prev;
     do_package_merge #hi #(lo - 1) #w (merge prev 2 0 x)
 
+let rec log2 (a: pos): Tot (e: nat{
+  pow2 e >= a /\ (forall e'. pow2 e' >= a ==> e' >= e)
+}) =
+  match (a, a % 2) with
+  | (1, _) -> 0
+  | (_, 0) -> 1 + log2 (a / 2)
+  | (_, 1) -> 1 + log2 (a / 2 + 1)
+
+val lemma_do_package_merge_len_lower_bound:
+  #hi: pos -> #lo: pos{lo <= hi} -> #w: weight_seq -> prev: solution hi lo w -> Lemma
+  (requires (
+    let n = length w in
+    let e = Math.Lib.max 0 ((log2 n) - (hi - lo)) in
+    n <= pow2 hi /\ length prev >= 2 * n - pow2 e))
+  (ensures length (do_package_merge prev) >= 2 * length w - 2)
+  (decreases lo)
+
 val lemma_base_set_solution: hi: pos -> w: weight_seq -> Lemma
   (ensures (
     let x = make_base_set hi w in
@@ -337,7 +358,38 @@ val lemma_base_set_solution: hi: pos -> w: weight_seq -> Lemma
     top2_leaf x w /\
     (forall j. package_gt_div2 w x j) /\
     (forall i. solution_wf hi hi w x i)
+  )) [SMTPat (make_base_set hi w)]
+
+val lemma_do_package_merge_slice: max_len: pos -> w: weight_seq -> Lemma
+  (requires (
+    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    length w <= pow2 max_len /\
+    length s == 2 * length w - 1))
+  (ensures (
+    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    let s' = slice s 0 (2 * length w - 2) in
+    length (filter_leaves s') == length w /\
+    weight_sorted s' /\
+    top2_leaf #1 s' w /\
+    (forall j. package_gt_div2 w s' j) /\
+    (forall i. solution_wf max_len 1 w s' i)
   ))
 
-// let package_merge (max_len: pos) (w: weight_seq{length w <= pow2 max_len}):
-  // Tot (solution max_len 1 w) =
+let package_merge (max_len: pos) (w: weight_seq{length w <= pow2 max_len}):
+  Tot (s: solution max_len 1 w{
+    length s == 2 * length w - 2
+  }) =
+  let n = length w in
+  let x = make_base_set max_len w in
+  let s = do_package_merge x in
+  lemma_do_package_merge_len_lower_bound #max_len #max_len #w x;
+  if length s = 2 * n - 1 then begin
+    lemma_do_package_merge_slice max_len w;
+    slice s 0 (2 * n - 2)
+  end else
+    s
+
+val lemma_package_merge: max_len: pos -> w: weight_seq{length w <= pow2 max_len} -> Lemma
+  (ensures (
+    let s = solution_len (package_merge max_len w) in
+    kraft_sum s =$ one /\ (forall i. s.[i] <= max_len)))
