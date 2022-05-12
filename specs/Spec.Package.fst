@@ -250,7 +250,7 @@ let lemma_unfold_solution_leaf (s: seq item) (i: nat): Lemma
 
 #push-options "--fuel 1 --ifuel 0 --query_stats --z3refresh --z3rlimit 1024 --z3seed 7"
 let lemma_snoc_leaf_monotone_elem
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w true) (j: package_index_t prev false)
   (x: solution hi (lo - 1) (slice w 0 i){length x >= 2})
   (k: index_t (unfold_solution (snoc x (Leaf i (lo - 1) w.[i])) (hi - lo + 1))): Lemma
@@ -280,9 +280,9 @@ let lemma_snoc_leaf_monotone_elem
   end
 
 let lemma_snoc_leaf_filter
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w true) (j: package_index_t prev false)
-  (x: intermidiate_solution prev i j): Lemma
+  (x: intermediate_solution prev i j): Lemma
   (ensures (
     let x' = snoc x (Leaf i (lo - 1) w.[i]) in
     filter_leaves x' == make_base_set (lo - 1) (slice w 0 (i + 1)))) =
@@ -378,9 +378,9 @@ let rec lemma_solution_sum'_perm (s1 s2: seq item): Lemma
     }
 
 let lemma_solution_sum_snoc_leaf
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w true) (j: package_index_t prev false)
-  (x: intermidiate_solution prev i j): Lemma
+  (x: intermediate_solution prev i j): Lemma
   (ensures (
     let x' = snoc x (Leaf i (lo - 1) w.[i]) in
     solution_sum hi (lo - 1) x' =$ qpow2 (-(lo - 1)) *$ (of_int (length x')))) =
@@ -410,9 +410,9 @@ let lemma_solution_sum_snoc_leaf
   }
 
 let lemma_snoc_leaf_solution_wf
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w true) (j: package_index_t prev false)
-  (x: intermidiate_solution prev i j)
+  (x: intermediate_solution prev i j)
   (k: nat{2 <= k /\ k <= length x + 1}) : Lemma
   (ensures (
     let x' = snoc x (Leaf i (lo - 1) w.[i]) in
@@ -428,9 +428,9 @@ let lemma_snoc_leaf_solution_wf
     assert(slice x' 0 k `equal` slice x 0 k)
 
 let lemma_snoc_leaf_package_gt_div2
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w true) (j: package_index_t prev false)
-  (x: intermidiate_solution prev i j)
+  (x: intermediate_solution prev i j)
   (k: index_t (snoc x (Leaf i (lo - 1) w.[i]))): Lemma
   (requires leaf_smaller (lo - 1) w prev i j)
   (ensures (
@@ -465,14 +465,65 @@ let rec lemma_weight_sorted_snoc (s: seq item) (i: item): Lemma
 
 #push-options "--ifuel 1"
 let lemma_snoc_leaf_merge_invariant
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w true) (j: package_index_t prev false)
-  (x: intermidiate_solution prev i j): Lemma
+  (x: intermediate_solution prev i j): Lemma
   (requires leaf_smaller (lo - 1) w prev i j)
   (ensures (
     let x' = snoc x (Leaf i (lo - 1) w.[i]) in
     merge_invariant (lo - 1) w prev (i + 1) j x')) =
   if i < length w - 1 then lemma_weight_seq_lt w i (i + 1)
+
+#push-options "--fuel 2 --ifuel 2"
+let rec lemma_solution_weight_sum_snoc_item (x: seq item) (l: item): Lemma
+  (requires length x >= 1)
+  (ensures solution_weight_sum (snoc x l) == solution_weight_sum x + item_weight l)
+  (decreases length x) =
+  match length x with
+  | 1 -> ()
+  | _ ->
+    calc (==) {
+      solution_weight_sum (snoc x l);
+      =={}
+      item_weight x.[0] + solution_weight_sum (tail (snoc x l));
+      =={assert(tail (snoc x l) `equal` snoc (tail x) l)}
+      item_weight x.[0] + solution_weight_sum (snoc (tail x) l);
+      =={lemma_solution_weight_sum_snoc_item (tail x) l}
+      item_weight x.[0] + solution_weight_sum (tail x) + item_weight l;
+      =={}
+      solution_weight_sum x + item_weight l;
+    }
+
+let rec lemma_weight_sum_snoc (w: seq pos) (i: pos): Lemma
+  (requires length w >= 1)
+  (ensures weight_sum w + i == weight_sum (snoc w i))
+  (decreases length w) =
+  match length w with
+  | 1 -> ()
+  | _ ->
+    calc (==) {
+      weight_sum (snoc w i);
+      =={}
+      w.[0] + weight_sum (tail (snoc w i));
+      =={assert(tail (snoc w i) `equal` snoc (tail w) i)}
+      w.[0] + weight_sum (snoc (tail w) i);
+      =={lemma_weight_sum_snoc (tail w) i}
+      w.[0] + weight_sum (tail w) + i;
+      =={}
+       weight_sum w + i;
+    }
+#pop-options
+
+let lemma_snoc_leaf_solution_weight_sum_inv
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
+  (i: leaf_index_t w true) (j: package_index_t prev false)
+  (x: intermediate_solution prev i j): Lemma
+  (requires leaf_smaller (lo - 1) w prev i j)
+  (ensures (
+    let x' = snoc x (Leaf i (lo - 1) w.[i]) in
+    solution_weight_sum_invariant w prev (i + 1) j x')) =
+  lemma_solution_weight_sum_snoc_item x (Leaf i (lo - 1) w.[i]);
+  lemma_weight_sum_snoc (slice w 0 i) w.[i]
 
 let lemma_snoc_leaf #hi #lo #w prev i j x =
   let l = Leaf i (lo - 1) w.[i] in
@@ -482,7 +533,8 @@ let lemma_snoc_leaf #hi #lo #w prev i j x =
   forall_intro (move_requires (lemma_snoc_leaf_solution_wf prev i j x));
   lemma_unfold_packages_snoc_leaf x l;
   lemma_weight_sorted_snoc x l;
-  lemma_snoc_leaf_merge_invariant prev i j x
+  lemma_snoc_leaf_merge_invariant prev i j x;
+  lemma_snoc_leaf_solution_weight_sum_inv prev i j x
 
 let last_leaf_id (s: seq item{length (filter_leaves s) > 0}): Tot (id: nat{
    item_id (last (filter_leaves s)) == id
@@ -499,7 +551,7 @@ let rec lemma_filter_leaves_map (s: seq item) (i: index_t (filter_leaves s)): Le
     | _ -> lemma_filter_leaves_map (tail s) i
 
 let lemma_last_leaf_index
-  #hi (#lo: intermidiate_exp hi) #w
+  #hi (#lo: intermediate_exp hi) #w
   (prev: solution hi lo w) (j: package_index_t prev true): Lemma
   (ensures (
     let k = last_leaf_id (slice prev 0 (j + 2)) in
@@ -517,9 +569,9 @@ let rec lemma_weight_sorted_lt (w: seq item) (i j: index_t w): Lemma
   | _ -> lemma_weight_sorted_lt (tail w) (i - 1) (j - 1)
 
 let lemma_package_lt_leaf
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev true)
-  (x: intermidiate_solution prev i j): Lemma
+  (x: intermediate_solution prev i j): Lemma
   (requires package_smaller (lo - 1) w prev i j)
   (ensures length (filter_leaves (slice prev 0 (j + 2))) <= length (filter_leaves x)) =
   let prev' = slice prev 0 (j + 2) in
@@ -541,11 +593,11 @@ let lemma_package_lt_leaf
           lemma_weight_seq_lt w i lp
         end)
 
-#set-options "--z3seed 88"
+#set-options "--z3seed 21"
 let lemma_snoc_package_monotone_elem
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev true)
-  (x: intermidiate_solution prev i j)
+  (x: intermediate_solution prev i j)
   (k: index_t (unfold_solution (snoc x (Package prev.[j] prev.[j + 1])) (hi - lo + 1))):
   Lemma
   (requires package_smaller (lo - 1) w prev i j)
@@ -575,9 +627,9 @@ let lemma_snoc_package_monotone_elem
   lemma_package_lt_leaf prev i j x
 
 let lemma_snoc_package_count_one
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev true)
-  (x: intermidiate_solution prev i j)
+  (x: intermediate_solution prev i j)
   (k: index_t (unfold_solution (snoc x (Package prev.[j] prev.[j + 1])) (hi - lo + 1))):
   Lemma
   (requires package_smaller (lo - 1) w prev i j)
@@ -636,9 +688,9 @@ let rec lemma_solution_sum'_base_set #e #w (b: base_set e w): Lemma
     }
 
 let lemma_solution_sum_snoc_package
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev true)
-  (x: intermidiate_solution prev i j): Lemma
+  (x: intermediate_solution prev i j): Lemma
   (ensures (
     let x' = snoc x (Package prev.[j] prev.[j + 1]) in
     solution_sum hi (lo - 1) x' =$ qpow2 (-(lo - 1)) *$ (of_int (length x')))) =
@@ -675,9 +727,9 @@ let lemma_solution_sum_snoc_package
 #pop-options
 
 let lemma_snoc_package_solution_wf
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev true)
-  (x: intermidiate_solution prev i j)
+  (x: intermediate_solution prev i j)
   (k: nat{2 <= k /\ k <= length x + 1}): Lemma
   (requires package_smaller (lo - 1) w prev i j)
   (ensures (
@@ -699,9 +751,9 @@ let lemma_snoc_package_solution_wf
     assert (slice x' 0 k `equal` slice x 0 k)
 
 let lemma_snoc_package_merge_invariant
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev true)
-  (x: intermidiate_solution prev i j): Lemma
+  (x: intermediate_solution prev i j): Lemma
   (requires package_smaller (lo - 1) w prev i j)
   (ensures (
     let x' = snoc x (Package prev.[j] prev.[j + 1]) in
@@ -713,9 +765,9 @@ let lemma_snoc_package_merge_invariant
   end
 
 let lemma_snoc_package_gt_div2
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev true)
-  (x: intermidiate_solution prev i j)
+  (x: intermediate_solution prev i j)
   (k: index_t (snoc x (Package prev.[j] prev.[j + 1]))): Lemma
   (requires package_smaller (lo - 1) w prev i j)
   (ensures (
@@ -736,6 +788,20 @@ let lemma_snoc_package_gt_div2
     end else 
       assert(package_gt_div2 (slice w 0 i) x k)
 
+let lemma_snoc_package_solution_weight_sum_inv
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
+  (i: leaf_index_t w false) (j: package_index_t prev true)
+  (x: intermediate_solution prev i j): Lemma
+  (requires package_smaller (lo - 1) w prev i j)
+  (ensures (
+    let x' = snoc x (Package prev.[j] prev.[j + 1]) in
+    solution_weight_sum_invariant w prev i (j + 2) x')) =
+  let prev' = slice prev 0 j in
+  let prev'' = slice prev 0 (j + 1) in
+  lemma_solution_weight_sum_snoc_item x (Package prev.[j] prev.[j + 1]);
+  if length prev' > 0 then lemma_solution_weight_sum_snoc_item prev' prev.[j];
+  lemma_solution_weight_sum_snoc_item prev'' prev.[j + 1]
+
 let lemma_snoc_package #hi #lo #w prev i j x =
   let p = Package prev.[j] prev.[j + 1] in
   let x' = snoc x p in
@@ -746,7 +812,8 @@ let lemma_snoc_package #hi #lo #w prev i j x =
   lemma_snoc_package_merge_invariant prev i j x;
   lemma_filter_leaves_snoc_package x p;
   lemma_weight_sorted_snoc x p;
-  lemma_unfold_packages_snoc_package x prev.[j] prev.[j + 1]
+  lemma_unfold_packages_snoc_package x prev.[j] prev.[j + 1];
+  lemma_snoc_package_solution_weight_sum_inv prev i j x
 
 let rec make_leaf_col
   #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w)
@@ -1051,7 +1118,7 @@ let rec lemma_monotone_array_kraft_sum
       of_int (length w - i) -$ ks;
     }
 
-#push-options "--fuel 3 --ifuel 2 --z3rlimit 1024 --z3seed 3"
+#push-options "--fuel 3 --ifuel 2 --z3rlimit 1024 --z3seed 4"
 let lemma_init_merge_seq #hi #lo #w prev =
   let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
   let w' = slice w 0 2 in
@@ -1084,9 +1151,9 @@ let rec lemma_do_package_merge_len_lower_bound #hi #lo #w prev =
 #pop-options
 
 let lemma_merge_last_not_package
-  #hi (#lo: intermidiate_exp hi) #w (prev: solution hi lo w)
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev false)
-  (x: intermidiate_solution prev i j): Lemma
+  (x: intermediate_solution prev i j): Lemma
   (requires length (merge prev i j x) > 2 * length w - 2)
   (ensures Package? (last (merge prev i j x))) =
   let x' = merge prev i j x in
@@ -1236,6 +1303,7 @@ let lemma_base_set_monotone_elem (e: pos) (w: weight_seq)
   else
     assert(item_id w''.[j] == 0)
 
+#set-options "--z3seed 88"
 let lemma_monotone_base_set (e: pos) (w: weight_seq) (i: nat{
     2 <= i /\ i <= length (make_base_set e w)
   }): Lemma
@@ -1342,3 +1410,93 @@ let lemma_package_merge max_len w =
     of_int n -$ kraft_sum sl;
   }
 
+#set-options "--z3seed 21 --fuel 1 --ifuel 0"
+let lemma_do_package_merge_weight_upper_bound_aux (s: seq item): Lemma
+  (requires length s >= 2)
+  (ensures solution_weight_sum (slice s 0 (length s / 2 * 2)) <= solution_weight_sum s) =
+  let s' = slice s 0 (length s / 2 * 2) in
+  if length s / 2 * 2 < length s then
+    lemma_solution_weight_sum_snoc_item s' (last s)
+
+let rec lemma_do_package_merge_weight_upper_bound
+  #hi (#lo: pos{lo <= hi}) #w (prev: solution hi lo w): Lemma
+  (ensures (
+    let s = do_package_merge prev in
+    solution_weight_sum s <= solution_weight_sum prev + (lo - 1) * weight_sum w
+  )) (decreases lo) =
+  match lo with
+  | 1 -> ()
+  | _ -> 
+    let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
+    lemma_init_merge_seq prev;
+    let x' = merge prev 2 0 x in
+    let prev' = slice prev 0 (length prev / 2 * 2) in
+    let ps' = solution_weight_sum prev' in
+    let ps = solution_weight_sum prev in
+    let ws = weight_sum w in
+    let ws' = (lo - 2) * weight_sum w in
+    lemma_do_package_merge_weight_upper_bound #hi #(lo - 1) #w x';
+    assert(solution_weight_sum (do_package_merge prev) <=
+      solution_weight_sum x' + ws');
+    calc (==) {
+      solution_weight_sum x' + ws';
+      =={}
+      ws + ps' + ws';
+      =={Math.Lemmas.paren_add_right ws ps' ws'}
+      ws + (ps' + ws');
+      =={}
+      ws + (ws' + ps');
+      =={
+        Math.Lemmas.paren_add_right ws ws' ps';
+        Math.Lemmas.paren_add_left ws ws' ps'
+      }
+      (ws + ws') + ps';
+      =={assert_norm(1 * ws == ws)}
+      (1 * ws + ws') + ps';
+      =={Math.Lemmas.distributivity_add_left 1 (lo - 2) (weight_sum w)}
+      (lo - 1) * weight_sum w + ps';
+    };
+    lemma_do_package_merge_weight_upper_bound_aux prev
+
+let rec lemma_solution_weight_sum (s: seq item{length s > 0}) (i: index_t s): Lemma
+  (ensures item_weight s.[i] <= solution_weight_sum s)
+  (decreases i) =
+  match i with
+  | 0 -> ()
+  | _ -> lemma_solution_weight_sum (tail s) (i - 1)
+
+#push-options "--fuel 2 --ifuel 2"
+let rec lemma_solution_weight_base_set
+  (e: pos) (w: weight_seq) (i: pos): Lemma
+  (requires i <= length w)
+  (ensures solution_weight_sum (slice (make_base_set e w) 0 i) == weight_sum (slice w 0 i))
+  (decreases i) =
+  match i with
+  | 1 -> ()
+  | _ ->
+    let b = make_base_set e w in
+    calc (==) {
+      solution_weight_sum (slice b 0 i);
+      =={}
+      solution_weight_sum (snoc (slice b 0 (i - 1)) b.[i - 1]);
+      =={lemma_solution_weight_sum_snoc_item (slice b 0 (i - 1)) b.[i - 1]}
+      solution_weight_sum (slice b 0 (i - 1)) + item_weight b.[i - 1];
+      =={lemma_solution_weight_base_set e w (i - 1)}
+      weight_sum (slice w 0 (i - 1)) + w.[i - 1];
+      =={lemma_weight_sum_snoc (slice w 0 (i - 1)) w.[i - 1]}
+      weight_sum (snoc (slice w 0 (i - 1)) w.[i - 1]);
+      =={}
+      weight_sum (slice w 0 i);
+    }
+#pop-options
+
+#set-options "--z3seed 4"
+let lemma_package_merge_weight_upper_bound max_len w =
+  let n = length w in
+  let x = make_base_set max_len w in
+  let s = do_package_merge #max_len #max_len #w x in
+  assert(slice w 0 (length w) `equal` w);
+  assert(slice x 0 (length x) `equal` x);
+  lemma_do_package_merge_weight_upper_bound #max_len #max_len #w x;
+  lemma_solution_weight_base_set max_len w (length w);
+  forall_intro (lemma_solution_weight_sum s)
