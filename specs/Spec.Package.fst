@@ -5,6 +5,11 @@ open FStar.Classical
 open FStar.Squash
 open Spec.Kraft
 
+let rec lemma_filter_leaves_len_gt s =
+  match length s with
+  | 0 -> ()
+  | _ -> lemma_filter_leaves_len_gt (tail s)
+
 let rec lemma_weight_seq_lt (w: weight_seq) (i j: index_t w): Lemma
   (requires i < j)
   (ensures w.[i] <= w.[j])
@@ -593,7 +598,7 @@ let lemma_package_lt_leaf
           lemma_weight_seq_lt w i lp
         end)
 
-#set-options "--z3seed 21"
+#set-options "--z3seed 212"
 let lemma_snoc_package_monotone_elem
   #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
   (i: leaf_index_t w false) (j: package_index_t prev true)
@@ -870,13 +875,6 @@ let rec lemma_max_exp_gt_zero_aux
   | 0 -> ()
   | _ -> lemma_max_exp_gt_zero_aux (tail s) (i - 1) id e
 
-let rec lemma_filter_leaves_len_gt (s: seq item): Lemma
-  (ensures length s >= length (filter_leaves s))
-  (decreases length s) =
-  match length s with
-  | 0 -> ()
-  | _ -> lemma_filter_leaves_len_gt (tail s)
-
 let lemma_solution_len_gt_two
   #hi (#lo: pos{hi >= lo}) #w (s: solution hi lo w): Lemma
   (ensures length s >= 2) =
@@ -1118,7 +1116,7 @@ let rec lemma_monotone_array_kraft_sum
       of_int (length w - i) -$ ks;
     }
 
-#push-options "--fuel 3 --ifuel 2 --z3rlimit 1024 --z3seed 4"
+#push-options "--fuel 3 --ifuel 2 --z3rlimit 1024 --z3seed 3"
 let lemma_init_merge_seq #hi #lo #w prev =
   let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
   let w' = slice w 0 2 in
@@ -1126,14 +1124,9 @@ let lemma_init_merge_seq #hi #lo #w prev =
   assert(filter_leaves x `equal` make_base_set (lo - 1) (slice w 0 2));
   lemma_unfold_packages_all_leaves x;
   lemma_unfold_solution_leaf x (hi - (lo - 1));
-  assert(
-    length x == 2 /\
-    filter_leaves x == x /\
-    weight_sorted x /\
-    top2_leaf #(lo - 1) x w' /\
-    solution_wf hi (lo - 1) w' x 2 /\
-    unfold_packages x == empty #item /\
-    merge_invariant (lo - 1) w prev 2 0 x)
+  lemma_empty (unfold_packages x);
+  assert(length (unfold_packages x) = 0);
+  assert(unfold_packages x == empty #item)
 #pop-options
 
 #push-options "--ifuel 0 --z3seed 111 --z3rlimit 1024"
@@ -1148,6 +1141,14 @@ let rec lemma_do_package_merge_len_lower_bound #hi #lo #w prev =
     lemma_init_merge_seq prev;
     let x' = merge prev 2 0 x in
     lemma_do_package_merge_len_lower_bound x'
+
+let rec lemma_do_package_merge_len_upper_bound #hi #lo #w x fuel =
+  match fuel with
+  | 0 -> ()
+  | _ -> 
+    let x' = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
+    lemma_init_merge_seq x;
+    lemma_do_package_merge_len_upper_bound (merge x 2 0 x') (fuel - 1)
 #pop-options
 
 let lemma_merge_last_not_package
@@ -1170,23 +1171,24 @@ let lemma_merge_last_not_package
   end
 
 let rec lemma_do_package_merge_last_not_package
-  #hi (#lo: pos{1 < lo /\ lo <= hi}) #w (prev: solution hi lo w): Lemma
-  (requires length (do_package_merge prev) > 2 * length w - 2)
-  (ensures Package? (last (do_package_merge prev)))
-  (decreases lo) =
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w) (i: pos{i < lo}): Lemma
+  (requires length (do_package_merge prev i) > 2 * length w - 2)
+  (ensures Package? (last (do_package_merge prev i)))
+  (decreases i) =
   let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
   lemma_init_merge_seq prev;
-  match lo with
-  | 2 -> 
+  match i with
+  | 1 -> 
     calc (==) {
-      do_package_merge prev;
+      do_package_merge prev i;
       =={}
-      do_package_merge #hi #(lo - 1) #w (merge prev 2 0 x);
+      do_package_merge #hi #(lo - 1) #w (merge_solution prev) (i - 1);
       =={}
       merge prev 2 0 x;
     };
     lemma_merge_last_not_package prev 2 0 x
-  | _ -> lemma_do_package_merge_last_not_package #hi #(lo - 1) #w (merge prev 2 0 x)
+  | _ ->
+    lemma_do_package_merge_last_not_package #hi #(lo - 1) #w (merge_solution prev) (i - 1)
 
 let rec lemma_weight_sorted_base_seq (e: pos) (w: weight_seq) (i: index_t w): Lemma
   (ensures (
@@ -1335,36 +1337,42 @@ let lemma_base_set_solution hi w =
   forall_intro (lemma_base_set_package_gt_div2 hi w);
   forall_intro (move_requires (lemma_base_set_solution_wf hi w))
 
-let lemma_do_package_merge_div2_gt (max_len: pos) (w: weight_seq) (j: nat{
-    j < length w * 2 - 2
-  }): Lemma
+let lemma_do_package_merge_div2_gt
+  (max_len: pos) (w: weight_seq)
+  (fuel: nat{fuel < max_len}) (j: nat{j < length w * 2 - 2}): Lemma
   (requires (
-    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    let s = do_package_merge #max_len #max_len #w
+      (make_base_set max_len w) fuel in
     length w <= pow2 max_len /\ length s == 2 * length w - 1))
   (ensures (
-    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    let s = do_package_merge #max_len #max_len #w
+      (make_base_set max_len w) fuel in
     let s' = slice s 0 (length s - 1) in
     package_gt_div2 w s' j
   )) =
-  let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+  let s = do_package_merge #max_len #max_len #w
+    (make_base_set max_len w) fuel in
   let s' = slice s 0 (length s - 1) in
   if j % 2 = 0 && j + 1 < length s' then
     assert(package_gt_div2 w s j)
 
-let lemma_do_package_merge_solution_wf (max_len: pos) (w: weight_seq) (j: pos{
-    2 <= j /\ j <= length w * 2 - 2
-  }): Lemma
+let lemma_do_package_merge_solution_wf
+  (max_len: pos) (w: weight_seq)
+  (fuel: nat{fuel < max_len}) (j: pos{2 <= j /\ j <= length w * 2 - 2}) : Lemma
   (requires (
-    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    let s = do_package_merge #max_len #max_len #w
+      (make_base_set max_len w) fuel in
     length w <= pow2 max_len /\ length s == 2 * length w - 1))
   (ensures (
-    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    let s = do_package_merge #max_len #max_len #w
+      (make_base_set max_len w) fuel in
     let s' = slice s 0 (length s - 1) in
-    solution_wf max_len 1 w s' j
+    solution_wf max_len (max_len - fuel) w s' j
   )) = 
-  let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+  let s = do_package_merge #max_len #max_len #w
+    (make_base_set max_len w) fuel in
   let s' = slice s 0 (length s - 1) in
-  assert(solution_wf max_len 1 w s j)
+  assert(solution_wf max_len (max_len - fuel) w s j)
 
 let rec lemma_weight_sorted_head (s: seq item) (i: nat{i <= length s}): Lemma
   (requires weight_sorted s)
@@ -1379,12 +1387,13 @@ let rec lemma_weight_sorted_head (s: seq item) (i: nat{i <= length s}): Lemma
 
 let lemma_do_package_merge_slice max_len w =
   let w' = make_base_set max_len w in
-  let s = do_package_merge #max_len #max_len #w w' in
+  let s = do_package_merge #max_len #max_len #w w' (max_len - 1) in
   let s' = slice s 0 (length s - 1) in
-  lemma_do_package_merge_last_not_package #max_len #max_len #w w';
+  let fuel = max_len - 1 in
+  lemma_do_package_merge_last_not_package #max_len #max_len #w w' fuel;
   lemma_filter_leaves_snoc_package s' (last s);
-  forall_intro (move_requires (lemma_do_package_merge_div2_gt max_len w));
-  forall_intro (move_requires (lemma_do_package_merge_solution_wf max_len w));
+  forall_intro (move_requires (lemma_do_package_merge_div2_gt max_len w fuel));
+  forall_intro (move_requires (lemma_do_package_merge_solution_wf max_len w fuel));
   lemma_weight_sorted_head s (length s - 1)
 
 let lemma_package_merge max_len w =
@@ -1418,15 +1427,15 @@ let lemma_do_package_merge_weight_upper_bound_aux (s: seq item): Lemma
   if length s / 2 * 2 < length s then
     lemma_solution_weight_sum_snoc_item s' (last s)
 
-let rec lemma_do_package_merge_weight_upper_bound
-  #hi (#lo: pos{lo <= hi}) #w (prev: solution hi lo w): Lemma
+let rec lemma_do_package_merge_weight_sum_upper_bound
+  #hi (#lo: pos{lo <= hi}) #w (prev: solution hi lo w) (fuel: nat{fuel < lo}): Lemma
   (ensures (
-    let s = do_package_merge prev in
-    solution_weight_sum s <= solution_weight_sum prev + (lo - 1) * weight_sum w
-  )) (decreases lo) =
-  match lo with
-  | 1 -> ()
-  | _ -> 
+    let s = do_package_merge prev fuel in
+    solution_weight_sum s <= solution_weight_sum prev + fuel * weight_sum w
+  )) (decreases fuel) =
+  match fuel with
+  | 0 -> ()
+  | _ ->
     let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
     lemma_init_merge_seq prev;
     let x' = merge prev 2 0 x in
@@ -1434,9 +1443,9 @@ let rec lemma_do_package_merge_weight_upper_bound
     let ps' = solution_weight_sum prev' in
     let ps = solution_weight_sum prev in
     let ws = weight_sum w in
-    let ws' = (lo - 2) * weight_sum w in
-    lemma_do_package_merge_weight_upper_bound #hi #(lo - 1) #w x';
-    assert(solution_weight_sum (do_package_merge prev) <=
+    let ws' = (fuel - 1) * weight_sum w in
+    lemma_do_package_merge_weight_sum_upper_bound #hi #(lo - 1) #w x' (fuel - 1);
+    assert(solution_weight_sum (do_package_merge x' (fuel - 1)) <=
       solution_weight_sum x' + ws');
     calc (==) {
       solution_weight_sum x' + ws';
@@ -1453,8 +1462,8 @@ let rec lemma_do_package_merge_weight_upper_bound
       (ws + ws') + ps';
       =={assert_norm(1 * ws == ws)}
       (1 * ws + ws') + ps';
-      =={Math.Lemmas.distributivity_add_left 1 (lo - 2) (weight_sum w)}
-      (lo - 1) * weight_sum w + ps';
+      =={Math.Lemmas.distributivity_add_left 1 (fuel - 1) (weight_sum w)}
+      fuel * weight_sum w + ps';
     };
     lemma_do_package_merge_weight_upper_bound_aux prev
 
@@ -1491,12 +1500,756 @@ let rec lemma_solution_weight_base_set
 #pop-options
 
 #set-options "--z3seed 4"
-let lemma_package_merge_weight_upper_bound max_len w =
+let lemma_do_package_merge_weight_upper_bound max_len w fuel =
   let n = length w in
   let x = make_base_set max_len w in
-  let s = do_package_merge #max_len #max_len #w x in
+  let s = do_package_merge #max_len #max_len #w x fuel in
   assert(slice w 0 (length w) `equal` w);
   assert(slice x 0 (length x) `equal` x);
-  lemma_do_package_merge_weight_upper_bound #max_len #max_len #w x;
+  lemma_do_package_merge_weight_sum_upper_bound #max_len #max_len #w x fuel;
   lemma_solution_weight_base_set max_len w (length w);
   forall_intro (lemma_solution_weight_sum s)
+
+let rec lemma_leaf_row_unfold (s: seq item) (depth: pos): Lemma
+  (ensures
+    unfold_solution s depth ==
+    leaf_row s depth @| unfold_solution s (depth - 1))
+  (decreases depth) =
+  match depth with
+  | 1 ->
+    calc (==) {
+      leaf_row s depth @| unfold_solution s (depth - 1);
+      =={}
+      leaf_row (unfold_packages s) 0 @| filter_leaves s;
+      =={}
+      filter_leaves (unfold_packages s) @| filter_leaves s;
+      =={}
+      unfold_solution (unfold_packages s) 0 @| filter_leaves s;
+      =={}
+      unfold_solution s 1;
+    }
+  | _ ->
+    calc (==) {
+      unfold_solution s depth;
+      =={}
+      (unfold_solution (unfold_packages s) (depth - 1)) @| filter_leaves s;
+      =={lemma_leaf_row_unfold (unfold_packages s) (depth - 1)}
+      (leaf_row (unfold_packages s) (depth - 1) @|
+      unfold_solution (unfold_packages s) (depth - 2)) @|
+      filter_leaves s;
+      =={
+        append_assoc
+          (leaf_row (unfold_packages s) (depth - 1))
+          (unfold_solution (unfold_packages s) (depth - 2))
+          (filter_leaves s)
+      }
+      leaf_row (unfold_packages s) (depth - 1) @|
+      (unfold_solution (unfold_packages s) (depth - 2) @| filter_leaves s);
+      =={}
+      leaf_row s depth @| unfold_solution s (depth - 1);
+    }
+
+let rec lemma_max_exp_append (s1 s2: leaf_seq) (i: nat): Lemma
+  (ensures max_exp (s1 @| s2) i == Math.Lib.max (max_exp s1 i) (max_exp s2 i))
+  (decreases length s1) =
+  match length s1 with
+  | 0 ->
+    calc (==) {
+      (max_exp (s1 @| s2) i) <: nat;
+      =={
+        lemma_empty s1;
+        append_empty_l s2
+      }
+      max_exp s2 i;
+      =={}
+      Math.Lib.max (max_exp s1 i) (max_exp s2 i);
+    }
+  | _ ->
+    assert(tail (s1 @| s2) `equal` ((tail s1) @| s2));
+    lemma_max_exp_append (tail s1) s2 i
+
+let rec lemma_leaf_row_empty (s: seq item) (i: nat): Lemma
+  (requires length s == 0)
+  (ensures leaf_row s i == empty #item) =
+  lemma_empty s;
+  match i with
+  | 0 -> ()
+  | _ -> lemma_leaf_row_empty s (i - 1)
+
+let rec lemma_do_package_merge_cont
+  #hi #lo #w (prev: solution hi lo w) (fuel: nat{fuel < lo - 1}): Lemma
+  (ensures
+    merge_solution (do_package_merge prev fuel) ==
+    do_package_merge prev (fuel + 1))
+  (decreases fuel) =
+  match fuel with
+  | 0 ->
+    calc (==) {
+      do_package_merge prev (fuel + 1);
+      =={}
+      do_package_merge prev 1;
+      =={}
+      do_package_merge (merge_solution prev) fuel;
+      =={}
+      merge_solution prev;
+      =={}
+      merge_solution (do_package_merge prev 0);
+    }
+  | _ ->
+    calc (==) {
+      do_package_merge prev (fuel + 1);
+      =={}
+      do_package_merge (merge_solution prev) fuel;
+      =={lemma_do_package_merge_cont (merge_solution prev) (fuel - 1)}
+      merge_solution (do_package_merge (merge_solution prev) (fuel - 1));
+      =={}
+      merge_solution (do_package_merge prev fuel);
+    }
+
+#push-options "--fuel 2 --ifuel 2"
+let rec lemma_unfold_packages_prefix (a b: seq item): Lemma
+  (requires a `prefix` b)
+  (ensures unfold_packages a `prefix` unfold_packages b)
+  (decreases length b - length a) =
+  let a' = unfold_packages a in
+  if length a = 0 then
+    lemma_empty a
+  else if length a < length b then begin
+    lemma_unfold_packages_prefix (snoc a b.[length a]) b;
+    match b.[length a] with
+    | Leaf _ _ _ -> lemma_unfold_packages_snoc_leaf a b.[length a]
+    | Package i1 i2 ->
+      calc (==) {
+        unfold_packages (snoc a b.[length a]);
+        =={lemma_unfold_packages_snoc_package a i1 i2}
+        snoc (snoc a' i1) i2;
+      };
+      prefix_alt a' (snoc a' i1);
+      prefix_alt (snoc a' i1) (snoc (snoc a' i1) i2)
+  end
+#pop-options
+
+let lemma_merge_unpack
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w)
+  (i: leaf_index_t w false) (j: package_index_t prev false)
+  (x: intermediate_solution prev i j) (s: seq item): Lemma
+  (requires s `prefix` merge prev i j x)
+  (ensures solution_row s 1 `prefix` prev)
+  (decreases %[length w - i; length prev - j]) =
+  let x' = merge prev i j x in
+  calc (==) {
+    solution_row x' 1;
+    =={}
+    solution_row (unfold_packages x') 0;
+    =={}
+    unfold_packages x';
+  };
+  calc (==) {
+    solution_row s 1;
+    =={}
+    solution_row (unfold_packages s) 0;
+    =={}
+    unfold_packages s;
+  };
+  lemma_unfold_packages_prefix s x'
+
+#push-options "--fuel 0 --ifuel 0"
+let lemma_merge_solution_unpack
+  #hi (#lo: intermediate_exp hi) #w (prev: solution hi lo w) (s: seq item): Lemma
+  (requires s `prefix` merge_solution prev)
+  (ensures solution_row s 1 `prefix` prev) =
+  let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
+  lemma_init_merge_seq prev;
+  lemma_merge_unpack prev 2 0 x s
+#pop-options
+
+let rec lemma_filter_leaves_prefix (a b: seq item): Lemma
+  (requires a `prefix` b)
+  (ensures filter_leaves a `prefix` filter_leaves b)
+  (decreases length b - length a) =
+  if length a > 0 && length a < length b then begin
+    let t = b.[length a] in
+    lemma_filter_leaves_prefix (snoc a t) b;
+    if Leaf? t then begin
+      calc (==) {
+        filter_leaves (snoc a t);
+        =={lemma_filter_leaves_snoc_leaf a t}
+        snoc (filter_leaves a) t;
+      };
+      prefix_alt (filter_leaves a) (snoc (filter_leaves a) t)
+    end else
+      lemma_filter_leaves_snoc_package a t
+  end
+
+let rec lemma_pack_unpack_aux
+  #max_len (w: valid_weight_seq max_len) (row: seq item) (i: pos{i < max_len}): Lemma
+  (requires (
+    let s: solution max_len max_len w = make_base_set max_len w in
+    row `prefix` do_package_merge s i))
+  (ensures (
+    let b: solution max_len max_len w = make_base_set max_len w in
+    let s' = do_package_merge b (i - 1) in
+    let s = do_package_merge b i in
+    leaf_row row 1 `prefix` filter_leaves s'
+  )) (decreases length row) =
+  let b: solution max_len max_len w = make_base_set max_len w in
+  let s' = do_package_merge b (i - 1) in
+  let s = do_package_merge b i in
+  let row' = leaf_row row 1 in
+  match length row with
+  | 0 -> lemma_leaf_row_empty row 1
+  | _ ->
+    lemma_pack_unpack_aux w (unsnoc row) i;
+    if Leaf? (last row) then
+      lemma_unfold_packages_snoc_leaf (unsnoc row) (last row)
+    else begin
+      lemma_do_package_merge_cont b (i - 1);
+      lemma_merge_solution_unpack s' row;
+      lemma_filter_leaves_prefix (solution_row row 1) s'
+    end
+
+let rec lemma_solution_row
+  #max_len (w: valid_weight_seq max_len) (row: seq item) (i j: nat): Lemma
+  (requires (
+    let b: solution max_len max_len w = make_base_set max_len w in
+    i < max_len /\ j <= i /\ row `prefix` do_package_merge b i))
+  (ensures (
+    let b: solution max_len max_len w = make_base_set max_len w in
+    let s' = do_package_merge b (i - j) in
+    solution_row row j `prefix` s'
+  )) (decreases j) =
+  let b: solution max_len max_len w = make_base_set max_len w in
+  if j > 0 then begin
+    lemma_do_package_merge_cont b (i - 1);
+    lemma_merge_solution_unpack (do_package_merge b (i - 1)) row;
+    lemma_solution_row w (solution_row row 1) (i - 1) (j - 1);
+    calc (==) {
+      solution_row (solution_row row 1) (j - 1);
+      =={}
+      solution_row (solution_row (unfold_packages row) 0) (j - 1);
+      =={}
+      solution_row (unfold_packages row) (j - 1);
+      =={}
+      solution_row row j;
+    }
+  end
+
+let lemma_leaf_row
+  #max_len (w: valid_weight_seq max_len) (row: seq item) (i j: nat): Lemma
+  (requires (
+    let b: solution max_len max_len w = make_base_set max_len w in
+    i < max_len /\ j <= i /\ row `prefix` do_package_merge b i))
+  (ensures leaf_row row j `prefix` make_base_set (max_len - i + j) w) =
+  lemma_solution_row w row i j;
+  let b: solution max_len max_len w = make_base_set max_len w in
+  let s' = do_package_merge b (i - j) in
+  assert(solution_wf max_len (max_len - i + j) w s' (length s'));
+  lemma_filter_leaves_prefix (solution_row row j) s'
+
+let rec lemma_max_exp_leaf_row_aux
+  #max_len (w: valid_weight_seq max_len) (row: seq item) (e: pos) (i: index_t row): Lemma
+  (requires row `prefix` make_base_set e w)
+  (ensures max_exp row i == e)
+  (decreases length row) =
+  assert(((unsnoc row) @| create 1 (last row)) `equal` row);
+  if i = length row - 1 then begin
+    calc (==) {
+      (max_exp row i) <: nat;
+      =={}
+      max_exp ((unsnoc row) @| create 1 (last row)) i;
+      =={lemma_max_exp_append (unsnoc row) (create 1 (last row)) i}
+      Math.Lib.max 0 (max_exp (create 1 (last row)) i);
+      =={}
+      Math.Lib.max 0 (Math.Lib.max (exp (last row)) 0);
+      =={}
+      e;
+    }
+  end else
+    calc (==) {
+      (max_exp row i) <: nat;
+      =={}
+      max_exp ((unsnoc row) @| create 1 (last row)) i;
+      =={lemma_max_exp_append (unsnoc row) (create 1 (last row)) i}
+      Math.Lib.max (max_exp (unsnoc row) i) 0;
+      =={lemma_max_exp_leaf_row_aux w (unsnoc row) e i}
+      Math.Lib.max e 0;
+      =={}
+      e;
+    }
+
+let lemma_max_exp_leaf_row
+  #max_len (w: valid_weight_seq max_len) (row: seq item) (i j k: nat): Lemma
+  (requires (
+    let b: solution max_len max_len w = make_base_set max_len w in
+    i < max_len /\ j <= i /\ 
+    row `prefix` do_package_merge b i))
+  (ensures (
+    let row' = leaf_row row j in
+    let l = length row' in
+    (k >= l ==> max_exp row' k == 0) /\
+    (k < l ==> max_exp row' k == max_len - i + j)))
+  (decreases length row) =
+  let row' = leaf_row row j in
+  let l = length row' in
+  if k >= l then begin
+    let e = max_exp row' k in
+    if e > 0 then
+      exists_elim False
+        (get_proof (exists l. exp row'.[l] == e /\ item_id row'.[l] == k))
+        (fun l -> lemma_leaf_row w row i j)
+  end else begin
+    lemma_leaf_row w row i j;
+    lemma_max_exp_leaf_row_aux w row' (max_len - i + j) k
+  end
+
+let lemma_analyze_row_term_max
+  #nbits #max_len #w
+  (bits: item_bit_map nbits max_len 1 w) (depth: depth_t max_len)
+  i j (k: col_package_count max_len w depth i j)
+  (s: intermediate_exp_seq' max_len w depth j) (l: index_t s) : Lemma
+  (requires i = length (solution_row (package_merge max_len w) depth))
+  (ensures s.[l] == max_exp (unfold_solution (package_merge max_len w) depth) l) =
+  let t = package_merge max_len w in
+  if depth > 0 then begin
+    calc (==) {
+      (max_exp (unfold_solution t depth) l) <: nat;
+      =={lemma_leaf_row_unfold t depth}
+      max_exp (leaf_row t depth @| unfold_solution t (depth - 1)) l;
+      =={lemma_max_exp_append (leaf_row t depth) (unfold_solution t (depth - 1)) l}
+      Math.Lib.max
+        (max_exp (leaf_row t depth) l) 
+        (max_exp (unfold_solution t (depth - 1)) l);
+    };
+    if l >= j then lemma_max_exp_leaf_row w t (max_len - 1) depth l
+  end
+
+let rec lemma_solution_row_cont (s: seq item) (i: nat): Lemma
+  (ensures unfold_packages (solution_row s i) == solution_row s (i + 1))
+  (decreases i) =
+  match i with
+  | 0 ->
+    calc (==) {
+      unfold_packages (solution_row s i);
+      =={}
+      unfold_packages s;
+      =={}
+      solution_row (unfold_packages s) 0;
+      =={}
+      solution_row s 1;
+    }
+  | _ ->
+    calc (==) {
+      unfold_packages (solution_row s i);
+      =={}
+      unfold_packages (solution_row (unfold_packages s) (i - 1));
+      =={lemma_solution_row_cont (unfold_packages s) (i - 1)}
+      solution_row (unfold_packages s) i;
+      =={}
+      solution_row s (i + 1);
+    }
+
+let lemma_analyze_row_terminate #nbits #max_len #w bits depth i j k s =
+  forall_intro (move_requires (lemma_analyze_row_term_max bits depth i j k s));
+  lemma_solution_row_cont (package_merge max_len w) depth
+
+let lemma_analyze_row_set_leaf
+  #nbits #max_len #w (bits: item_bit_map nbits max_len 1 w) (depth: depth_t max_len)
+  i j (k: col_package_count max_len w depth i j): Lemma
+  (requires
+    i < length (solution_row (package_merge max_len w) depth) /\
+    (UInt.to_vec bits.[i]).[max_len - 1 - depth])
+  (ensures Leaf? (solution_row (package_merge max_len w) depth).[i]) =
+  let sol = package_merge max_len w in
+  let row = solution_row sol depth in
+  let b: solution max_len max_len w = make_base_set max_len w in
+  lemma_solution_row w sol (max_len - 1) depth;
+  let d = max_len - 1 - depth in
+  let x = do_package_merge b d in
+  assert(forall (k: index_t x). (UInt.to_vec bits.[k]).[d] == Leaf? x.[k]);
+  assert((UInt.to_vec bits.[i]).[d] == Leaf? x.[i])
+
+#push-options "--fuel 0"
+let lemma_analyze_row_set_idx
+  #nbits #max_len #w (bits: item_bit_map nbits max_len 1 w) (depth: depth_t max_len)
+  i j (k: col_package_count max_len w depth i j): Lemma
+  (requires
+    i < length (solution_row (package_merge max_len w) depth) /\
+    (UInt.to_vec bits.[i]).[max_len - 1 - depth])
+  (ensures (
+    let sol = package_merge max_len w in
+    let row = solution_row sol depth in
+    let row'' = slice row 0 (i + 1) in
+    j < length w /\
+    j + 1 == length (filter_leaves row'') /\
+    i + 1 <= 2 * length w - 1 /\
+    k == length (unfold_packages row''))) =
+  let sol = package_merge max_len w in
+  let row = solution_row sol depth in
+  let b: solution max_len max_len w = make_base_set max_len w in
+  let d = max_len - 1 - depth in
+  let x = do_package_merge b d in
+  lemma_solution_row w sol (max_len - 1) depth;
+  lemma_analyze_row_set_leaf bits depth i j k;
+
+  let row' = slice row 0 i in
+  let row'' = slice row 0 (i + 1) in
+  prefix_alt row' row'';
+  prefix_alt row'' row;
+  lemma_filter_leaves_prefix row' x;
+  assert(row.[i] == x.[i]);
+  lemma_filter_leaves_snoc_leaf row' row.[i];
+
+  lemma_do_package_merge_len_upper_bound b d;
+  lemma_unfold_packages_snoc_leaf row' row.[i]
+#pop-options
+
+let rec lemma_unfold_solution_leaf_row (s: seq item) (depth: nat): Lemma
+  (ensures
+    leaf_row s (depth + 1) @| unfold_solution s depth ==
+    unfold_solution s (depth + 1))
+  (decreases depth) =
+  let s' = unfold_packages s in
+  match depth with
+  | 0 ->
+    calc (==) {
+      leaf_row s (depth + 1) @| unfold_solution s depth;
+      =={}
+      (filter_leaves (solution_row s 1)) @| filter_leaves s;
+      =={}
+      (filter_leaves (solution_row s' 0)) @| filter_leaves s;
+      =={}
+      (filter_leaves s') @| filter_leaves s;
+      =={}
+      (unfold_solution s' 0) @| filter_leaves s;
+      =={}
+      unfold_solution s (depth + 1);
+    }
+  | _ ->
+    calc (==) {
+      leaf_row s (depth + 1) @| unfold_solution s depth;
+      =={}
+      (filter_leaves (solution_row s (depth + 1))) @|
+      unfold_solution s' (depth - 1) @|
+      filter_leaves s;
+      =={}
+      (leaf_row s' depth) @| unfold_solution s' (depth - 1) @| filter_leaves s;
+      =={append_assoc (leaf_row s' depth) (unfold_solution s' (depth - 1)) (filter_leaves s)}
+      ((leaf_row s' depth) @| unfold_solution s' (depth - 1)) @| filter_leaves s;
+      =={lemma_unfold_solution_leaf_row s' (depth - 1)}
+      unfold_solution s' depth @| filter_leaves s;
+      =={}
+      unfold_solution s (depth + 1);
+    }
+
+let rec leaf_row_sum (s: seq item) (depth: nat): Tot leaf_seq =
+  match depth with
+  | 0 -> leaf_row s 0
+  | _ -> leaf_row s depth @| leaf_row_sum s (depth - 1)
+
+let rec lemma_leaf_row_sum (s: seq item) (depth: nat): Lemma
+  (ensures leaf_row_sum s depth == unfold_solution s depth)
+  (decreases depth) =
+  match depth with
+  | 0 ->
+    calc (==) {
+      leaf_row_sum s depth;
+      =={}
+      filter_leaves s;
+      =={}
+      unfold_solution s depth;
+    }
+  | _ ->
+    calc (==) {
+      leaf_row_sum s depth;
+      =={}
+      leaf_row s depth @| leaf_row_sum s (depth - 1);
+      =={lemma_leaf_row_sum s (depth - 1)}
+      leaf_row s depth @| unfold_solution s (depth - 1);
+      =={lemma_unfold_solution_leaf_row s (depth - 1)}
+      unfold_solution s depth;
+    }
+
+let lemma_leaf_row_sum_prefix (s: seq item) (depth: nat): Lemma
+  (ensures leaf_row s depth `prefix` leaf_row_sum s depth) =
+  prefix_alt (leaf_row s depth) (leaf_row_sum s depth)
+
+let rec lemma_solution_row_plus (s: seq item) (a b: nat): Lemma
+  (ensures solution_row (solution_row s a) b == solution_row s (a + b))
+  (decreases a) =
+  match a with
+  | 0 ->
+    calc (==) {
+      solution_row (solution_row s a) b;
+      =={}
+      solution_row s b;
+    }
+  | _ ->
+    calc (==) {
+      solution_row (solution_row s a) b;
+      =={}
+      solution_row (solution_row (unfold_packages s) (a - 1)) b;
+      =={lemma_solution_row_plus (unfold_packages s) (a - 1) b}
+      solution_row (unfold_packages s) (a + b - 1);
+      =={}
+      solution_row s (a + b);
+    }
+
+let rec lemma_unfold_solution_split (s: seq item) (a b: nat): Lemma
+  (ensures
+    unfold_solution (solution_row s (b + 1)) a @| unfold_solution s b ==
+    unfold_solution s (a + b + 1))
+  (decreases a) =
+  match a with
+  | 0 ->
+    calc (==) {
+      unfold_solution (solution_row s (b + 1)) a @| unfold_solution s b;
+      =={}
+      leaf_row s (b + 1) @| unfold_solution s b;
+      =={lemma_unfold_solution_leaf_row s b}
+      unfold_solution s (b + 1);
+    }
+  | _ ->
+    let s' = solution_row s (b + 1) in
+    calc (==) {
+      unfold_solution s' a @| unfold_solution s b;
+      =={lemma_unfold_solution_leaf_row s' (a - 1)}
+      (leaf_row s' a @| unfold_solution s' (a - 1)) @| unfold_solution s b;
+      =={append_assoc
+        (leaf_row s' a) (unfold_solution s' (a - 1)) (unfold_solution s b)}
+      leaf_row s' a @| (unfold_solution s' (a - 1) @| unfold_solution s b);
+      =={lemma_unfold_solution_split s (a - 1) b}
+      leaf_row s' a @| (unfold_solution s (a + b));
+      =={lemma_solution_row_plus s (b + 1) a}
+      leaf_row s (a + b + 1) @| (unfold_solution s (a + b));
+      =={lemma_unfold_solution_leaf_row s (a + b)}
+      unfold_solution s (a + b + 1);
+    }
+
+let rec lemma_leaf_row_sum_exp_range_aux
+  #max_len (w: valid_weight_seq max_len) (row: seq item)
+  (fuel depth: depth_t max_len) (i: index_t (leaf_row_sum row depth)): Lemma
+  (requires (
+    let b: solution max_len max_len w = make_base_set max_len w in
+    let s = do_package_merge b fuel in
+    row `prefix` s /\ depth <= fuel))
+  (ensures (
+    let row' = leaf_row_sum row depth in
+    max_len - fuel <= exp row'.[i] /\ exp row'.[i] <= max_len - fuel + depth))
+  (decreases depth) =
+  let b: solution max_len max_len w = make_base_set max_len w in
+  let s = do_package_merge b fuel in
+  if i < length (leaf_row row depth) then begin
+    lemma_leaf_row_sum_prefix row depth;
+    lemma_leaf_row w row fuel depth
+  end else
+    lemma_leaf_row_sum_exp_range_aux
+      w row fuel (depth - 1) (i - length (leaf_row row depth))
+
+let lemma_leaf_row_sum_exp_range
+  #max_len (w: valid_weight_seq max_len) (row: seq item)
+  (fuel depth: depth_t max_len): Lemma
+  (requires (
+    let b: solution max_len max_len w = make_base_set max_len w in
+    let s = do_package_merge b fuel in
+    row `prefix` s /\ depth <= fuel))
+  (ensures (
+    let row' = leaf_row_sum row depth in
+    (forall i.
+      max_len - fuel <= exp row'.[i] /\
+      exp row'.[i] <= max_len - fuel + depth))) =
+  forall_intro (move_requires (lemma_leaf_row_sum_exp_range_aux w row fuel depth))
+
+let rec lemma_filter_leaves_mem (s: seq item) (i: item): Lemma
+  (requires Leaf? i /\ mem i s)
+  (ensures mem i (filter_leaves s))
+  (decreases length s) =
+  if length s > 0 && s.[0] <> i then begin
+    lemma_filter_leaves_mem (tail s) i;
+    if Leaf? s.[0] then lemma_mem_append (create 1 s.[0]) (filter_leaves (tail s))
+  end
+
+let rec lemma_leaf_row_sum_last (s: seq item) (depth: pos): Lemma
+  (ensures
+    leaf_row_sum s depth ==
+    leaf_row_sum (unfold_packages s) (depth - 1) @| leaf_row s 0)
+  (decreases depth) =
+  match depth with
+  | 1 -> 
+    calc (==) {
+      leaf_row_sum s depth;
+      =={}
+      leaf_row s 1 @| leaf_row_sum s 0;
+      =={}
+      (filter_leaves (solution_row (unfold_packages s) 0)) @| leaf_row s 0;
+      =={}
+      (filter_leaves (unfold_packages s)) @| leaf_row s 0;
+    }
+  | _ ->
+    calc (==) {
+      leaf_row_sum s depth;
+      =={}
+      leaf_row s depth @| leaf_row_sum s (depth - 1);
+      =={lemma_leaf_row_sum_last s (depth - 1)}
+      leaf_row s depth @| (leaf_row_sum (unfold_packages s) (depth - 2) @| leaf_row s 0);
+      =={
+        append_assoc
+          (leaf_row s depth)
+          (leaf_row_sum (unfold_packages s) (depth - 2))
+          (leaf_row s 0)
+      }
+      (leaf_row s depth @| leaf_row_sum (unfold_packages s) (depth - 2)) @| leaf_row s 0;
+      =={}
+      (leaf_row (unfold_packages s) (depth -1) @|
+      leaf_row_sum (unfold_packages s) (depth - 2)) @|
+      leaf_row s 0;
+    }
+
+let lemma_leaf_next_row
+  #max_len (w: valid_weight_seq max_len) (depth: depth_t max_len) (i j: nat): Lemma
+  (requires (
+    let sr = solution_row (package_merge max_len w) depth in
+    depth > 0 /\ i < length sr /\ j < length w /\
+    sr.[i] = Leaf j (depth + 1) w.[j] /\
+    mem sr.[i] (filter_leaves (slice sr 0 (i + 1)))))
+  (ensures (
+    let s = package_merge max_len w in
+    let us = unfold_solution s (depth - 1) in
+    mem (Leaf j depth w.[j]) us)) =
+  let s = package_merge max_len w in
+  let sr = slice (solution_row s depth) 0 (i + 1) in
+  let lr = filter_leaves sr in
+  lemma_filter_leaves_prefix sr (solution_row s depth);
+  lemma_leaf_row w s (max_len - 1) depth;
+  if depth > 1 then begin
+    let fuel = max_len - 1 - depth in
+    let row = leaf_row_sum (solution_row s depth) fuel in
+    let s' = unfold_solution s (max_len - 1) in
+    calc (==) {
+      s';
+      =={lemma_unfold_solution_split s (max_len - depth - 1) (depth - 1)}
+      unfold_solution (solution_row s depth) (max_len - depth - 1) @|
+      unfold_solution s (depth - 1);
+      =={lemma_leaf_row_sum (solution_row s depth) (max_len - depth - 1)}
+      row @| unfold_solution s (depth - 1);
+    };
+    let bottom = Leaf j depth w.[j] in
+    lemma_solution_row w s (max_len - 1) depth;
+    lemma_leaf_row_sum_exp_range w (solution_row s depth) fuel fuel;
+    if mem bottom row then mem_index bottom row;
+
+    lemma_filter_leaves_map sr (index_of lr sr.[i]);
+    lemma_filter_leaves_mem (solution_row s depth) sr.[i];
+    assert(mem sr.[i] (leaf_row s depth));
+
+    if fuel > 0 then begin
+      lemma_leaf_row_sum_last (solution_row s depth) fuel;
+      lemma_mem_append 
+        (leaf_row_sum (unfold_packages (solution_row s depth)) (fuel - 1))
+        (leaf_row (solution_row s depth) 0);
+      assert(leaf_row (solution_row s depth) 0 == leaf_row s depth);
+      assert(mem sr.[i] row)
+    end;
+    lemma_mem_append row (unfold_solution s (depth - 1));
+    assert(solution_wf max_len 1 w s (length s));
+    assert(monotone_elem s' w max_len 1 (index_of s' sr.[i]))
+  end
+
+let rec lemma_max_exp_unfold_solution 
+  #max_len (w: valid_weight_seq max_len) (depth: depth_t max_len) (i: nat): Lemma
+  (ensures max_exp (unfold_solution (package_merge max_len w) depth) i <= depth + 1)
+  (decreases depth) =
+  let s = package_merge max_len w in
+  match depth with
+  | 0 -> lemma_leaf_row w s (max_len - 1) depth
+  | _ ->
+    calc (==) {
+      (max_exp (unfold_solution s depth) i) <: nat;
+      =={lemma_unfold_solution_leaf_row s (depth - 1)}
+      max_exp ((leaf_row s depth) @| unfold_solution s (depth - 1)) i;
+      =={lemma_max_exp_append (leaf_row s depth) (unfold_solution s (depth - 1)) i}
+      Math.Lib.max
+        (max_exp (leaf_row s depth) i)
+        (max_exp (unfold_solution s (depth - 1)) i);
+    };
+    lemma_leaf_row w s (max_len - 1) depth;
+    lemma_max_exp_unfold_solution w (depth - 1) i
+
+let lemma_analyze_row_set_max_exp
+  #nbits #max_len #w (bits: item_bit_map nbits max_len 1 w) (depth: depth_t max_len)
+  i j (k: col_package_count max_len w depth i j)
+  (s: intermediate_exp_seq' max_len w depth j): Lemma
+  (requires (
+    let sol = package_merge max_len w in
+    i < length (solution_row (package_merge max_len w) depth) /\
+    j + 1 == length (filter_leaves (slice (solution_row sol depth) 0 (i + 1))) /\
+    j < length w /\
+    (UInt.to_vec bits.[i]).[max_len - 1 - depth]))
+  (ensures (
+    let sol = package_merge max_len w in
+    s.[j] + 1 == max_exp (unfold_solution sol depth) j
+  )) =
+  let sol = package_merge max_len w in
+  let b: solution max_len max_len w = make_base_set max_len w in
+  if depth > 0 then begin
+    let sr = solution_row sol depth in
+    let sr' = slice sr 0 (i + 1) in
+    let us = unfold_solution sol (depth - 1) in
+    lemma_filter_leaves_prefix sr' sr;
+    lemma_max_exp_unfold_solution w (depth - 1) j;
+    lemma_solution_row w sol (max_len - 1) depth;
+    lemma_leaf_row w sol (max_len - 1) depth;
+    lemma_filter_leaves_snoc_leaf (slice sr 0 i) sr.[i];
+    assert((filter_leaves sr').[j] == sr.[i]);
+    assert(filter_leaves sr' `prefix` filter_leaves sr);
+    assert(filter_leaves sr `prefix` make_base_set (depth + 1) w);
+    assert(Leaf? sr.[i] /\ sr.[i] = Leaf j (depth + 1) w.[j]);
+    lemma_leaf_next_row w depth i j;
+    calc (==) {
+      (max_exp (unfold_solution sol depth) j) <: nat;
+      =={lemma_unfold_solution_leaf_row sol (depth - 1)}
+      max_exp (leaf_row sol depth @| us) j;
+      =={lemma_max_exp_append (leaf_row sol depth) us j}
+      Math.Lib.max (max_exp (leaf_row sol depth) j) (max_exp us j);
+      =={lemma_max_exp_leaf_row w sol (max_len - 1) depth j}
+      Math.Lib.max (depth + 1) (max_exp us j);
+      =={}
+      depth + 1;
+    }
+  end else
+    lemma_leaf_row w sol (max_len - 1) 0
+
+let lemma_analyze_row_set #nbits #max_len #w bits depth i j k s =
+  lemma_analyze_row_set_idx bits depth i j k;
+  lemma_analyze_row_set_max_exp bits depth i j k s
+
+let lemma_analyze_row_skip #nbits #max_len #w bits depth i j k s =
+  let s = package_merge max_len w in
+  let row = solution_row s depth in
+  let row' = slice row 0 i in
+  let row'' = slice row 0 (i + 1) in
+  assert(row'' `equal` snoc row' row.[i]);
+
+  lemma_solution_row w s (max_len - 1) depth;
+  lemma_filter_leaves_snoc_package row' row.[i];
+
+  match row.[i] with
+  | Package i1 i2 -> lemma_unfold_packages_snoc_package row' i1 i2;
+  lemma_unfold_packages_prefix row'' row;
+  assert(unfold_packages row'' `prefix` unfold_packages row);
+  lemma_solution_row_cont s depth;
+  lemma_solution_row w s (max_len - 1) (depth + 1)
+
+let lemma_do_analyze #max_len #w i p =
+  let depth = max_len - i in
+  let s = package_merge max_len w in
+  lemma_solution_row w s (max_len - 1) depth
+
+let lemma_analyze_init_aux #max_len (w: valid_weight_seq max_len) (i: index_t w): Lemma
+  (ensures max_exp (unfold_solution (package_merge max_len w) 0) i == 1) =
+  let s = package_merge max_len w in
+  let row = unfold_solution s 0 in
+  lemma_leaf_row w s (max_len - 1) 0;
+  lemma_max_exp_leaf_row w s (max_len - 1) 0 i
+
+let lemma_analyze_init #max_len w =
+  forall_intro (lemma_analyze_init_aux w)

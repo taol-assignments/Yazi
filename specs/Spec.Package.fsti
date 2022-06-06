@@ -1,6 +1,6 @@
 module Spec.Package
 
-module U32 = FStar.UInt32
+module UInt = FStar.UInt
 
 open FStar.Mul
 open FStar.Seq
@@ -94,6 +94,10 @@ let rec filter_leaves (s: seq item):
     | true -> cons s.[0] (filter_leaves (tail s))
     | false -> filter_leaves (tail s)
 
+val lemma_filter_leaves_len_gt: s: seq item -> Lemma
+  (ensures length s >= length (filter_leaves s))
+  (decreases length s)
+
 let rec unfold_packages (s: seq item): Tot (seq item) (decreases length s) =
   match length s with
   | 0 -> empty #item
@@ -102,8 +106,10 @@ let rec unfold_packages (s: seq item): Tot (seq item) (decreases length s) =
     | Package i1 i2 -> cons i1 (cons i2 (unfold_packages (tail s)))
     | _ -> unfold_packages (tail s)
 
+type leaf_seq = s: seq item{forall i. Leaf? s.[i]}
+
 let rec unfold_solution (s: seq item) (i: nat):
-  Tot (s': seq item{forall i. Leaf? s'.[i]})
+  Tot leaf_seq
   (decreases i) =
   match i with
   | 0 -> filter_leaves s
@@ -269,6 +275,7 @@ let rec merge
     length s == length w + length prev / 2 /\
     (Leaf? (last s) ==> item_weight (last s) == last w) /\
     mem (Package prev.[length prev / 2 * 2 - 2] prev.[length prev / 2 * 2 - 1]) s /\
+    unfold_packages s == slice prev 0 (length prev / 2 * 2) /\
     solution_weight_sum s == weight_sum w +
       solution_weight_sum (slice prev 0 (length prev / 2 * 2))
   }) (decreases %[length w - i; length prev - j]) =
@@ -295,10 +302,10 @@ let rec merge
     merge prev (i + 1) j (snoc x (Leaf i (lo - 1) w.[i]))
 #pop-options
 
-let rec max_exp (s: seq item{forall i. Leaf? s.[i]}) (i: nat): Tot (e: nat{
-    (forall l. mem l s /\ item_id l == i ==> exp l <= e) /\
-    (e > 0 ==> (exists j. exp s.[j] == e /\ item_id s.[j] == i))
-  }) (decreases length s) =
+let rec max_exp (s: leaf_seq) (i: nat): Tot (e: nat{
+  (forall l. mem l s /\ item_id l == i ==> exp l <= e) /\
+  (e > 0 ==> (exists j. exp s.[j] == e /\ item_id s.[j] == i))
+}) (decreases length s) =
   match length s with
   | 0 -> 0
   | _ ->
@@ -360,14 +367,11 @@ let merge_solution
   merge prev 2 0 x
 
 let rec do_package_merge
-  #hi (#lo: pos{lo <= hi}) #w (prev: solution hi lo w):
-  Tot (solution hi 1 w) (decreases lo) =
-  match lo with
-  | 1 -> prev
-  | _ -> do_package_merge (merge_solution prev)
-    // let x = cons (Leaf 0 (lo - 1) w.[0]) (create 1 (Leaf 1 (lo - 1) w.[1])) in
-    // lemma_init_merge_seq prev;
-    // do_package_merge #hi #(lo - 1) #w (merge prev 2 0 x)
+  #hi (#lo: pos{lo <= hi}) #w (prev: solution hi lo w) (fuel: nat{fuel < lo}):
+  Tot (solution hi (lo - fuel) w) (decreases fuel) =
+  match fuel with
+  | 0 -> prev
+  | _ -> do_package_merge (merge_solution prev) (fuel - 1)
 
 let rec log2 (a: pos): Tot (e: nat{
   pow2 e >= a /\ (forall e'. pow2 e' >= a ==> e' >= e)
@@ -383,8 +387,16 @@ val lemma_do_package_merge_len_lower_bound:
     let n = length w in
     let e = Math.Lib.max 0 ((log2 n) - (hi - lo)) in
     n <= pow2 hi /\ length prev >= 2 * n - pow2 e))
-  (ensures length (do_package_merge prev) >= 2 * length w - 2)
+  (ensures length (do_package_merge prev (lo - 1)) >= 2 * length w - 2)
   (decreases lo)
+
+val lemma_do_package_merge_len_upper_bound:
+  #hi: pos -> #lo: pos{lo <= hi} -> #w: weight_seq ->
+  x: solution hi lo w -> fuel: nat{fuel < lo} -> Lemma
+  (requires length x <= 2 * length w - 1)
+  (ensures length (do_package_merge x fuel) <= 2 * length w - 1)
+  (decreases fuel)
+  [SMTPat (do_package_merge #hi #lo #w x fuel)]
 
 val lemma_base_set_solution: hi: pos -> w: weight_seq -> Lemma
   (ensures (
@@ -399,11 +411,13 @@ val lemma_base_set_solution: hi: pos -> w: weight_seq -> Lemma
 
 val lemma_do_package_merge_slice: max_len: pos -> w: weight_seq -> Lemma
   (requires (
-    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    let s = do_package_merge #max_len #max_len #w
+      (make_base_set max_len w) (max_len - 1) in
     length w <= pow2 max_len /\
     length s == 2 * length w - 1))
   (ensures (
-    let s = do_package_merge #max_len #max_len #w (make_base_set max_len w) in
+    let s = do_package_merge #max_len #max_len #w
+      (make_base_set max_len w) (max_len - 1) in
     let s' = slice s 0 (2 * length w - 2) in
     length (filter_leaves s') == length w /\
     weight_sorted s' /\
@@ -422,7 +436,7 @@ let package_merge (max_len: pos) (w: valid_weight_seq max_len):
   }) =
   let n = length w in
   let x = make_base_set max_len w in
-  let s = do_package_merge x in
+  let s = do_package_merge #max_len #max_len #w x (max_len - 1) in
   lemma_do_package_merge_len_lower_bound #max_len #max_len #w x;
   if length s = 2 * n - 1 then begin
     lemma_do_package_merge_slice max_len w;
@@ -435,30 +449,193 @@ val lemma_package_merge: max_len: pos -> w: valid_weight_seq max_len -> Lemma
     let s = solution_len (package_merge max_len w) in
     kraft_sum s =$ one /\ (forall i. s.[i] <= max_len)))
 
-val lemma_package_merge_weight_upper_bound:
+val lemma_do_package_merge_weight_upper_bound:
     max_len: pos
   -> w: valid_weight_seq max_len
+  -> fuel: nat{fuel < max_len}
   -> Lemma
   (ensures (
-    let s = package_merge max_len w in
-    (forall i. item_weight s.[i] <= weight_sum w * max_len)
+    let x = make_base_set max_len w in
+    let s = do_package_merge #max_len #max_len #w x fuel in
+    (forall i. item_weight s.[i] <= weight_sum w * (fuel + 1))
   ))
 
-type intermediate_exp_seq #hi #w (s: solution hi 1 w) (max: nat{max <= hi}) = l: seq nat{
-  length l == length w /\
-  (forall i.
-    l.[i] > 0 /\ l.[i] <= max /\
-    l.[i] == Math.Lib.min max (max_exp (unfold_solution s (hi - 1)) i))
+type item_bit_map (nbits max_len lo: pos) (w: valid_weight_seq max_len) =
+  s: seq (UInt.uint_t nbits) {
+    let b: solution max_len max_len w = make_base_set max_len w in
+    max_len <= nbits /\ lo <= max_len /\
+    length s == 2 * length w - 1 /\
+    (forall (j: nat{j <= max_len - lo}).
+      let x = do_package_merge b j in
+      (forall (i: index_t x). (UInt.to_vec s.[i]).[j] == Leaf? x.[i]))
+  }
+
+let rec solution_row (s: seq item) (depth: nat): Tot (seq item) (decreases depth) =
+  match depth with
+  | 0 -> s
+  | _ -> solution_row (unfold_packages s) (depth - 1)
+
+let leaf_row (s: seq item) (depth: nat): Tot leaf_seq =
+  filter_leaves (solution_row s depth)
+
+type col_index max_len w depth = i: nat{
+  i <= length (solution_row (package_merge max_len w) depth) /\
+  length (solution_row (package_merge max_len w) depth) <= 2 * length w - 1
 }
 
-// type merge_history (e: pos) (w: weight_seq) = s: seq (seq item) {
-//   length s >= 1 /\
-//   s.[0] == make_base_set e w /\
-//   (forall i. i > 0 ==> s.[i] == merge s.[i - 1]
-// }
+type col_leaf_count max_len w depth (i: col_index max_len w depth) = j: nat{
+  let s = package_merge max_len w in
+  j == length (filter_leaves (slice (solution_row s depth) 0 i)) /\
+  j <= length w
+}
 
-let rec analyze
-  #hi #w (s: solution hi 1 w)
-  (i: nat{i < hi}) (x: intermediate_exp_seq s i): Tot (exp_seq s) =
-  admit();
-  x
+type col_package_count max_len w depth i (j: col_leaf_count max_len w depth i) = k: nat{
+  let s = package_merge max_len w in
+  k == length (unfold_packages (slice (solution_row s depth) 0 i)) /\
+  k < 2 * length w - 1 /\
+  k % 2 == 0 /\
+  j + k / 2 == i
+}
+
+type depth_t (max_len: pos) = d: nat{
+  d < max_len
+}
+
+type exp_seq' (max_len: pos) w (depth: depth_t max_len) = l: seq nat{
+  let s = package_merge max_len w in
+  length l == length w /\
+  (forall i. l.[i] == max_exp (unfold_solution s depth) i)
+}
+
+type intermediate_exp_seq'
+  (max_len: pos) (w: valid_weight_seq max_len)
+  (depth: nat{depth < max_len}) (j: nat{j <= length w}) =
+  l: seq nat {
+    let s = package_merge max_len w in
+    length l == length w /\
+    (depth == 0 ==> (forall i. {:pattern l.[i]}
+      (i < j ==> l.[i] == max_exp (unfold_solution s depth) i) /\
+      (i >= j ==> l.[i] == 0))) /\
+    (depth > 0 ==> (forall i. {:pattern l.[i]}
+      (i < j ==> l.[i] == max_exp (unfold_solution s depth) i) /\
+      (i >= j ==> l.[i] == max_exp (unfold_solution s (depth - 1)) i)))
+  }
+
+val lemma_analyze_row_terminate:
+    #nbits: pos
+  -> #max_len: pos
+  -> #w: valid_weight_seq max_len
+  -> bits: item_bit_map nbits max_len 1 w
+  -> depth: depth_t max_len
+  -> i: col_index max_len w depth
+  -> j: col_leaf_count max_len w depth i
+  -> k: col_package_count max_len w depth i j
+  -> s: intermediate_exp_seq' max_len w depth j
+  -> Lemma
+  (requires i = length (solution_row (package_merge max_len w) depth))
+  (ensures
+    (forall l. s.[l] == max_exp (unfold_solution (package_merge max_len w) depth) l) /\
+    k == length (solution_row (package_merge max_len w) (depth + 1)))
+
+val lemma_analyze_row_set:
+    #nbits: pos
+  -> #max_len: pos
+  -> #w: valid_weight_seq max_len
+  -> bits: item_bit_map nbits max_len 1 w
+  -> depth: depth_t max_len
+  -> i: col_index max_len w depth
+  -> j: col_leaf_count max_len w depth i
+  -> k: col_package_count max_len w depth i j
+  -> s: intermediate_exp_seq' max_len w depth j
+  -> Lemma
+  (requires
+    i < length (solution_row (package_merge max_len w) depth) /\
+    (UInt.to_vec bits.[i]).[max_len - 1 - depth])
+  (ensures (
+    let sol = package_merge max_len w in
+    j < length w /\
+    j + 1 == length (filter_leaves (slice (solution_row sol depth) 0 (i + 1))) /\
+    i + 1 <= 2 * length w - 1 /\
+    k == length (unfold_packages (slice (solution_row sol depth) 0 (i + 1))) /\
+    s.[j] + 1 == max_exp (unfold_solution sol depth) j))
+
+val lemma_analyze_row_skip:
+    #nbits: pos
+  -> #max_len: pos
+  -> #w: valid_weight_seq max_len
+  -> bits: item_bit_map nbits max_len 1 w
+  -> depth: depth_t max_len
+  -> i: col_index max_len w depth
+  -> j: col_leaf_count max_len w depth i
+  -> k: col_package_count max_len w depth i j
+  -> s: intermediate_exp_seq' max_len w depth j
+  -> Lemma
+  (requires
+    i < length (solution_row (package_merge max_len w) depth) /\
+    (UInt.to_vec bits.[i]).[max_len - 1 - depth] == false)
+  (ensures (
+    let sol = package_merge max_len w in
+    j == length (filter_leaves (slice (solution_row sol depth) 0 (i + 1))) /\
+    k + 2 == length (unfold_packages (slice (solution_row sol depth) 0 (i + 1))) /\
+    k + 2 < 2 * length w - 1
+  ))
+
+type analyze_pair #max_len (w: valid_weight_seq max_len) (depth: depth_t max_len) =
+  p: (nat & exp_seq' max_len w depth) {
+    fst p == length (solution_row (package_merge max_len w) (depth + 1))
+  }
+
+let rec analyze_row
+  #nbits #max_len #w (bits: item_bit_map nbits max_len 1 w) (depth: depth_t max_len)
+  i j (k: col_package_count max_len w depth i j)
+  (s: intermediate_exp_seq' max_len w depth j):
+  Tot (analyze_pair w depth)
+  (decreases length (solution_row (package_merge max_len w) depth) - i) =
+  if i = length (solution_row (package_merge max_len w) depth) then begin
+    lemma_analyze_row_terminate bits depth i j k s;
+    (k, s)
+  end else if (UInt.to_vec bits.[i]).[max_len - 1 - depth] then begin
+    lemma_analyze_row_set bits depth i j k s;
+    analyze_row bits depth (i + 1) (j + 1) k (s.(j) <- s.[j] + 1)
+  end else begin
+    lemma_analyze_row_skip bits depth i j k s;
+    analyze_row bits depth (i + 1) j (k + 2) s
+  end
+
+val lemma_do_analyze:
+    #max_len: pos
+  -> #w: valid_weight_seq max_len
+  -> i: depth_t max_len
+  -> p: analyze_pair w (max_len - 1 - i)
+  -> Lemma
+  (requires i > 0)
+  (ensures (let depth' = max_len - i in
+    length (solution_row (package_merge max_len w) depth') <= 2 * length w - 1))
+
+let rec do_analyze
+  #nbits #max_len #w (bits: item_bit_map nbits max_len 1 w)
+  (i: depth_t max_len) (p: analyze_pair w (max_len - 1 - i)):
+  Tot (exp_seq' max_len w (max_len - 1))
+  (decreases i) =
+  match i with
+  | 0 -> snd p
+  | _ ->
+    let depth = max_len - 1 - i in
+    let depth' = max_len - i in
+    let s = package_merge max_len w in
+    lemma_do_analyze i p;
+    do_analyze bits (i - 1) (analyze_row bits (max_len - i) 0 0 0 (snd p))
+
+val lemma_analyze_init:
+    #max_len: pos
+  -> w: valid_weight_seq max_len
+  -> Lemma
+  (ensures forall (i: index_t w).
+    max_exp (unfold_solution (package_merge max_len w) 0) i == 1)
+
+let analyze #nbits #max_len #w (bits: item_bit_map nbits max_len 1 w):
+  Tot(exp_seq' max_len w (max_len - 1)) =
+  let s = package_merge max_len w in
+  let a: seq nat = create (length w) 1 in
+  lemma_analyze_init w;
+  do_analyze bits (max_len - 1) (length (solution_row s 1) , a)
