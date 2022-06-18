@@ -14,7 +14,7 @@ class weight_value (a:Type) =
 }
 
 type item: (exp: pos) -> (weight: pos) -> Type =
-  | Coin: id: nat -> exp: pos -> weight: pos -> item exp weight
+  | Coin: exp: pos -> weight: pos -> item exp weight
   | Package: #exp: pos -> #w1: pos -> #w2: pos ->
       i1: item (exp + 1) w1 -> i2: item (exp + 1) w2 -> item exp (w1 + w2)
 
@@ -39,11 +39,11 @@ type pkg_cnt #w (c: coin_cnt w) = p: nat{
 
 type row_t: (w: weights) -> (exp: pos) -> (c: coin_cnt w) -> (p: pkg_cnt c) -> Type =
   | SHead: #w: weights -> #exp: pos -> c: item exp w.[0]{
-      c == Coin 0 exp w.[0]
+      c == Coin exp w.[0]
     } -> row_t w exp 1 0
   | SCoin: #w: weights -> #exp: pos -> #c: index_t w{c > 0} -> #p: pkg_cnt c{
       c + p < 2 * length w - 2
-    } -> xs: row_t w exp c p -> x: item exp w.[c]{x == Coin c exp w.[c]} ->
+    } -> xs: row_t w exp c p -> x: item exp w.[c]{x == Coin exp w.[c]} ->
     row_t w exp (c + 1) p
   | SPackage: #w: weights -> #exp: pos ->
     #c: coin_cnt w -> #p: pkg_cnt c{p + c + 1 <= 2 * length w - 2} ->
@@ -139,7 +139,7 @@ type row_partial #w (#e: pos) #p (prev: row w (e + 1) (length w) p) c' p' =
     unpack_correspond prev xs /\
     (c' + p' > 0 ==>
       (let lst = xs.(p' + c' - 1) in
-      (c' < n ==> lst `lt` Coin c' e w.[c']) /\
+      (c' < n ==> lst `lt` Coin e w.[c']) /\
       (2 * p' + 1 < lp ==> lst `lt` Package prev.(2 * p') prev.(2 * p' + 1))))
   }
 #pop-options
@@ -188,22 +188,22 @@ val lemma_row_weight_sorted:
 let pkg_smaller
   (#w: weights) (#n: nat{n == length w}) (#e: pos{e > 1})
   (#p: pkg_cnt n{p <= n - 2}) (#c': pos{c' <= n}) (#p': pkg_index p c')
-  (prev: row w e n p) (xs: row_partial #_ #(e - 1) #_ prev c' p') =
+  (prev: row w e n p) (s: row_partial #_ #(e - 1) #_ prev c' p') =
   p' < Math.Lib.min (n - 2) ((n + p) / 2) /\
   (c' < n ==> (
     let pkg: item (e - 1) _ = Package prev.(p' * 2) prev.(p' * 2 + 1) in
-    let coin = Coin c' (e - 1) w.[c'] in
+    let coin = Coin (e - 1) w.[c'] in
     weight pkg < weight coin
   ))
 
 let coin_smaller
   (#w: weights) (#n: nat{n == length w}) (#e: pos{e > 1})
   (#p: pkg_cnt n{p <= n - 2}) (#c': pos{c' <= n}) (#p': pkg_index p c')
-  (prev: row w e n p) (xs: row_partial #_ #(e - 1) #_ prev c' p') =
+  (prev: row w e n p) (s: row_partial #_ #(e - 1) #_ prev c' p') =
   c' < n /\
   (p' < Math.Lib.min (n - 2) ((n + p) / 2) ==> (
     let pkg: item (e - 1) _ = Package prev.(p' * 2) prev.(p' * 2 + 1) in
-    let coin = Coin c' (e - 1) w.[c'] in
+    let coin = Coin (e - 1) w.[c'] in
     weight coin <= weight pkg
   ))
 
@@ -215,42 +215,39 @@ val lemma_pkg_weight:
   -> #c': pos{c' <= n}
   -> #p': pkg_index p c'
   -> prev: row w e n p
-  -> xs: row_partial #_ #(e - 1) #_ prev c' p'
+  -> s: row_partial #_ #(e - 1) #_ prev c' p'
   -> Lemma
   (requires c' < n \/ p' < Math.Lib.min (n - 2) ((n + p) / 2))
   (ensures 
-    (pkg_smaller prev xs ==> 
-      row_pkg_gt (SPackage xs (Package prev.(p' * 2) prev.(p' * 2 + 1)))
-    ) /\ (coin_smaller prev xs ==> 
-      row_pkg_gt (SCoin xs (Coin c' (e - 1) w.[c']))
+    (2 * p' + 3 < n + p ==>
+      prev.(p' * 2) `lt` prev.(p' * 2 + 1) /\
+      prev.(p' * 2 + 1) `lt` prev.(p' * 2 + 2) /\
+      prev.(p' * 2 + 2) `lt` prev.(p' * 2 + 3)) /\
+    (pkg_smaller prev s ==> 
+      row_pkg_gt (SPackage s (Package prev.(p' * 2) prev.(p' * 2 + 1)))
+    ) /\ (coin_smaller prev s ==> 
+      row_pkg_gt (SCoin s (Coin (e - 1) w.[c']))
     ))
 
 #push-options "--fuel 1 --ifuel 0 --z3rlimit 1024"
 let rec merge (#w: weights) (#n: nat{n == length w}) (#e: pos{e > 1})
   (#p: pkg_cnt n{p <= n - 2}) (#c': pos{c' <= n}) (#p': pkg_index p c')
-  (prev: row w e n p) (xs: row_partial prev c' p'):
-  Tot (xs': row w (e - 1) n (next_pkg_cnt w p){
-    unpack_correspond prev xs'
+  (prev: row w e n p) (s: row_partial prev c' p'):
+  Tot (s': row w (e - 1) n (next_pkg_cnt w p){
+    unpack_correspond prev s'
   }) (decreases %[n - c'; n + p - 2 * p']) =
-  if 2 * p' + 3 < n + p then begin
-    lemma_row_weight_sorted prev (p' * 2) (p' * 2 + 1);
-    lemma_row_weight_sorted prev (p' * 2 + 1) (p' * 2 + 2);
-    lemma_row_weight_sorted prev (p' * 2 + 2) (p' * 2 + 3)
-  end;
   let pmax = Math.Lib.min (n - 2) ((n + p) / 2) in
-  if (c' < n || p' < pmax) then lemma_pkg_weight prev xs;
+  if c' < n || p' < pmax then lemma_pkg_weight prev s;
 
   match (c' < n, p' < pmax) with
-  | (false, false) -> xs
-  | (false, true) ->
-    merge prev (SPackage xs (Package prev.(p' * 2) prev.(p' * 2 + 1)))
-  | (true, false) ->
-    merge prev (SCoin xs (Coin c' (e - 1) w.[c']))
+  | (false, false) -> s
+  | (false, true) -> merge prev (SPackage s (Package prev.(p' * 2) prev.(p' * 2 + 1)))
+  | (true, false) -> merge prev (SCoin s (Coin (e - 1) w.[c']))
   | _ ->
     let pkg: item (e - 1) _ = Package prev.(p' * 2) prev.(p' * 2 + 1) in
-    let coin = Coin c' (e - 1) w.[c'] in
+    let coin = Coin (e - 1) w.[c'] in
     if weight pkg < weight coin then 
-      merge prev (SPackage xs pkg)
+      merge prev (SPackage s pkg)
     else
-      merge prev (SCoin xs coin)
+      merge prev (SCoin s coin)
 

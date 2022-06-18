@@ -24,14 +24,20 @@ let rec lemma_last_item_gte_last_leaf #w #e #c #p (s: row w e c p): Lemma
   | SPackage xs x -> lemma_last_item_gte_last_leaf xs
 
 #push-options "--fuel 1 --ifuel 0 --z3rlimit 1024 --z3refresh --query_stats"
-let lemma_pkg_weight #w #n #e #p #c' #p' prev xs =
+let lemma_pkg_weight #w #n #e #p #c' #p' prev s =
+  if 2 * p' + 3 < n + p then begin
+    lemma_row_weight_sorted prev (p' * 2) (p' * 2 + 1);
+    lemma_row_weight_sorted prev (p' * 2 + 1) (p' * 2 + 2);
+    lemma_row_weight_sorted prev (p' * 2 + 2) (p' * 2 + 3)
+  end;
+
   let pmax = Math.Lib.min (n - 2) ((n + p) / 2) in
   match (c' < n, p' < pmax) with
-  | (false, true) -> lemma_last_item_gte_last_leaf xs
+  | (false, true) -> lemma_last_item_gte_last_leaf s
   | (true, true) -> 
     let pkg: item (e - 1) _ = Package prev.(p' * 2) prev.(p' * 2 + 1) in
-    let coin = Coin c' (e - 1) w.[c'] in
-    if weight pkg < weight coin then lemma_last_item_gte_last_leaf xs
+    let coin = Coin (e - 1) w.[c'] in
+    if weight pkg < weight coin then lemma_last_item_gte_last_leaf s
   | _ -> ()
 #pop-options
 
